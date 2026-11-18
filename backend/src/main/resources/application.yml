@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: qianxun-homestay-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/qianxun_homestay?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectionTimeZone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:qianxun}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:}
+    member-expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:2592000}
+    admin-expiration-seconds: ${ADMIN_JWT_EXPIRATION_SECONDS:28800}
+  auth:
+    default-avatar: ${MEMBER_DEFAULT_AVATAR:/assets/avatar-default.png}
+  admin:
+    bootstrap-username: ${ADMIN_BOOTSTRAP_USERNAME:}
+    bootstrap-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+logging:
+  level:
+    com.qianxun.homestay.modules: INFO
+    org.springframework.security: WARN

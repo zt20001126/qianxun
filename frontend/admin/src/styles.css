@@ -1,0 +1,53 @@
+:root {
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #292522;
+  background: #f7f5ef;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --qx-primary: #98501f;
+  --qx-primary-dark: #512a18;
+  --qx-page-bg: #fbf5ef;
+  --qx-border: #e8dfd4;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input { font: inherit; }
+button { cursor: pointer; }
+
+.login-shell, .home-shell { min-height: 100vh; padding: 32px; }
+.login-shell { display: grid; place-items: center; background: radial-gradient(circle at 50% 12%, #fffdfa 0, #f5eee5 42%, #f2f0e9 100%); }
+.login-card { width: min(100%, 420px); padding: 44px 42px 30px; border: 1px solid rgba(112, 78, 48, .12); border-radius: 18px; background: rgba(255, 252, 249, .94); box-shadow: 0 22px 70px rgba(75, 54, 35, .10); }
+.brand-mark, .small-mark { display: grid; place-items: center; color: #fff9f0; background: var(--qx-primary); font-family: Georgia, serif; font-weight: 600; }
+.brand-mark { width: 52px; height: 52px; border-radius: 50%; margin-bottom: 23px; font-size: 24px; box-shadow: 0 5px 14px rgba(152, 80, 31, .2); }
+.eyebrow { margin: 0 0 9px; color: #98795c; font-size: 10px; letter-spacing: .17em; }
+h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "Songti SC", serif; font-size: 30px; font-weight: 600; letter-spacing: .08em; }
+.subtitle { margin: 8px 0 30px; color: #8b8177; font-size: 14px; letter-spacing: .15em; }
+.login-form { display: flex; flex-direction: column; gap: 10px; }
+.login-form label { margin-top: 8px; color: #554a40; font-size: 13px; }
+.login-form input { height: 46px; padding: 0 14px; border: 1px solid var(--qx-border); border-radius: 8px; outline: none; color: #292522; background: #fffdfa; }
+.login-form input:focus { border-color: #b77a4e; box-shadow: 0 0 0 3px rgba(152, 80, 31, .08); }
+.login-form input::placeholder { color: #b3aaa1; }
+.primary-button { height: 46px; margin-top: 14px; border: 0; border-radius: 8px; color: #fffaf5; background: var(--qx-primary); font-weight: 600; letter-spacing: .06em; transition: background .15s ease; }
+.primary-button:hover:not(:disabled) { background: #814219; }
+.primary-button:disabled { cursor: wait; opacity: .68; }
+.error-message { margin: 3px 0 0; color: #b44032; font-size: 13px; }
+.footer-note { margin: 24px 0 0; color: #a29a92; font-size: 12px; text-align: center; }
+.home-shell { background: #f7f5ef; }
+.home-header { display: flex; align-items: center; justify-content: space-between; max-width: 1080px; margin: 0 auto; padding: 8px 0 24px; border-bottom: 1px solid #e8e4dc; }
+.home-brand { display: flex; align-items: center; gap: 11px; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "Songti SC", serif; font-size: 20px; letter-spacing: .05em; }
+.small-mark { width: 34px; height: 34px; border-radius: 50%; font-size: 16px; }
+.text-button { border: 0; color: #876c54; background: none; font-size: 13px; }
+.text-button:hover { color: #512a18; }
+.welcome-card { max-width: 1080px; margin: 88px auto; padding: 52px; border: 1px solid #ebe3d8; border-radius: 16px; background: #fffcf9; box-shadow: 0 14px 36px rgba(68, 53, 37, .05); }
+.welcome-card h1 { font-size: 34px; }
+.welcome-copy { margin: 14px 0 25px; color: #74685e; }
+.status-line { display: flex; align-items: center; gap: 9px; color: #476a4d; font-size: 14px; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #6a9a68; }
+.phase-note { margin: 28px 0 0; padding-top: 20px; border-top: 1px solid #efe9e1; color: #92877d; font-size: 13px; }
+
+@media (max-width: 520px) {
+  .login-shell, .home-shell { padding: 18px; }
+  .login-card { padding: 34px 25px 26px; }
+  .welcome-card { margin: 40px auto; padding: 30px 24px; }
+}

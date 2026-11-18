@@ -1,0 +1,26 @@
+<view class="page-shell">
+  <view class="welcome-card">
+    <view class="seal">浔</view>
+    <text class="eyebrow">QIANXUN HOMESTAY</text>
+    <text class="title">登录成功</text>
+    <text class="subtitle">欢迎回到芊浔民宿</text>
+  </view>
+
+  <view wx:if="{{loading}}" class="state-message">正在读取会员资料…</view>
+  <view wx:elif="{{errorMessage}}" class="state-message error">{{errorMessage}}</view>
+  <view wx:elif="{{member}}" class="member-card">
+    <image class="avatar" src="{{avatarSource}}" mode="aspectFill" />
+    <view class="member-info">
+      <text class="nickname">{{member.nickname}}</text>
+      <text class="phone">{{member.phone}}</text>
+    </view>
+    <view class="points-box">
+      <text class="points-value">{{member.points}}</text>
+      <text class="points-label">可用积分</text>
+    </view>
+  </view>
+
+  <view class="phase-note">当前阶段提供手机号登录与会员身份查询。</view>
+  <button class="logout-button" bindtap="onLogoutTap">退出登录</button>
+  <image class="townscape" src="../../assets/decoration-baijianlou-houses.webp" mode="widthFix" />
+</view>

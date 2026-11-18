@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.member.mapper.MemberMapper">
+    <resultMap id="MemberResultMap" type="com.qianxun.homestay.modules.member.entity.MemberEntity">
+        <id property="id" column="id"/>
+        <result property="phone" column="phone"/>
+        <result property="openid" column="openid"/>
+        <result property="nickname" column="nickname"/>
+        <result property="avatar" column="avatar"/>
+        <result property="growthPoints" column="growth_points"/>
+        <result property="points" column="points"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <insert id="upsertLoginProfile">
+        INSERT INTO members (phone, openid, nickname, avatar, growth_points, points, created_at, updated_at)
+        VALUES (#{phone}, NULL, #{nickname}, #{avatar}, 0, 0, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+        ON DUPLICATE KEY UPDATE
+            nickname = VALUES(nickname),
+            avatar = VALUES(avatar),
+            updated_at = CURRENT_TIMESTAMP(3)
+    </insert>
+
+    <select id="findByPhone" resultMap="MemberResultMap">
+        SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
+        FROM members
+        WHERE phone = #{phone}
+        LIMIT 1
+    </select>
+
+    <select id="findById" resultMap="MemberResultMap">
+        SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
+        FROM members
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+</mapper>

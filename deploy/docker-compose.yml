@@ -1,0 +1,51 @@
+name: qianxun
+
+services:
+  mysql:
+    image: ${DOCKER_REGISTRY_PREFIX:-docker.m.daocloud.io}/library/mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-qianxun_homestay}
+      MYSQL_USER: ${MYSQL_USER:-qianxun}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请在 deploy/.env 中设置 MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 deploy/.env 中设置 MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+      args:
+        DOCKER_REGISTRY_PREFIX: ${DOCKER_REGISTRY_PREFIX:-docker.m.daocloud.io}
+        MAVEN_MIRROR_PROFILE: ${MAVEN_MIRROR_PROFILE:-aliyun}
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-qianxun_homestay}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectionTimeZone=Asia/Shanghai"
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-qianxun}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:?请在 deploy/.env 中设置 MYSQL_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?请在 deploy/.env 中设置 JWT_SECRET}
+      APP_JWT_EXPIRATION_SECONDS: 2592000
+      ADMIN_JWT_EXPIRATION_SECONDS: ${ADMIN_JWT_EXPIRATION_SECONDS:-28800}
+      MEMBER_DEFAULT_AVATAR: ${MEMBER_DEFAULT_AVATAR:-/assets/avatar-default.webp}
+      ADMIN_BOOTSTRAP_USERNAME: ${ADMIN_BOOTSTRAP_USERNAME:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173}
+      TZ: Asia/Shanghai
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+volumes:
+  mysql_data:

@@ -1,0 +1,11 @@
+# Local runtime credentials and environment overrides
+deploy/.env
+.env
+**/.env.local
+
+# Java and frontend build output
+**/target/
+**/node_modules/
+**/dist/
+**/.vite/
+*.log

@@ -1,0 +1,42 @@
+<view class="page-shell">
+  <image class="plum-branch" src="../../assets/decoration-plum-branch.webp" mode="widthFix" />
+
+  <view class="brand-block">
+    <view class="brand-seal">浔</view>
+    <text class="brand-kicker">QIANXUN HOMESTAY</text>
+    <text class="brand-title">芊浔民宿</text>
+    <text class="brand-subtitle">枕水而居 · 慢叙江南</text>
+  </view>
+
+  <view class="login-card">
+    <text class="card-title">手机号登录</text>
+    <text class="card-caption">输入手机号，开启南浔小住时光</text>
+
+    <view class="phone-field">
+      <text class="country-code">+86</text>
+      <input
+        class="phone-input"
+        type="number"
+        maxlength="11"
+        value="{{phone}}"
+        placeholder="请输入手机号"
+        placeholder-class="placeholder"
+        confirm-type="done"
+        bindinput="onPhoneInput"
+        bindconfirm="onLoginTap"
+      />
+    </view>
+
+    <text wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</text>
+    <button class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="onLoginTap">
+      {{loading ? '正在登录…' : '登录 / 注册'}}
+    </button>
+
+    <text class="phone-notice">本阶段不发送短信验证码，系统不会核验手机号归属。请勿输入他人手机号，避免账号及积分被他人使用。</text>
+  </view>
+
+  <view class="scenery">
+    <image src="../../assets/decoration-baijianlou-houses.webp" mode="widthFix" />
+    <text>浙江 · 湖州 · 南浔</text>
+  </view>
+</view>

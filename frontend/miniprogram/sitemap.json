@@ -1,0 +1,4 @@
+{
+  "desc": "芊浔民宿小程序页面索引",
+  "rules": [{ "action": "allow", "page": "*" }]
+}

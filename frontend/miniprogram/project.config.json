@@ -1,0 +1,15 @@
+{
+  "description": "芊浔民宿微信小程序：第一阶段认证",
+  "miniprogramRoot": "./",
+  "compileType": "miniprogram",
+  "appid": "touristappid",
+  "projectname": "qianxun-miniprogram",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "compileHotReLoad": true,
+    "useCompilerPlugins": ["typescript"]
+  },
+  "condition": {}
+}

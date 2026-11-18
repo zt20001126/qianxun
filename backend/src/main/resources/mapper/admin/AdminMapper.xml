@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.admin.mapper.AdminMapper">
+    <resultMap id="AdminResultMap" type="com.qianxun.homestay.modules.admin.entity.AdminEntity">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="passwordHash" column="password_hash"/>
+        <result property="enabled" column="enabled"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findByUsername" resultMap="AdminResultMap">
+        SELECT id, username, password_hash, enabled, created_at, updated_at
+        FROM admin
+        WHERE username = #{username}
+        LIMIT 1
+    </select>
+
+    <select id="findById" resultMap="AdminResultMap">
+        SELECT id, username, password_hash, enabled, created_at, updated_at
+        FROM admin
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="countAdmins" resultType="long">
+        SELECT COUNT(*) FROM admin
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO admin (username, password_hash, enabled, created_at, updated_at)
+        VALUES (#{username}, #{passwordHash}, 1, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+    </insert>
+</mapper>
