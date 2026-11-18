@@ -2,6 +2,7 @@ package com.qianxun.homestay.common.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.common.api.ApiResponse;
+import com.qianxun.homestay.common.logging.ApiRequestLoggingFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -60,7 +61,8 @@ public class SecurityConfig {
                                 response, objectMapper, HttpServletResponse.SC_UNAUTHORIZED, "未登录或登录已失效"))
                         .accessDeniedHandler((request, response, exception) -> writeError(
                                 response, objectMapper, HttpServletResponse.SC_FORBIDDEN, "无权访问该接口")))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new ApiRequestLoggingFilter(objectMapper), JwtAuthenticationFilter.class);
         return http.build();
     }
 

@@ -47,5 +47,6 @@ app:
 
 logging:
   level:
+    com.qianxun.homestay.common.logging: INFO
     com.qianxun.homestay.modules: INFO
     org.springframework.security: WARN

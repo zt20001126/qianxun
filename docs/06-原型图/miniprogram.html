@@ -1,0 +1,2313 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>芊浔民宿 · 南浔古镇水乡精品民宿微信小程序</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: 思源宋体 + 思源黑体 营造新中式雅致书卷气 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: {
+                            paper: '#FAF7F2',     // 宣纸米白主底色
+                            card: '#FFFFFF',      // 卡片纯白
+                            warm: '#F3EDE2',      // 暖杏浅底
+                            wood: '#8B4D25',      // 古镇木棕主色
+                            woodDark: '#6F3B1A',  // 木棕深色
+                            woodLight: '#F7EFE8', // 浅木棕底色
+                            cinnabar: '#B83B2A',  // 朱砂印章红 / 价格高亮
+                            celadon: '#4E7A65',   // 江南青瓷绿
+                            celadonBg: '#EBF2EE', // 青瓷浅绿底
+                            charcoal: '#231F1D',  // 白墙黛瓦炭黑
+                            gray: '#7A726B',      // 暖灰辅助文字
+                            border: '#E8E0D4',    // 宣纸边框线
+                            gold: '#C59B5F',      // 暖金会员色
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans SC"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        serif: ['"Noto Serif SC"', 'serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(35, 31, 29, 0.05)',
+                        'card': '0 8px 24px -4px rgba(139, 77, 37, 0.08)',
+                        'phone': '0 28px 65px -12px rgba(35, 31, 29, 0.28), 0 0 0 11px #1E1B19, 0 0 0 13px #423B35',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .page-enter {
+            animation: fadeUp 0.26s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes sheetUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .sheet-enter {
+            animation: sheetUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        @keyframes checkStroke {
+            0% { stroke-dashoffset: 48; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .check-anim {
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: checkStroke 0.55s 0.15s ease-out forwards;
+        }
+
+        /* 桌面端背景水墨宣纸质感 */
+        body {
+            background-color: #EAE3D7;
+            background-image: radial-gradient(#D3C8B6 1px, transparent 1px);
+            background-size: 22px 22px;
+        }
+
+        /* 印章竖排微纹理 */
+        .seal-stamp {
+            writing-mode: vertical-rl;
+            letter-spacing: 0.08em;
+        }
+
+        /* 底部乌篷船远山水墨水印装饰 */
+        .ink-footer-watermark {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 90' fill='none'%3E%3Cpath d='M0 68 Q75 42 150 62 T310 54 T400 66 L400 90 L0 90 Z' fill='%238B4D25' fill-opacity='0.05'/%3E%3Cpath d='M40 76 Q140 50 245 70 T400 62 L400 90 L0 90 Z' fill='%238B4D25' fill-opacity='0.07'/%3E%3Cpath d='M252 67 C266 64 282 64 296 67 L290 71 L258 71 Z' fill='%238B4D25' fill-opacity='0.18'/%3E%3Cpath d='M267 65 Q274 59 281 65 Z' fill='%238B4D25' fill-opacity='0.22'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: bottom center;
+            background-size: 100% auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 sm:p-5 font-sans text-ink-charcoal antialiased">
+
+    <!-- 手机物理外壳 (390px × 844px) -->
+    <div id="phone-container" class="relative w-full sm:w-[390px] h-screen sm:h-[844px] bg-ink-paper sm:rounded-[46px] sm:shadow-phone overflow-hidden flex flex-col">
+
+        <!-- 顶部 iOS 状态栏 + 微信小程序胶囊导航 -->
+        <header id="mp-navbar" class="relative z-40 shrink-0 transition-colors duration-200 bg-ink-paper/95 backdrop-blur-md">
+            <!-- 状态栏 -->
+            <div class="flex items-center justify-between px-6 pt-3 pb-1 text-[12px] font-semibold text-ink-charcoal select-none">
+                <span>10:24</span>
+                <div class="hidden sm:block w-24 h-5 bg-[#181615] rounded-full"></div>
+                <div class="flex items-center gap-1.5">
+                    <i data-lucide="signal" class="w-3.5 h-3.5"></i>
+                    <i data-lucide="wifi" class="w-3.5 h-3.5"></i>
+                    <div class="w-5 h-2.5 border border-ink-charcoal/80 rounded-[3px] p-[1px] flex items-center">
+                        <div class="w-full h-full bg-ink-charcoal rounded-[1px]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 小程序导航栏 -->
+            <div id="navbar-inner" class="flex items-center justify-between px-4 h-11">
+                <div id="nav-left" class="flex items-center min-w-[78px]"></div>
+                <div id="nav-title" class="font-serif font-bold text-[16px] text-ink-charcoal tracking-wide truncate">芊浔民宿</div>
+                <!-- 微信小程序原生胶囊 -->
+                <div class="flex items-center h-[30px] px-2.5 rounded-full bg-white/85 border border-black/[0.08] shadow-2xs backdrop-blur-md select-none">
+                    <button onclick="showToast('芊浔民宿 · 南浔古镇水乡精品民宿 V3.1')" class="pr-2.5 text-ink-charcoal hover:opacity-70" title="更多">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="5" cy="12" r="2.2"/>
+                            <circle cx="12" cy="12" r="2.8"/>
+                            <circle cx="19" cy="12" r="2.2"/>
+                        </svg>
+                    </button>
+                    <div class="w-[1px] h-3.5 bg-black/15"></div>
+                    <button onclick="showToast('点击左上角「退出登录」可返回登录界面')" class="pl-2.5 text-ink-charcoal hover:opacity-70" title="关闭">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                            <circle cx="12" cy="12" r="8.5"/>
+                            <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主体滚动视图区域 (内置底部乌篷船远山水墨水印) -->
+        <main id="viewport" class="flex-1 overflow-y-auto no-scrollbar relative ink-footer-watermark">
+            <!-- 动态注入视图 -->
+        </main>
+
+        <!-- 底部原生小程序 TabBar (首页 / 订单 / 会员 / 我的) + Home 指示条 -->
+        <nav id="mp-tabbar" class="hidden shrink-0 z-40 bg-white/95 backdrop-blur-lg border-t border-ink-border px-2 pt-1.5 pb-2 flex flex-col">
+            <div class="flex items-center justify-around w-full">
+                <button onclick="navigateTab('home')" data-tab="home" class="tab-item flex flex-col items-center gap-0.5 w-16">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-[11px] font-medium">首页</span>
+                </button>
+                <button onclick="navigateTab('orders')" data-tab="orders" class="tab-item relative flex flex-col items-center gap-0.5 w-16">
+                    <i data-lucide="clipboard-list" class="w-5 h-5"></i>
+                    <span id="order-tab-dot" class="hidden absolute top-0 right-4 w-2 h-2 rounded-full bg-ink-cinnabar"></span>
+                    <span class="text-[11px] font-medium">订单</span>
+                </button>
+                <button onclick="navigateTab('member')" data-tab="member" class="tab-item flex flex-col items-center gap-0.5 w-16">
+                    <i data-lucide="crown" class="w-5 h-5"></i>
+                    <span class="text-[11px] font-medium">会员</span>
+                </button>
+                <button onclick="navigateTab('mine')" data-tab="mine" class="tab-item flex flex-col items-center gap-0.5 w-16">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-[11px] font-medium">我的</span>
+                </button>
+            </div>
+            <!-- 底部 iPhone Home 指示条 -->
+            <div class="w-32 h-1 rounded-full bg-ink-charcoal/20 mx-auto mt-2"></div>
+        </nav>
+
+        <!-- 底部固定操作栏 (用于房间详情页 / 填写预订页 / 订单详情页) -->
+        <div id="sticky-footer" class="hidden shrink-0 z-40 bg-white/95 backdrop-blur-lg border-t border-ink-border px-5 pt-3 pb-3 shadow-[0_-6px_20px_rgba(35,31,29,0.05)]"></div>
+
+        <!-- 未来 60 个自然日交互式日期选择日历抽屉 -->
+        <div id="calendar-drawer" class="hidden absolute inset-0 z-50 bg-black/45 backdrop-blur-[2px] flex flex-col justify-end">
+            <div class="bg-ink-paper rounded-t-3xl p-5 pb-6 max-h-[88%] overflow-y-auto no-scrollbar sheet-enter shadow-2xl">
+                <div class="flex items-center justify-between pb-3 border-b border-ink-border">
+                    <button onclick="closeCalendarDrawer()" class="p-1.5 rounded-full bg-ink-warm text-ink-charcoal">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                    <div class="text-center">
+                        <div class="font-serif font-bold text-base">选择入住与退房日期</div>
+                        <div class="text-[10px] text-ink-gray">仅开放北京时间今日起未来 60 个自然日预订</div>
+                    </div>
+                    <span id="cal-nights-badge" class="px-2.5 py-0.5 rounded-full bg-ink-woodLight text-ink-wood text-xs font-semibold">共 3 晚</span>
+                </div>
+
+                <!-- 入离日期双栏预览 -->
+                <div class="mt-3 flex items-center justify-between text-xs bg-white rounded-2xl p-3 border border-ink-border/70">
+                    <div>
+                        <span class="text-ink-gray">入住：</span>
+                        <span id="cal-preview-in" class="font-bold text-ink-charcoal">11月18日 周三</span>
+                    </div>
+                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-ink-wood"></i>
+                    <div>
+                        <span class="text-ink-gray">退房：</span>
+                        <span id="cal-preview-out" class="font-bold text-ink-charcoal">11月21日 周六</span>
+                    </div>
+                </div>
+
+                <!-- 图例说明（严格遵循 V3.1 第 3.2 节：只显示可预订 / 不可预订） -->
+                <div class="mt-2.5 flex items-center justify-end gap-4 text-[11px] text-ink-gray px-1">
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-white border border-ink-border"></span>可预订</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-ink-warm/80"></span>不可预订</span>
+                    <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-xs bg-ink-wood"></span>已选区间</span>
+                </div>
+
+                <!-- 60天滚动月份日历容器 (2026年11月 / 12月 / 2027年1月) -->
+                <div id="calendar-months-container" class="mt-2.5 space-y-3 max-h-[340px] overflow-y-auto no-scrollbar pr-0.5">
+                    <!-- JS 动态生成未来 60 天日历 -->
+                </div>
+
+                <button onclick="confirmCalendarSelection()" class="mt-4 w-full py-3.5 rounded-2xl bg-ink-wood hover:bg-ink-woodDark text-white font-medium text-sm shadow-lg shadow-ink-wood/25 active:scale-[0.98] transition">
+                    确认日期（共 <span id="cal-confirm-nights">3</span> 晚）
+                </button>
+            </div>
+        </div>
+
+        <!-- 通用弹窗遮罩（用于退款失败提示 / 会员规则表 / 民宿导览介绍） -->
+        <div id="dialog-overlay" class="hidden absolute inset-0 z-50 bg-black/50 backdrop-blur-[2px] flex items-center justify-center p-6">
+            <div id="dialog-box" class="w-full max-w-[325px] bg-white rounded-3xl p-6 shadow-2xl border border-ink-border page-enter">
+                <!-- 动态注入弹窗内容 -->
+            </div>
+        </div>
+
+        <!-- 轻提示 Toast -->
+        <div class="pointer-events-none absolute top-24 inset-x-0 z-50 flex justify-center px-6">
+            <div id="toast-pill" class="opacity-0 -translate-y-2 transition-all duration-300 px-4 py-2 rounded-full bg-ink-charcoal/90 text-white text-xs font-medium shadow-lg backdrop-blur-md flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-ink-gold"></span>
+                <span id="toast-msg">提示</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. V3.1 业务规则配置 & 6间房基础数据
+        // ==========================================
+        const TODAY_STR = '2026-11-18'; // 北京时间今天（60自然日窗口第1天）
+        const MAX_WINDOW_DAYS = 60;
+
+        // 统一默认古风剪影头像（SVG Data URI 保证离线永不裂图，且符合 V3.1 统一默认头像契约）
+        const DEFAULT_AVATAR_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23EFE6D8'/%3E%3Ccircle cx='60' cy='60' r='56' fill='%23F7EFE3' stroke='%23D6C3A8' stroke-width='2'/%3E%3Cpath d='M86 24 Q96 36 104 28 M92 34 Q100 44 108 38' stroke='%236B8366' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='56' cy='48' r='16' fill='%23594334'/%3E%3Ccircle cx='42' cy='42' r='8' fill='%23433125'/%3E%3Cpath d='M32 98 C34 74 78 74 82 98 Z' fill='%237A553A'/%3E%3C/svg%3E";
+
+        // 会员四档等级与兑换率（V3.1 需求 3.5 & 接口 T01）
+        const MEMBER_TIERS = [
+            { key: 'normal', name: '普通会员', minPoints: 0, maxPoints: 499, rate: 30 },
+            { key: 'silver', name: '银卡会员', minPoints: 500, maxPoints: 999, rate: 25 },
+            { key: 'gold', name: '金卡会员', minPoints: 1000, maxPoints: 1499, rate: 20 },
+            { key: 'diamond', name: '钻石会员', minPoints: 1500, maxPoints: 999999, rate: 15 }
+        ];
+
+        // 预设测试账号池（V3.1 第 3.1 节：手机号直接登录，昵称固定为手机号后四位，头像统一默认）
+        const PRESET_MEMBERS = {
+            '13800005678': {
+                phone: '13800005678',
+                growthPoints: 760,   // 银卡会员 (500-999, 25积分=¥1)
+                availablePoints: 2400
+            },
+            '13900008899': {
+                phone: '13900008899',
+                growthPoints: 1260,  // 金卡会员 (1000-1499, 20积分=¥1)
+                availablePoints: 3200
+            },
+            '13600009999': {
+                phone: '13600009999',
+                growthPoints: 1850,  // 钻石会员 (≥1500, 15积分=¥1)
+                availablePoints: 4500
+            }
+        };
+
+        // 芊浔民宿全部 6 间房（1楼 101/102/103 + 2楼 201/202/203，严格对应数据库 room 表）
+        const ROOMS = [
+            {
+                id: 1,
+                number: '101',
+                name: '101 · 雅致大床房',
+                floor: '1楼',
+                area: '约22m²',
+                bed: '大床1.8m',
+                guests: 2,
+                price: 328,
+                tags: ['木格花窗', '静谧庭院景', '新中式原木'],
+                desc: '温馨舒适的雅致大床房，简约中式风格，采用天然原木梁柱与素雅棉麻软装，推窗可见青石小院绿意，安静舒适，适合情侣或家庭入住。',
+                amenities: [
+                    { icon: 'wind', label: '空调' },
+                    { icon: 'bath', label: '独立卫浴' },
+                    { icon: 'wifi', label: 'Wi-Fi' },
+                    { icon: 'tv', label: '电视' }
+                ],
+                unavailableDates: ['2026-11-24', '2026-11-25'], // 模拟已有订单/封房占用的夜晚
+                images: [
+                    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=85'
+                ]
+            },
+            {
+                id: 2,
+                number: '102',
+                name: '102 · 舒适双床房',
+                floor: '1楼',
+                area: '约26m²',
+                bed: '双床1.2m×2',
+                guests: 2,
+                price: 348,
+                tags: ['宽敞双床', '禅意茶席', '独立干湿分离'],
+                desc: '开阔双床格局，配备两张1.2米定制乳胶雅床与靠窗品茗茶席，兼具私密性与松弛感，非常适合闺蜜结伴或亲子水乡慢游。',
+                amenities: [
+                    { icon: 'wind', label: '空调' },
+                    { icon: 'bath', label: '独立卫浴' },
+                    { icon: 'wifi', label: 'Wi-Fi' },
+                    { icon: 'tv', label: '电视' }
+                ],
+                unavailableDates: ['2026-11-28', '2026-11-29'],
+                images: [
+                    'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=85'
+                ]
+            },
+            {
+                id: 3,
+                number: '103',
+                name: '103 · 临水双床房',
+                floor: '1楼',
+                area: '约28m²',
+                bed: '双床1.35m×2',
+                guests: 2,
+                price: 358,
+                tags: ['临河水景', '独立亲水小院', '双人茶台'],
+                desc: '一楼临河雅室，推门即达青石临水步道，配备两张1.35米宽适大床与南浔熏豆茶具，清晨伴随摇橹水声自然醒来。',
+                amenities: [
+                    { icon: 'wind', label: '空调' },
+                    { icon: 'bath', label: '独立卫浴' },
+                    { icon: 'wifi', label: 'Wi-Fi' },
+                    { icon: 'tv', label: '电视' }
+                ],
+                unavailableDates: ['2026-11-18', '2026-11-19'], // 模拟18-19日已占用，默认选18-21日时会被自动过滤，改期后释放可见
+                images: [
+                    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=85'
+                ]
+            },
+            {
+                id: 4,
+                number: '201',
+                name: '201 · 观景大床房',
+                floor: '2楼',
+                area: '约24m²',
+                bed: '大床1.8m',
+                guests: 2,
+                price: 368,
+                tags: ['二楼俯瞰古桥', '全景木窗', '晨雾水乡'],
+                desc: '位于二楼向阳视野位，整排仿古雕花木格窗将百间楼白墙黛瓦与摇橹船景尽收眼底，清晨薄雾缭绕，宛如置身水墨画卷。',
+                amenities: [
+                    { icon: 'wind', label: '空调' },
+                    { icon: 'bath', label: '独立卫浴' },
+                    { icon: 'wifi', label: 'Wi-Fi' },
+                    { icon: 'tv', label: '电视' }
+                ],
+                unavailableDates: ['2026-12-01', '2026-12-02'],
+                images: [
+                    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=85'
+                ]
+            },
+            {
+                id: 5,
+                number: '202',
+                name: '202 · 临水大床房',
+                floor: '2楼',
+                area: '约30m²',
+                bed: '大床2.0m',
+                guests: 2,
+                price: 398,
+                tags: ['枕水听橹声', '观景深泡浴缸', '百间楼夜景'],
+                desc: '二楼临河旗舰房型，推窗即见古桥灯笼倒影，配备2.0米云端舒睡大床与临窗观景浴缸，夜晚静赏百间楼灯火阑珊。',
+                amenities: [
+                    { icon: 'wind', label: '空调' },
+                    { icon: 'bath', label: '独立卫浴' },
+                    { icon: 'wifi', label: 'Wi-Fi' },
+                    { icon: 'tv', label: '电视' }
+                ],
+                unavailableDates: ['2026-11-22'],
+                images: [
+                    'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=85'
+                ]
+            },
+            {
+                id: 6,
+                number: '203',
+                name: '203 · 阁楼星空大床房',
+                floor: '2楼',
+                area: '约34m²',
+                bed: '大床2.0m',
+                guests: 2,
+                price: 428,
+                tags: ['百年木梁阁楼', '观星天窗', '私享茶书房'],
+                desc: '保留清代老宅原木屋脊与坡顶天窗，阳光透过竹帘洒入木质书案，夜晚卧榻可仰望江南夜空，极具诗意栖居体验。',
+                amenities: [
+                    { icon: 'wind', label: '空调' },
+                    { icon: 'bath', label: '独立卫浴' },
+                    { icon: 'wifi', label: 'Wi-Fi' },
+                    { icon: 'tv', label: '电视' }
+                ],
+                unavailableDates: ['2026-11-26', '2026-11-27'],
+                images: [
+                    'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=85',
+                    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=85'
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 2. 日期工具函数 (精确处理跨月与未来60天校验)
+        // ==========================================
+        const WEEK_NAMES = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+        function parseYMD(ymd) {
+            const [y, m, d] = ymd.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function formatYMD(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function addDays(ymd, days) {
+            const dt = parseYMD(ymd);
+            dt.setDate(dt.getDate() + days);
+            return formatYMD(dt);
+        }
+
+        function diffDays(startYmd, endYmd) {
+            const s = parseYMD(startYmd);
+            const e = parseYMD(endYmd);
+            return Math.round((e - s) / 86400000);
+        }
+
+        function formatMonthDay(ymd) {
+            const dt = parseYMD(ymd);
+            return `${dt.getMonth() + 1}月${dt.getDate()}日`;
+        }
+
+        function formatWeek(ymd) {
+            return WEEK_NAMES[parseYMD(ymd).getDay()];
+        }
+
+        // 获取 [checkIn, checkOut) 区间内所有住宿夜晚 YYYY-MM-DD（含入住日、不含退房日）
+        function getStayNightsList(checkIn, checkOut) {
+            const list = [];
+            const n = diffDays(checkIn, checkOut);
+            for (let i = 0; i < n; i++) {
+                list.push(addDays(checkIn, i));
+            }
+            return list;
+        }
+
+        // 检查房间在整个 [checkIn, checkOut) 区间是否可订
+        function isRoomAvailable(room, checkIn, checkOut) {
+            const stayNights = getStayNightsList(checkIn, checkOut);
+            return !stayNights.some(d => room.unavailableDates.includes(d));
+        }
+
+        // ==========================================
+        // 3. 全局状态机 (State)
+        // ==========================================
+        const state = {
+            isLoggedIn: false,
+            route: 'login', // 'login' | 'home' | 'rooms' | 'detail' | 'booking' | 'success' | 'orders' | 'orderDetail' | 'member' | 'pointsLog' | 'mine'
+            // 登录表单（V3.1: 仅单手机号 + 协议勾选，无验证码、无微信授权）
+            loginPhone: '13800005678',
+            agreedTerms: true,
+            // 日期选择状态（默认今日起 3 晚：2026-11-18 ~ 2026-11-21）
+            checkIn: '2026-11-18',
+            checkOut: '2026-11-21',
+            tempCheckIn: '2026-11-18',
+            tempCheckOut: '2026-11-21',
+            selectingStep: 'checkin',
+            calendarContextRoomId: null, // 若从某间房详情点预订进入，可高亮该房不可订日
+            // 房间与预订状态
+            selectedRoomId: 1,
+            detailImgIdx: 0,
+            bookingForm: {
+                guestName: '张先生',
+                guestPhone: '13800005678',
+                guestsCount: 2,
+                remark: '需要安静的房间',
+                usePoints: true
+            },
+            lastCreatedOrder: null,
+            // 订单列表与详情（V3.1 严格要求：仅展示全部订单列表，不设顶部状态筛选标签）
+            selectedOrderId: 'QX202611180001',
+            orders: [
+                {
+                    orderId: 'QX202611180001',
+                    roomId: 1,
+                    roomName: '101 · 雅致大床房',
+                    image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=80',
+                    checkIn: '2026-11-22',
+                    checkOut: '2026-11-25',
+                    nights: 3,
+                    guestsCount: 2,
+                    guestName: '张先生',
+                    guestPhone: '13800005678',
+                    remark: '需要安静的房间',
+                    unitPrice: 328,
+                    roomFee: 984,
+                    usedPoints: 2400,
+                    discountAmount: 96,
+                    paidAmount: 888,
+                    status: 'PENDING_CONFIRM',
+                    statusLabel: '待确认',
+                    refundable: true,
+                    refundHint: '可在入住当天 18:00（北京时间）前自助申请取消退款。',
+                    createdAt: '2026-11-18 10:20'
+                },
+                {
+                    orderId: 'QX202611180002',
+                    roomId: 5,
+                    roomName: '202 · 临水大床房',
+                    image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=600&q=80',
+                    checkIn: '2026-11-18',
+                    checkOut: '2026-11-19',
+                    nights: 1,
+                    guestsCount: 2,
+                    guestName: '张先生',
+                    guestPhone: '13800005678',
+                    remark: '无',
+                    unitPrice: 398,
+                    roomFee: 398,
+                    usedPoints: 0,
+                    discountAmount: 0,
+                    paidAmount: 398,
+                    status: 'PENDING_CHECKIN',
+                    statusLabel: '待入住',
+                    refundable: false, // 模拟参考图⑩⑪：已超出入住当日18:00截止时间，不可自助退款
+                    refundHint: '当前订单已超出可退款时间（入住当日 18:00 后），如需退改请联系商家。',
+                    createdAt: '2026-11-16 16:30'
+                },
+                {
+                    orderId: 'QX202611150003',
+                    roomId: 2,
+                    roomName: '102 · 舒适双床房',
+                    image: 'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=600&q=80',
+                    checkIn: '2026-11-15',
+                    checkOut: '2026-11-17',
+                    nights: 2,
+                    guestsCount: 2,
+                    guestName: '张先生',
+                    guestPhone: '13800005678',
+                    remark: '无',
+                    unitPrice: 348,
+                    roomFee: 696,
+                    usedPoints: 0,
+                    discountAmount: 0,
+                    paidAmount: 696,
+                    status: 'COMPLETED',
+                    statusLabel: '已完成',
+                    refundable: false,
+                    refundHint: '行程已完成，订单积分奖励已发放至您的会员账户。',
+                    createdAt: '2026-11-10 14:08'
+                }
+            ],
+            // 会员信息（默认载入银卡会员 13800005678，昵称固定为手机号后四位 "5678"）
+            member: {
+                phone: '13800005678',
+                nickname: '5678',
+                avatar: DEFAULT_AVATAR_SVG,
+                growthPoints: 760,
+                availablePoints: 2400
+            },
+            // 积分流水（严格按 V3.1 第 3.5 & 3.6 节：订单完成奖励 / 抵扣订单房费 / 取消订单返还 / 历史消费补发 / 赠送补偿，含 balance_after，不含每日签到）
+            pointsLogs: [
+                { id: 1, month: '2026年11月', title: '抵扣订单房费', sub: '订单：QX202611180001', time: '11月18日 10:20', delta: -2400, balanceAfter: 2400, icon: 'ticket' },
+                { id: 2, month: '2026年11月', title: '订单完成奖励', sub: '订单：QX202611150003（实付¥696）', time: '11月17日 12:15', delta: +696, balanceAfter: 4800, icon: 'award' },
+                { id: 3, month: '2026年11月', title: '取消订单返还', sub: '订单：QX202611080004', time: '11月08日 16:40', delta: +400, balanceAfter: 4104, icon: 'rotate-ccw' },
+                { id: 4, month: '2026年10月', title: '历史消费补发', sub: '备注：老客水乡入住成长补发', time: '10月28日 14:36', delta: +500, balanceAfter: 3704, icon: 'sparkles' },
+                { id: 5, month: '2026年10月', title: '赠送/补偿积分', sub: '备注：管家欢迎礼遇赠送', time: '10月20日 11:05', delta: +204, balanceAfter: 3204, icon: 'gift' }
+            ]
+        };
+
+        // ==========================================
+        // 4. 会员等级 & 积分精确计算引擎 (V3.1 契约)
+        // ==========================================
+        function getCurrentTier() {
+            const gp = state.member.growthPoints;
+            return MEMBER_TIERS.slice().reverse().find(t => gp >= t.minPoints) || MEMBER_TIERS[0];
+        }
+
+        function getNextTier() {
+            const cur = getCurrentTier();
+            const idx = MEMBER_TIERS.findIndex(t => t.key === cur.key);
+            return MEMBER_TIERS[idx + 1] || null;
+        }
+
+        // 严格遵循 V3.1 第 1.3 & 3.5 节：
+        // 积分使用量为非负整数；抵扣金额 floor(points_used / rate * 100) / 100；单笔上限房费 20%
+        function calculatePointsDeduction(roomFee) {
+            const tier = getCurrentTier();
+            const maxDiscountYuan = Number((roomFee * 0.20).toFixed(2));
+            const maxPointsByCap = Math.floor(maxDiscountYuan * tier.rate);
+            const usablePoints = Math.min(state.member.availablePoints, maxPointsByCap);
+            // 取兑换率整数倍，使抵扣金额为干净整数元或精确两位小数
+            const alignedPoints = Math.floor(usablePoints / tier.rate) * tier.rate;
+            const discountYuan = Math.floor((alignedPoints * 100) / tier.rate) / 100;
+
+            return {
+                tier,
+                rate: tier.rate,
+                maxDiscountYuan,
+                alignedPoints,
+                discountYuan
+            };
+        }
+
+        function maskPhone(phone) {
+            const clean = String(phone || '').replace(/\s+/g, '');
+            if (clean.length === 11) {
+                return `${clean.slice(0, 3)}****${clean.slice(7)}`;
+            }
+            return clean;
+        }
+
+        function showToast(msg) {
+            const pill = document.getElementById('toast-pill');
+            document.getElementById('toast-msg').textContent = msg;
+            pill.classList.remove('opacity-0', '-translate-y-2');
+            pill.classList.add('opacity-100', 'translate-y-0');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                pill.classList.remove('opacity-100', 'translate-y-0');
+                pill.classList.add('opacity-0', '-translate-y-2');
+            }, 2300);
+        }
+
+        function closeDialog() {
+            document.getElementById('dialog-overlay').classList.add('hidden');
+        }
+
+        function openDialog(htmlContent) {
+            const overlay = document.getElementById('dialog-overlay');
+            document.getElementById('dialog-box').innerHTML = htmlContent;
+            overlay.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // 5. 路由控制与顶部导航/底部栏同步
+        // ==========================================
+        function navigateTo(route) {
+            state.route = route;
+            document.getElementById('viewport').scrollTop = 0;
+            render();
+        }
+
+        function navigateTab(tab) {
+            state.route = tab;
+            document.getElementById('viewport').scrollTop = 0;
+            render();
+        }
+
+        function handleBack() {
+            const map = {
+                'rooms': 'home',
+                'detail': 'rooms',
+                'booking': 'detail',
+                'orderDetail': 'orders',
+                'pointsLog': 'member'
+            };
+            navigateTo(map[state.route] || 'home');
+        }
+
+        function syncChrome() {
+            const r = state.route;
+            const navbar = document.getElementById('mp-navbar');
+            const navLeft = document.getElementById('nav-left');
+            const navTitle = document.getElementById('nav-title');
+            const tabbar = document.getElementById('mp-tabbar');
+            const footer = document.getElementById('sticky-footer');
+
+            const mainTabs = ['home', 'orders', 'member', 'mine'];
+            const isMainTab = mainTabs.includes(r);
+
+            const titleMap = {
+                'login': '',
+                'home': '芊浔民宿',
+                'rooms': '可订房间',
+                'detail': '房间详情',
+                'booking': '填写预订信息',
+                'success': '预订成功',
+                'orders': '我的订单',
+                'orderDetail': '订单详情',
+                'member': '会员中心',
+                'pointsLog': '积分流水',
+                'mine': '我的'
+            };
+            navTitle.textContent = titleMap[r] || '芊浔民宿';
+
+            if (r === 'login') {
+                navbar.classList.remove('bg-ink-paper/95', 'backdrop-blur-md');
+                navbar.classList.add('bg-transparent');
+                navLeft.innerHTML = `<button onclick="cyclePresetAccount()" class="text-[11px] px-2.5 py-1 rounded-full bg-white/85 text-ink-wood font-medium border border-ink-wood/20 shadow-2xs active:scale-95 transition">切换测试号</button>`;
+            } else {
+                navbar.classList.add('bg-ink-paper/95', 'backdrop-blur-md');
+                navbar.classList.remove('bg-transparent');
+
+                if (isMainTab) {
+                    navLeft.innerHTML = `
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-ink-wood"></span>
+                            <span class="text-[11px] text-ink-gray font-medium">南浔古镇</span>
+                        </div>
+                    `;
+                } else if (r === 'success') {
+                    navLeft.innerHTML = '';
+                } else {
+                    navLeft.innerHTML = `
+                        <button onclick="handleBack()" class="flex items-center gap-0.5 py-1 pr-2 text-ink-charcoal active:opacity-60">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                    `;
+                }
+            }
+
+            if (isMainTab) {
+                tabbar.classList.remove('hidden');
+                footer.classList.add('hidden');
+                document.querySelectorAll('.tab-item').forEach(btn => {
+                    const active = btn.dataset.tab === r;
+                    btn.classList.toggle('text-ink-wood', active);
+                    btn.classList.toggle('text-ink-gray', !active);
+                });
+            } else {
+                tabbar.classList.add('hidden');
+                if (!['detail', 'booking', 'orderDetail'].includes(r)) {
+                    footer.classList.add('hidden');
+                }
+            }
+
+            const hasPending = state.orders.some(o => o.status === 'PENDING_CONFIRM');
+            const orderDot = document.getElementById('order-tab-dot');
+            if (orderDot) {
+                orderDot.classList.toggle('hidden', !hasPending);
+            }
+        }
+
+        function cyclePresetAccount() {
+            const phones = Object.keys(PRESET_MEMBERS);
+            const idx = phones.indexOf(state.loginPhone.replace(/\D/g, ''));
+            const nextPhone = phones[(idx + 1) % phones.length];
+            state.loginPhone = nextPhone;
+            showToast(`已填入测试手机号：${nextPhone}`);
+            render();
+        }
+
+        // ==========================================
+        // 6. 各页面视图渲染函数
+        // ==========================================
+
+        // ① 登录页 (南浔古镇百间楼江南水乡背景 + 纯净化手机号直接登录)
+        function renderLoginPage() {
+            const cleanPhone = state.loginPhone.replace(/\s+/g, '');
+            return `
+                <div class="relative min-h-full flex flex-col justify-between px-6 pt-2 pb-8 page-enter overflow-hidden">
+                    <!-- 顶部南浔古镇百间楼江南水乡全景背景 (粉墙黛瓦 · 临水长廊 · 石拱桥倒影) -->
+                    <div class="absolute inset-x-0 -top-20 h-[380px] pointer-events-none overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=85" alt="南浔古镇百间楼" class="w-full h-full object-cover object-center scale-105">
+                        <!-- 暖阳晨雾与宣纸渐变融合 -->
+                        <div class="absolute inset-0 bg-gradient-to-b from-amber-50/45 via-ink-paper/35 to-ink-paper"></div>
+                        <!-- 江南水乡石拱桥与百间楼水墨轮廓叠加层，增强水乡意境 -->
+                        <svg class="absolute bottom-4 inset-x-0 w-full h-28 opacity-35 text-ink-woodDark" viewBox="0 0 400 100" preserveAspectRatio="none" fill="currentColor">
+                            <path d="M0,78 Q60,74 115,78 Q155,44 195,78 Q265,72 400,76 L400,100 L0,100 Z" opacity="0.45"/>
+                            <path d="M132,78 Q155,46 178,78 Z" fill="#FAF7F2"/>
+                            <rect x="18" y="48" width="38" height="28" rx="1" opacity="0.5"/>
+                            <polygon points="14,48 37,35 60,48" opacity="0.65"/>
+                            <rect x="62" y="54" width="34" height="22" rx="1" opacity="0.45"/>
+                            <polygon points="58,54 79,43 100,54" opacity="0.6"/>
+                            <rect x="295" y="46" width="42" height="30" rx="1" opacity="0.5"/>
+                            <polygon points="290,46 316,33 342,46" opacity="0.65"/>
+                            <rect x="342" y="52" width="44" height="24" rx="1" opacity="0.45"/>
+                            <polygon points="338,52 364,40 390,52" opacity="0.6"/>
+                        </svg>
+                    </div>
+
+                    <!-- 品牌书法感标题区 -->
+                    <div class="relative z-10 text-center mt-8">
+                        <div class="inline-flex items-center justify-center gap-2">
+                            <h1 class="font-serif text-[34px] font-bold tracking-[0.14em] text-ink-woodDark drop-shadow-2xs">芊浔民宿</h1>
+                            <span class="seal-stamp px-1 py-1.5 rounded-[4px] bg-ink-cinnabar text-white text-[10px] font-serif font-bold shadow-xs">南浔</span>
+                        </div>
+                        <div class="flex items-center justify-center gap-3 mt-2 text-xs text-ink-wood font-medium tracking-[0.2em]">
+                            <span class="w-6 h-[1px] bg-ink-wood/40"></span>
+                            <span>南浔古镇 · 水乡民宿</span>
+                            <span class="w-6 h-[1px] bg-ink-wood/40"></span>
+                        </div>
+                    </div>
+
+                    <!-- 纯净宣纸白登录卡片 -->
+                    <div class="relative z-10 bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-card border border-ink-border mt-12">
+                        <h2 class="font-serif text-lg font-bold text-center text-ink-charcoal mb-6">手机号登录</h2>
+
+                        <!-- 纯净手机号输入框（无会员等级徽章） -->
+                        <div class="flex items-center gap-2.5 bg-ink-paper rounded-2xl px-4 py-3.5 border border-ink-border focus-within:border-ink-wood transition">
+                            <i data-lucide="smartphone" class="w-4 h-4 text-ink-gray shrink-0"></i>
+                            <input
+                                type="tel"
+                                maxlength="13"
+                                value="${state.loginPhone}"
+                                oninput="handleLoginPhoneInput(this.value)"
+                                placeholder="请输入手机号"
+                                class="bg-transparent text-sm text-ink-charcoal w-full focus:outline-hidden"
+                            >
+                            ${cleanPhone ? `
+                                <button onclick="clearLoginPhone()" class="text-ink-gray/60 hover:text-ink-charcoal p-0.5" title="清空">
+                                    <i data-lucide="x-circle" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        <!-- 登录主按钮 -->
+                        <button onclick="submitPhoneLogin()" class="mt-5 w-full py-3.5 rounded-2xl bg-ink-wood hover:bg-ink-woodDark text-white font-medium text-sm shadow-lg shadow-ink-wood/25 active:scale-[0.98] transition">
+                            登录
+                        </button>
+
+                        <!-- 用户协议勾选 -->
+                        <label onclick="toggleTerms()" class="mt-5 flex items-center justify-center gap-2 text-[11px] text-ink-gray cursor-pointer select-none">
+                            <span class="w-4 h-4 rounded-full border flex items-center justify-center transition shrink-0 ${state.agreedTerms ? 'bg-ink-wood border-ink-wood text-white' : 'border-ink-gray/50 bg-white'}">
+                                ${state.agreedTerms ? '<i data-lucide="check" class="w-2.5 h-2.5"></i>' : ''}
+                            </span>
+                            <span>我已阅读并同意 <span class="text-ink-wood">《用户协议》</span> 和 <span class="text-ink-wood">《隐私协议》</span></span>
+                        </label>
+                    </div>
+
+                    <!-- 底部纯净江南水墨远山与乌篷船水印（无任何说明文案） -->
+                    <div class="relative z-10 mt-6 pointer-events-none select-none">
+                        <svg class="w-full h-16 text-ink-wood/20" viewBox="0 0 360 64" fill="currentColor">
+                            <path d="M0,48 Q75,28 150,46 T300,42 T360,48 L360,64 L0,64 Z" opacity="0.45"/>
+                            <path d="M0,54 Q110,38 220,52 T360,50 L360,64 L0,64 Z" opacity="0.65"/>
+                            <!-- 乌篷船剪影 -->
+                            <path d="M205,49 Q225,54 246,49 L242,52 Q225,56 209,52 Z" opacity="0.9"/>
+                            <path d="M216,49 Q225,42 234,49 Z" opacity="0.85"/>
+                        </svg>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleLoginPhoneInput(val) {
+            state.loginPhone = val;
+            render();
+        }
+
+        function clearLoginPhone() {
+            state.loginPhone = '';
+            render();
+        }
+
+        function toggleTerms() {
+            state.agreedTerms = !state.agreedTerms;
+            render();
+        }
+
+        function submitPhoneLogin() {
+            if (!state.agreedTerms) {
+                showToast('请先勾选同意用户协议与隐私协议');
+                return;
+            }
+            const rawDigits = state.loginPhone.replace(/\D/g, '');
+            if (rawDigits.length !== 11 || !/^1[3-9]\d{9}$/.test(rawDigits)) {
+                showToast('请输入正确的11位手机号');
+                return;
+            }
+            // 按 V3.1 规则匹配或自动创建会员，昵称固定为手机号后四位
+            const tail4 = rawDigits.slice(-4);
+            state.member.nickname = tail4;
+            if (rawDigits === '13800005678') {
+                state.member.growthPoints = 680;
+                state.member.availablePoints = 1200;
+            } else if (rawDigits === '13900008899') {
+                state.member.growthPoints = 1260;
+                state.member.availablePoints = 2400;
+            } else if (rawDigits === '13600009999') {
+                state.member.growthPoints = 1880;
+                state.member.availablePoints = 3600;
+            } else {
+                state.member.growthPoints = 0;
+                state.member.availablePoints = 0;
+            }
+            state.bookingForm.guestPhone = rawDigits.replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3');
+            state.isLoggedIn = true;
+            showToast(`登录成功，欢迎尾号 ${tail4} 会员`);
+            navigateTo('home');
+        }
+
+        function quickLogin() {
+            state.agreedTerms = true;
+            state.isLoggedIn = true;
+            showToast('已进入芊浔民宿预览');
+            navigateTo('home');
+        }
+
+        // ② 首页 (南浔古镇百间楼水乡头图 + 入住退房日期查询 + 四大快捷导览 + 走进南浔专题)
+        function renderHomePage() {
+            const nights = Math.max(1, diffDays(state.checkIn, state.checkOut));
+            const availCount = ROOMS.filter(r => isRoomAvailable(r, state.checkIn, state.checkOut)).length;
+
+            return `
+                <div class="pb-6 page-enter">
+                    <!-- 顶部南浔水乡百间楼氛围大图 -->
+                    <div class="relative h-[230px] overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1000&q=85" alt="南浔百间楼" class="w-full h-full object-cover object-center">
+                        <div class="absolute inset-0 bg-gradient-to-t from-ink-paper via-black/25 to-black/15"></div>
+
+                        <div class="absolute top-6 inset-x-0 text-center text-white drop-shadow">
+                            <div class="inline-flex items-center gap-2">
+                                <h1 class="font-serif text-[28px] font-bold tracking-[0.12em]">芊浔民宿</h1>
+                                <span class="seal-stamp px-1 py-1 rounded-[3px] bg-ink-cinnabar text-white text-[10px] font-serif font-bold">南浔</span>
+                            </div>
+                            <p class="text-xs tracking-[0.22em] text-white/95 mt-1">—— 枕水而居 · 诗意南浔 ——</p>
+                        </div>
+                    </div>
+
+                    <!-- 悬浮双层圆角预订卡片（复刻 01-首页.png 中部卡片结构） -->
+                    <div class="px-4 -mt-14 relative z-10">
+                        <div class="bg-white/98 rounded-[26px] p-4 shadow-card border border-ink-border/80">
+                            <!-- 入住 / 退房日期选择框 -->
+                            <div onclick="openCalendarDrawer(null)" class="flex items-center justify-between bg-ink-paper/80 rounded-2xl px-4 py-3.5 border border-ink-border/70 cursor-pointer active:scale-[0.99] transition">
+                                <div>
+                                    <div class="text-[11px] text-ink-gray">入住日期</div>
+                                    <div class="mt-1 flex items-baseline gap-1.5">
+                                        <span class="font-serif text-[18px] font-bold text-ink-charcoal">${formatMonthDay(state.checkIn)}</span>
+                                        <span class="text-xs text-ink-gray">${formatWeek(state.checkIn)}</span>
+                                    </div>
+                                </div>
+
+                                <i data-lucide="arrow-right" class="w-4 h-4 text-ink-wood"></i>
+
+                                <div class="text-right">
+                                    <div class="text-[11px] text-ink-gray">退房日期</div>
+                                    <div class="mt-1 flex items-baseline justify-end gap-1.5">
+                                        <span class="font-serif text-[18px] font-bold text-ink-charcoal">${formatMonthDay(state.checkOut)}</span>
+                                        <span class="text-xs text-ink-gray">${formatWeek(state.checkOut)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 居中「共 X 晚」月牙胶囊 -->
+                            <div class="flex justify-center my-3">
+                                <button onclick="openCalendarDrawer(null)" class="px-5 py-1.5 rounded-full bg-ink-woodLight text-ink-wood text-xs font-semibold flex items-center gap-1.5 border border-ink-wood/15">
+                                    <i data-lucide="moon" class="w-3.5 h-3.5"></i>
+                                    <span>共 ${nights} 晚</span>
+                                </button>
+                            </div>
+
+                            <!-- 查询房间主按钮 -->
+                            <button onclick="navigateTo('rooms')" class="w-full py-3.5 rounded-2xl bg-ink-wood hover:bg-ink-woodDark text-white font-medium text-[15px] shadow-lg shadow-ink-wood/25 active:scale-[0.98] transition">
+                                查询房间（${availCount}间可订）
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 四宫格快捷图标入口 (民宿介绍 / 房型一览 / 周边游玩 / 交通指引) -->
+                    <div class="px-4 mt-5">
+                        <div class="grid grid-cols-4 divide-x divide-ink-border/80 py-2">
+                            <button onclick="showGuideModal('intro')" class="flex flex-col items-center gap-2 group">
+                                <div class="w-11 h-11 rounded-full bg-ink-woodLight text-ink-wood flex items-center justify-center border border-ink-wood/10 group-active:scale-90 transition">
+                                    <i data-lucide="landmark" class="w-5 h-5"></i>
+                                </div>
+                                <span class="text-xs font-medium text-ink-charcoal">民宿介绍</span>
+                            </button>
+                            <button onclick="navigateTo('rooms')" class="flex flex-col items-center gap-2 group">
+                                <div class="w-11 h-11 rounded-full bg-ink-woodLight text-ink-wood flex items-center justify-center border border-ink-wood/10 group-active:scale-90 transition">
+                                    <i data-lucide="bed-double" class="w-5 h-5"></i>
+                                </div>
+                                <span class="text-xs font-medium text-ink-charcoal">房型一览</span>
+                            </button>
+                            <button onclick="showGuideModal('around')" class="flex flex-col items-center gap-2 group">
+                                <div class="w-11 h-11 rounded-full bg-ink-woodLight text-ink-wood flex items-center justify-center border border-ink-wood/10 group-active:scale-90 transition">
+                                    <i data-lucide="sprout" class="w-5 h-5"></i>
+                                </div>
+                                <span class="text-xs font-medium text-ink-charcoal">周边游玩</span>
+                            </button>
+                            <button onclick="showGuideModal('traffic')" class="flex flex-col items-center gap-2 group">
+                                <div class="w-11 h-11 rounded-full bg-ink-woodLight text-ink-wood flex items-center justify-center border border-ink-wood/10 group-active:scale-90 transition">
+                                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                </div>
+                                <span class="text-xs font-medium text-ink-charcoal">交通指引</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 底部「走进南浔古镇」专题横幅（完全复刻 01-首页.png 底部卡片） -->
+                    <div class="px-4 mt-4">
+                        <div onclick="showGuideModal('nanxun')" class="relative h-[116px] rounded-2xl overflow-hidden shadow-soft border border-ink-border/70 cursor-pointer group">
+                            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=900&q=85" alt="走进南浔古镇" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+                            <div class="absolute inset-0 bg-gradient-to-r from-[#FAF3E8] via-[#FAF3E8]/92 to-transparent"></div>
+                            <div class="absolute inset-y-0 left-4 flex flex-col justify-center">
+                                <h3 class="font-serif text-[18px] font-bold text-ink-woodDark tracking-wide">走进南浔古镇</h3>
+                                <p class="text-xs text-ink-wood/85 mt-0.5">百间楼夜色 · 江南水乡韵</p>
+                                <span class="mt-2 inline-flex items-center gap-1 w-fit px-3 py-1 rounded-full bg-ink-wood text-white text-[11px] font-medium shadow-2xs">
+                                    了解南浔 <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showGuideModal(type) {
+            const data = {
+                intro: {
+                    tag: '关于芊浔',
+                    title: '芊浔民宿 · 枕水而居',
+                    body: '坐落于浙江省湖州市南浔区南浔古镇88号，全店精设 6 间水乡雅居（一楼 101/102/103、二楼 201/202/203），保留徽派马头墙与雕花木窗，推窗即见摇橹船影。',
+                    extra: '地址：浙江省湖州市南浔区南浔古镇88号'
+                },
+                around: {
+                    tag: '水乡漫游',
+                    title: '周边必打卡景点',
+                    body: '• 百间楼古民居群（步行 1 分钟，晨雾与灯笼夜色绝美）\n• 小莲庄 & 嘉业堂藏书楼（步行 6 分钟）\n• 张石铭旧宅（步行 8 分钟，中西合璧建筑瑰宝）',
+                    extra: '每日 19:30 庭院免费奉上南浔三道茶'
+                },
+                traffic: {
+                    tag: '出行指南',
+                    title: '如何抵达芊浔民宿',
+                    body: '• 高铁出行：乘至「湖州南浔站」，打车约 15 分钟即达古镇东门停车场。\n• 自驾导航：搜索「南浔古镇东门地面停车场」，管家将提前至入口迎候接行李。',
+                    extra: '24小时管家热线：0572-1234 5678'
+                },
+                nanxun: {
+                    tag: '文化底蕴',
+                    title: '百间楼夜色 · 江南水乡韵',
+                    body: '南浔古镇素有“文化之邦”与“诗书之乡”美誉，相比喧闹商业古镇，这里仍保留着原住民临河浣洗、茶馆听评弹的烟火气。入住芊浔，私享整片静谧水乡。',
+                    extra: '营业时间：全年无休 · 14:00 入住 / 次日 12:00 退房'
+                }
+            }[type];
+
+            openDialog(`
+                <div class="text-left">
+                    <span class="px-2.5 py-0.5 rounded-full bg-ink-woodLight text-ink-wood text-[11px] font-semibold">${data.tag}</span>
+                    <h3 class="font-serif text-lg font-bold text-ink-charcoal mt-2">${data.title}</h3>
+                    <p class="text-xs text-ink-charcoal/85 leading-relaxed whitespace-pre-line mt-3">${data.body}</p>
+                    <div class="mt-4 p-3 rounded-xl bg-ink-paper text-[11px] text-ink-wood font-medium border border-ink-border">
+                        ${data.extra}
+                    </div>
+                    <button onclick="closeDialog()" class="mt-5 w-full py-3 rounded-2xl bg-ink-wood text-white text-xs font-medium">
+                        我知道了
+                    </button>
+                </div>
+            `);
+        }
+
+        // 【03-可订房间列表】对齐 03-可订房间.png + 接口 R01（自动过滤所选区间冲突房源）
+        function renderRoomsPage() {
+            const nights = Math.max(1, diffDays(state.checkIn, state.checkOut));
+            const availableRooms = ROOMS.filter(r => isRoomAvailable(r, state.checkIn, state.checkOut));
+
+            return `
+                <div class="relative pb-10 page-enter">
+                    <!-- 顶部水乡古镇水墨背景带 -->
+                    <div class="relative h-28 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?auto=format&fit=crop&w=900&q=85" class="w-full h-full object-cover opacity-80">
+                        <div class="absolute inset-0 bg-gradient-to-b from-ink-paper/40 via-ink-paper/65 to-ink-paper"></div>
+                    </div>
+
+                    <div class="px-4 -mt-12 relative z-10">
+                        <!-- 悬浮日期摘要条 -->
+                        <div onclick="openCalendarDrawer(null)" class="bg-white rounded-2xl p-3.5 shadow-card border border-ink-border/80 flex items-center justify-between cursor-pointer active:scale-[0.99] transition">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="calendar" class="w-4 h-4 text-ink-wood shrink-0"></i>
+                                <div class="text-[13px] font-bold text-ink-charcoal">
+                                    ${formatMonthDay(state.checkIn)} <span class="text-xs font-normal text-ink-gray">${formatWeek(state.checkIn)}</span>
+                                    <span class="mx-1.5 text-ink-wood">→</span>
+                                    ${formatMonthDay(state.checkOut)} <span class="text-xs font-normal text-ink-gray">${formatWeek(state.checkOut)}</span>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full bg-ink-woodLight text-ink-wood text-xs font-semibold">
+                                共${nights}晚
+                            </span>
+                        </div>
+
+                        <!--「| 可订房间」标题栏 -->
+                        <div class="flex items-center justify-between mt-5 mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h2 class="font-serif font-bold text-base text-ink-woodDark">可订房间（${availableRooms.length}/${ROOMS.length}间）</h2>
+                            </div>
+                            <span class="text-[11px] text-ink-gray">已自动过滤占用房源</span>
+                        </div>
+
+                        <!-- 房间卡片列表 -->
+                        ${availableRooms.length === 0 ? `
+                            <div class="bg-white rounded-2xl p-8 text-center border border-ink-border shadow-soft">
+                                <p class="text-xs text-ink-gray">所选日期区间内全部 6 间客房均已满房</p>
+                                <button onclick="openCalendarDrawer(null)" class="mt-4 px-5 py-2 rounded-full bg-ink-wood text-white text-xs">更换入住日期</button>
+                            </div>
+                        ` : `
+                            <div class="space-y-3.5">
+                                ${availableRooms.map(room => `
+                                    <div onclick="openRoomDetail(${room.id})" class="bg-white rounded-2xl p-3 shadow-soft border border-ink-border/70 flex gap-3.5 cursor-pointer active:scale-[0.99] transition">
+                                        <div class="relative w-[108px] h-[94px] rounded-xl overflow-hidden shrink-0 bg-ink-warm">
+                                            <img src="${room.images[0]}" alt="${room.name}" class="w-full h-full object-cover">
+                                        </div>
+                                        <div class="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                                            <div>
+                                                <h3 class="font-serif font-bold text-[15px] text-ink-charcoal truncate">${room.name}</h3>
+                                                <div class="flex items-center gap-2 text-[11px] text-ink-gray mt-1.5">
+                                                    <span class="flex items-center gap-0.5"><i data-lucide="user" class="w-3 h-3 text-ink-wood"></i>可住${room.guests}人</span>
+                                                    <span class="flex items-center gap-0.5"><i data-lucide="bed-double" class="w-3 h-3 text-ink-wood"></i>${room.bed}</span>
+                                                    <span class="flex items-center gap-0.5"><i data-lucide="maximize-2" class="w-3 h-3 text-ink-wood"></i>${room.area}</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center justify-between mt-2.5">
+                                                <div>
+                                                    <span class="text-[17px] font-bold text-ink-cinnabar">¥${room.price}</span>
+                                                    <span class="text-[11px] text-ink-gray">/晚</span>
+                                                </div>
+                                                <button class="px-3.5 py-1.5 rounded-xl bg-ink-wood text-white text-xs font-medium shadow-2xs">
+                                                    查看详情
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openRoomDetail(roomId) {
+            state.selectedRoomId = roomId;
+            state.detailImgIdx = 0;
+            navigateTo('detail');
+        }
+
+        // 【04-房间详情】完全复刻 04-房间详情.png 布局（1/6 轮播 + 三栏参数 + 房间介绍 + 设施配置 + 吸底立即预订）
+        function renderDetailPage() {
+            const room = ROOMS.find(r => r.id === state.selectedRoomId) || ROOMS[0];
+            const totalImgs = room.images.length;
+
+            const footer = document.getElementById('sticky-footer');
+            footer.classList.remove('hidden');
+            footer.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-xs text-ink-cinnabar font-bold">¥</span>
+                        <span class="text-2xl font-bold text-ink-cinnabar">${room.price}</span>
+                        <span class="text-xs text-ink-gray">/晚</span>
+                    </div>
+                    <button onclick="openBookingForm()" class="px-9 py-3 rounded-2xl bg-ink-wood hover:bg-ink-woodDark text-white font-medium text-sm shadow-lg shadow-ink-wood/25 active:scale-[0.98] transition">
+                        立即预订
+                    </button>
+                </div>
+                <div class="w-32 h-1 rounded-full bg-ink-charcoal/20 mx-auto mt-2.5"></div>
+            `;
+
+            return `
+                <div class="pb-8 page-enter">
+                    <!-- 顶部 1/6 多图轮播 -->
+                    <div class="relative aspect-[4/3] bg-ink-warm overflow-hidden">
+                        <img src="${room.images[state.detailImgIdx]}" alt="${room.name}" class="w-full h-full object-cover transition-all duration-300">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
+
+                        <button onclick="stepDetailImg(-1)" class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/35 text-white flex items-center justify-center backdrop-blur-xs">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="stepDetailImg(1)" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/35 text-white flex items-center justify-center backdrop-blur-xs">
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+
+                        <div class="absolute bottom-5 right-4 px-3 py-1 rounded-full bg-black/60 text-white text-xs font-medium tracking-wider">
+                            ${state.detailImgIdx + 1} / ${totalImgs}
+                        </div>
+                    </div>
+
+                    <!-- 圆角上浮白底详情大卡 -->
+                    <div class="-mt-4 relative z-10 bg-white rounded-t-3xl px-5 pt-5 pb-6 shadow-soft border-t border-ink-border/60 space-y-5">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <h1 class="font-serif text-[20px] font-bold text-ink-charcoal">${room.name}</h1>
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-ink-woodLight text-ink-wood font-medium">${room.floor}</span>
+                            </div>
+
+                            <!-- 可住人数 / 床型 / 面积 三栏分隔线 -->
+                            <div class="mt-4 py-3 border-y border-ink-border/70 grid grid-cols-3 divide-x divide-ink-border/70 text-center">
+                                <div class="flex items-center justify-center gap-1.5 text-xs text-ink-charcoal">
+                                    <i data-lucide="user" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                    <span>可住${room.guests}人</span>
+                                </div>
+                                <div class="flex items-center justify-center gap-1.5 text-xs text-ink-charcoal">
+                                    <i data-lucide="bed-double" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                    <span>${room.bed}</span>
+                                </div>
+                                <div class="flex items-center justify-center gap-1.5 text-xs text-ink-charcoal">
+                                    <i data-lucide="maximize-2" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                    <span>${room.area}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- | 房间介绍 -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-woodDark">房间介绍</h3>
+                            </div>
+                            <p class="text-xs text-ink-charcoal/85 leading-relaxed">${room.desc}</p>
+                        </div>
+
+                        <!-- | 设施配置 -->
+                        <div>
+                            <div class="flex items-center gap-2 mb-3.5">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-woodDark">设施配置</h3>
+                            </div>
+                            <div class="grid grid-cols-4 divide-x divide-ink-border/60 text-center">
+                                ${room.amenities.map(a => `
+                                    <div class="flex flex-col items-center gap-1.5">
+                                        <i data-lucide="${a.icon}" class="w-5 h-5 text-ink-wood"></i>
+                                        <span class="text-[11px] text-ink-charcoal">${a.label}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- 入住日期快捷提示条 -->
+                        <div onclick="openCalendarDrawer(${room.id})" class="p-3 rounded-2xl bg-ink-paper border border-ink-border/80 flex items-center justify-between text-xs cursor-pointer">
+                            <span class="text-ink-gray">已选行程：<strong class="text-ink-charcoal">${formatMonthDay(state.checkIn)} - ${formatMonthDay(state.checkOut)}</strong></span>
+                            <span class="text-ink-wood font-semibold">修改日期 ></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function stepDetailImg(delta) {
+            const room = ROOMS.find(r => r.id === state.selectedRoomId) || ROOMS[0];
+            state.detailImgIdx = (state.detailImgIdx + delta + room.images.length) % room.images.length;
+            render();
+        }
+
+        function openBookingForm() {
+            const room = ROOMS.find(r => r.id === state.selectedRoomId) || ROOMS[0];
+            if (!isRoomAvailable(room, state.checkIn, state.checkOut)) {
+                showToast('所选日期区间内该房型不可预订，请重新选择日期');
+                openCalendarDrawer(room.id);
+                return;
+            }
+            state.bookingForm.usePoints = state.member.availablePoints >= getCurrentTier().rate;
+            navigateTo('booking');
+        }
+
+        // 【05-填写预订信息】对齐 05-填写预订信息.png + V3.1 第 3.3 节（4字段 + 积分抵扣计算 + 10分钟锁房模拟支付）
+        function renderBookingPage() {
+            const room = ROOMS.find(r => r.id === state.selectedRoomId) || ROOMS[0];
+            const nights = Math.max(1, diffDays(state.checkIn, state.checkOut));
+            const roomFee = room.price * nights;
+            const calc = calculatePointsDeduction(roomFee);
+            const appliedDiscount = state.bookingForm.usePoints ? calc.discountYuan : 0;
+            const appliedPoints = state.bookingForm.usePoints ? calc.alignedPoints : 0;
+            const finalPay = Number((roomFee - appliedDiscount).toFixed(2));
+
+            const footer = document.getElementById('sticky-footer');
+            footer.classList.remove('hidden');
+            footer.innerHTML = `
+                <button onclick="executeMockPay(${roomFee}, ${appliedPoints}, ${appliedDiscount}, ${finalPay})" class="w-full py-3.5 rounded-full bg-ink-wood hover:bg-ink-woodDark text-white font-medium text-base shadow-lg shadow-ink-wood/25 flex items-center justify-center gap-2 active:scale-[0.98] transition">
+                    <i data-lucide="message-circle" class="w-5 h-5 fill-current"></i>
+                    <span>立即支付 ¥${finalPay}</span>
+                </button>
+                <div class="w-32 h-1 rounded-full bg-ink-charcoal/20 mx-auto mt-2.5"></div>
+            `;
+
+            return `
+                <div class="px-4 pt-2 pb-8 space-y-3.5 page-enter">
+                    <!-- 顶部房间与入离日期卡 -->
+                    <div class="bg-white rounded-2xl p-3.5 shadow-soft border border-ink-border/70">
+                        <div class="flex gap-3">
+                            <img src="${room.images[0]}" class="w-20 h-16 rounded-xl object-cover shrink-0">
+                            <div class="min-w-0 flex-1 flex flex-col justify-center">
+                                <h2 class="font-serif font-bold text-[15px] text-ink-charcoal truncate">${room.name}</h2>
+                                <div class="flex items-center gap-2.5 text-[11px] text-ink-gray mt-1.5">
+                                    <span>${room.bed}</span>
+                                    <span>·</span>
+                                    <span>可住${room.guests}人</span>
+                                    <span>·</span>
+                                    <span>${room.area}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div onclick="openCalendarDrawer(${room.id})" class="mt-3 pt-2.5 border-t border-ink-border/60 flex items-center justify-between text-xs cursor-pointer">
+                            <div class="flex items-center gap-1.5 text-ink-charcoal">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                <span>入住：<strong class="font-bold">${formatMonthDay(state.checkIn)}</strong> ${formatWeek(state.checkIn)}</span>
+                                <span class="text-ink-wood mx-0.5">→</span>
+                                <span>退房：<strong class="font-bold">${formatMonthDay(state.checkOut)}</strong> ${formatWeek(state.checkOut)}</span>
+                            </div>
+                            <span class="px-2.5 py-0.5 rounded-full bg-ink-woodLight text-ink-wood font-semibold text-[11px]">共${nights}晚</span>
+                        </div>
+                    </div>
+
+                    <!-- | 预订信息（严格遵守 V3.1 第 3.3 节：预订人、手机号码、入住人数、备注，不要求身份证） -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-ink-border/70 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h3 class="font-serif font-bold text-sm text-ink-woodDark">预订信息</h3>
+                        </div>
+
+                        <div class="space-y-2.5 text-xs">
+                            <div class="flex items-center gap-3">
+                                <label class="w-20 text-ink-charcoal shrink-0 flex items-center gap-1.5">
+                                    <i data-lucide="user" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                    预订人 <span class="text-ink-cinnabar">*</span>
+                                </label>
+                                <input type="text" value="${state.bookingForm.guestName}" oninput="state.bookingForm.guestName = this.value" placeholder="请输入预订人姓名" class="flex-1 bg-ink-paper/70 rounded-xl px-3 py-2.5 border border-ink-border focus:border-ink-wood focus:outline-hidden">
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <label class="w-20 text-ink-charcoal shrink-0 flex items-center gap-1.5">
+                                    <i data-lucide="phone" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                    手机号码 <span class="text-ink-cinnabar">*</span>
+                                </label>
+                                <input type="tel" value="${state.bookingForm.guestPhone}" oninput="state.bookingForm.guestPhone = this.value" placeholder="请输入手机号码" class="flex-1 bg-ink-paper/70 rounded-xl px-3 py-2.5 border border-ink-border focus:border-ink-wood focus:outline-hidden">
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <label class="w-20 text-ink-charcoal shrink-0 flex items-center gap-1.5">
+                                    <i data-lucide="users" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                    入住人数 <span class="text-ink-cinnabar">*</span>
+                                </label>
+                                <div class="flex items-center rounded-xl border border-ink-border overflow-hidden bg-white">
+                                    <button onclick="adjustBookingGuests(-1)" class="w-9 h-8 flex items-center justify-center text-ink-gray hover:bg-ink-paper">—</button>
+                                    <span class="w-10 text-center font-bold text-ink-charcoal border-x border-ink-border leading-8">${state.bookingForm.guestsCount}</span>
+                                    <button onclick="adjustBookingGuests(1)" class="w-9 h-8 flex items-center justify-center text-ink-charcoal hover:bg-ink-paper">+</button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <label class="w-20 text-ink-charcoal shrink-0 flex items-center gap-1.5">
+                                    <i data-lucide="file-text" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                    备注
+                                </label>
+                                <input type="text" value="${state.bookingForm.remark}" oninput="state.bookingForm.remark = this.value" placeholder="请输入备注（如有特殊需求）" class="flex-1 bg-ink-paper/70 rounded-xl px-3 py-2.5 border border-ink-border focus:border-ink-wood focus:outline-hidden">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- | 费用明细（房费 + 积分抵扣 + 实付金额） -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-ink-border/70 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-woodDark">费用明细</h3>
+                            </div>
+                            <span class="text-[11px] px-2 py-0.5 rounded-full bg-ink-woodLight text-ink-wood font-medium">
+                                ${calc.tier.name}（${calc.rate}积分=¥1）
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs pt-1">
+                            <span class="text-ink-charcoal">房费</span>
+                            <span class="text-ink-gray">¥${room.price} × ${nights}晚</span>
+                            <span class="font-bold text-ink-charcoal">¥${roomFee}</span>
+                        </div>
+
+                        <div class="pt-2.5 border-t border-ink-border/60">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="flex items-center gap-1 text-xs text-ink-charcoal">
+                                        <span>积分抵扣</span>
+                                        <button onclick="showPointsRuleModal()" class="text-ink-gray hover:text-ink-wood">
+                                            <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                        </button>
+                                    </div>
+                                    <div class="text-[11px] text-ink-gray mt-0.5">当前可用积分：${state.member.availablePoints.toLocaleString()}</div>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+                                    ${state.bookingForm.usePoints && calc.alignedPoints > 0 ? `
+                                        <span class="px-2.5 py-1 rounded-lg bg-ink-woodLight text-ink-wood text-[11px] font-semibold">
+                                            － ${calc.alignedPoints.toLocaleString()} 积分
+                                        </span>
+                                        <span class="text-xs font-bold text-ink-cinnabar">－¥${calc.discountYuan}</span>
+                                    ` : `
+                                        <span class="text-[11px] text-ink-gray">不使用积分</span>
+                                    `}
+                                    <button onclick="toggleUsePoints()" class="w-10 h-5.5 h-[22px] rounded-full transition-colors p-0.5 ${state.bookingForm.usePoints && calc.alignedPoints > 0 ? 'bg-ink-wood' : 'bg-ink-border'}">
+                                        <div class="w-[18px] h-[18px] rounded-full bg-white shadow-2xs transition-transform ${state.bookingForm.usePoints && calc.alignedPoints > 0 ? 'translate-x-[18px]' : 'translate-x-0'}"></div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 暖杏底色实付金额框 -->
+                        <div class="p-3.5 rounded-xl bg-ink-woodLight/85 flex items-center justify-between">
+                            <span class="font-serif font-bold text-sm text-ink-woodDark">实付金额</span>
+                            <span class="text-[20px] font-bold text-ink-cinnabar">¥${finalPay}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function adjustBookingGuests(delta) {
+            const room = ROOMS.find(r => r.id === state.selectedRoomId) || ROOMS[0];
+            const next = state.bookingForm.guestsCount + delta;
+            if (next >= 1 && next <= room.guests) {
+                state.bookingForm.guestsCount = next;
+                render();
+            } else if (next > room.guests) {
+                showToast(`该房型最多可入住 ${room.guests} 人`);
+            }
+        }
+
+        function toggleUsePoints() {
+            if (state.member.availablePoints < getCurrentTier().rate) {
+                showToast('当前可用积分不足以抵扣 ¥1');
+                return;
+            }
+            state.bookingForm.usePoints = !state.bookingForm.usePoints;
+            render();
+        }
+
+        // 接口 P01 + P08: 临时锁房10分钟 -> 后端模拟支付成功并生成正式订单（初始 PENDING_CONFIRM）
+        function executeMockPay(roomFee, usedPoints, discountAmount, paidAmount) {
+            if (!state.bookingForm.guestName.trim()) {
+                showToast('请填写预订人姓名');
+                return;
+            }
+            if (!/^1[3-9]\d{9}$/.test(state.bookingForm.guestPhone.replace(/\s+/g, ''))) {
+                showToast('请填写正确的联系手机号码');
+                return;
+            }
+
+            const room = ROOMS.find(r => r.id === state.selectedRoomId) || ROOMS[0];
+            const nights = Math.max(1, diffDays(state.checkIn, state.checkOut));
+            const seq = String(state.orders.length + 1).padStart(4, '0');
+            const orderNo = `QX20261118${seq}`;
+
+            const newOrder = {
+                orderId: orderNo,
+                roomId: room.id,
+                roomName: room.name,
+                image: room.images[0],
+                checkIn: state.checkIn,
+                checkOut: state.checkOut,
+                nights,
+                guestsCount: state.bookingForm.guestsCount,
+                guestName: state.bookingForm.guestName.trim(),
+                guestPhone: state.bookingForm.guestPhone.trim(),
+                remark: state.bookingForm.remark.trim() || '无',
+                unitPrice: room.price,
+                roomFee,
+                usedPoints,
+                discountAmount,
+                paidAmount,
+                status: 'PENDING_CONFIRM',
+                statusLabel: '待确认',
+                refundable: true,
+                refundHint: '可在入住当天 18:00（北京时间）前自助申请取消退款。',
+                createdAt: '2026-11-18 11:02'
+            };
+
+            // 占用对应住宿夜晚，防止重复预订
+            const stayNights = getStayNightsList(state.checkIn, state.checkOut);
+            room.unavailableDates = Array.from(new Set([...room.unavailableDates, ...stayNights]));
+
+            // 扣减积分并记录含 balance_after 的积分流水
+            if (usedPoints > 0) {
+                state.member.availablePoints -= usedPoints;
+                state.pointsLogs.unshift({
+                    id: Date.now(),
+                    month: '2026年11月',
+                    title: '抵扣订单房费',
+                    sub: `订单：${orderNo}`,
+                    time: '11月18日 11:02',
+                    delta: -usedPoints,
+                    balanceAfter: state.member.availablePoints,
+                    icon: 'ticket'
+                });
+            }
+
+            state.orders.unshift(newOrder);
+            state.lastCreatedOrder = newOrder;
+            state.selectedOrderId = orderNo;
+            navigateTo('success');
+        }
+
+        // 【06-预订成功页】完全复刻 06-预订成功.png 视觉结构（水乡头图 + 绿圆白勾 + 订单号复制胶囊 + 双按钮）
+        function renderSuccessPage() {
+            const order = state.lastCreatedOrder || state.orders[0];
+            return `
+                <div class="relative pb-10 page-enter">
+                    <!-- 顶部水乡拱桥背景 -->
+                    <div class="relative h-48 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?auto=format&fit=crop&w=900&q=85" class="w-full h-full object-cover">
+                        <div class="absolute inset-0 bg-gradient-to-b from-ink-paper/10 via-ink-paper/30 to-ink-paper"></div>
+                    </div>
+
+                    <div class="px-5 -mt-24 relative z-10 flex flex-col items-center text-center">
+                        <!-- 宣纸白底结果卡片 -->
+                        <div class="w-full bg-white/98 rounded-[28px] px-6 pt-12 pb-7 shadow-card border border-ink-border relative">
+                            <!-- 顶部骑缝绿色圆章白勾 -->
+                            <div class="absolute -top-9 left-1/2 -translate-x-1/2 w-[72px] h-[72px] rounded-full bg-white p-1.5 shadow-md">
+                                <div class="w-full h-full rounded-full bg-[#38A169] flex items-center justify-center">
+                                    <svg class="w-9 h-9 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                        <path class="check-anim" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <h1 class="font-serif text-[26px] font-bold text-ink-woodDark tracking-wide">预订成功</h1>
+                            <p class="text-xs text-ink-gray mt-2 leading-relaxed">
+                                您的房间已预订，<br>可在「我的订单」中查看。
+                            </p>
+
+                            <!-- 带一键复制功能的订单号胶囊 -->
+                            <div onclick="copyOrderNo('${order.orderId}')" class="mt-5 py-3 px-4 rounded-2xl bg-ink-woodLight/85 border border-ink-wood/15 flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition">
+                                <span class="text-xs text-ink-woodDark font-medium">订单号：<strong class="font-mono text-sm">${order.orderId}</strong></span>
+                                <i data-lucide="copy" class="w-3.5 h-3.5 text-ink-wood"></i>
+                            </div>
+                        </div>
+
+                        <!-- 双行动按钮 -->
+                        <div class="w-full space-y-3 mt-6">
+                            <button onclick="openOrderDetail('${order.orderId}')" class="w-full py-3.5 rounded-full bg-ink-wood hover:bg-ink-woodDark text-white font-medium text-sm shadow-lg shadow-ink-wood/25 flex items-center justify-center gap-2 active:scale-[0.98] transition">
+                                <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                                <span>查看订单</span>
+                            </button>
+                            <button onclick="navigateTab('home')" class="w-full py-3.5 rounded-full bg-white border border-ink-wood/40 text-ink-woodDark font-medium text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition">
+                                <i data-lucide="home" class="w-4 h-4"></i>
+                                <span>返回首页</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function copyOrderNo(orderNo) {
+            const ta = document.createElement('textarea');
+            ta.value = orderNo;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast(`已复制订单号：${orderNo}`);
+        }
+
+        // 【07-我的订单】严格遵循 V3.1 第 3.4 节：
+        // "我的订单页面第一期只显示「全部订单」入口/列表；不提供六个状态筛选标签。列表卡片展示订单号、入住日期、住宿晚数、实付金额"
+        function renderOrdersPage() {
+            const badgeStyle = {
+                'PENDING_CONFIRM': 'bg-ink-woodLight text-ink-wood border-ink-wood/20',
+                'PENDING_CHECKIN': 'bg-amber-50 text-amber-800 border-amber-200',
+                'CHECKED_IN': 'bg-ink-celadonBg text-ink-celadon border-ink-celadon/25',
+                'COMPLETED': 'bg-ink-paper text-ink-gray border-ink-border',
+                'CANCELLED': 'bg-red-50 text-ink-cinnabar border-red-200'
+            };
+
+            return `
+                <div class="px-4 pt-2 pb-8 space-y-3.5 page-enter">
+                    <!-- 全部订单标题栏 -->
+                    <div class="flex items-center justify-between pt-1">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h2 class="font-serif font-bold text-sm text-ink-woodDark">全部订单（${state.orders.length}）</h2>
+                        </div>
+                        <span class="text-[11px] text-ink-gray">点击订单查看详情与退改</span>
+                    </div>
+
+                    <!-- 订单卡片流 -->
+                    ${state.orders.map(o => `
+                        <div onclick="openOrderDetail('${o.orderId}')" class="bg-white rounded-2xl p-3.5 shadow-soft border border-ink-border/70 cursor-pointer active:scale-[0.99] transition">
+                            <div class="flex items-center justify-between pb-2.5 mb-2.5 border-b border-ink-border/50 text-[11px]">
+                                <span class="text-ink-gray font-mono">订单号：${o.orderId}</span>
+                                <span class="px-2.5 py-0.5 rounded-full border text-[10px] font-semibold ${badgeStyle[o.status] || ''}">${o.statusLabel}</span>
+                            </div>
+
+                            <div class="flex gap-3 items-center">
+                                <img src="${o.image}" class="w-20 h-[74px] rounded-xl object-cover shrink-0">
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="font-serif font-bold text-[15px] text-ink-charcoal truncate">${o.roomName}</h3>
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-ink-gray shrink-0"></i>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 text-xs text-ink-gray mt-1.5">
+                                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-ink-wood"></i>
+                                        <span>${formatMonthDay(o.checkIn)} 至 ${formatMonthDay(o.checkOut)}</span>
+                                        <span class="text-ink-charcoal font-medium ml-1">共${o.nights}晚</span>
+                                    </div>
+                                    <div class="mt-2 flex items-baseline justify-between">
+                                        <span class="text-[11px] text-ink-gray">实付金额</span>
+                                        <span class="text-[17px] font-bold text-ink-cinnabar">¥${o.paidAmount}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function openOrderDetail(orderId) {
+            state.selectedOrderId = orderId;
+            navigateTo('orderDetail');
+        }
+
+        // 【订单详情页】严格执行 V3.1 第 3.4 节取消退款规则（底部展示「取消订单」按钮，不可退款时呈灰色，点击弹出不支持自助退款及商家电话）
+        function renderOrderDetailPage() {
+            const order = state.orders.find(o => o.orderId === state.selectedOrderId) || state.orders[0];
+            const showCancelBtn = order.status !== 'CANCELLED';
+
+            const footer = document.getElementById('sticky-footer');
+            footer.classList.remove('hidden');
+            footer.innerHTML = `
+                <div class="flex items-center gap-3">
+                    ${showCancelBtn ? `
+                        <button onclick="handleCancelOrderClick('${order.orderId}')" class="flex-1 py-3 rounded-2xl border text-xs font-semibold transition ${
+                            order.refundable
+                            ? 'border-ink-cinnabar text-ink-cinnabar bg-white active:bg-red-50'
+                            : 'border-ink-border text-ink-gray/60 bg-ink-paper cursor-not-allowed'
+                        }">
+                            取消订单
+                        </button>
+                    ` : ''}
+                    <button onclick="callMerchantDialog()" class="flex-1 py-3 rounded-2xl bg-ink-wood hover:bg-ink-woodDark text-white text-xs font-semibold shadow-md shadow-ink-wood/20 active:scale-[0.98] transition">
+                        联系商家
+                    </button>
+                </div>
+                <div class="w-32 h-1 rounded-full bg-ink-charcoal/20 mx-auto mt-2.5"></div>
+            `;
+
+            return `
+                <div class="px-4 pt-2 pb-8 space-y-3.5 page-enter">
+                    <!-- 顶部状态提示横幅 -->
+                    <div class="rounded-2xl p-4 border ${
+                        order.status === 'CANCELLED'
+                        ? 'bg-red-50/80 border-red-200 text-ink-cinnabar'
+                        : 'bg-ink-woodLight/90 border-ink-wood/20 text-ink-woodDark'
+                    }">
+                        <div class="flex items-center gap-2 font-serif font-bold text-base">
+                            <i data-lucide="${order.status === 'CANCELLED' ? 'x-circle' : 'clock'}" class="w-5 h-5"></i>
+                            <span>${order.statusLabel}</span>
+                        </div>
+                        <p class="text-xs mt-1.5 opacity-90">${order.refundHint}</p>
+                    </div>
+
+                    <!-- 订单详细信息卡片 -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-ink-border/70 space-y-2.5 text-xs">
+                        <div class="flex items-center gap-2 pb-2 border-b border-ink-border/50">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h3 class="font-serif font-bold text-sm text-ink-woodDark">订单信息</h3>
+                        </div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">订单号</span><span class="font-mono text-ink-charcoal">${order.orderId}</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">房间</span><span class="font-semibold text-ink-charcoal">${order.roomName}</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">入住日期</span><span class="text-ink-charcoal">${order.checkIn}（${formatWeek(order.checkIn)}）</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">退房日期</span><span class="text-ink-charcoal">${order.checkOut}（${formatWeek(order.checkOut)}）</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">住宿晚数</span><span class="text-ink-charcoal">${order.nights}晚</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">入住人数</span><span class="text-ink-charcoal">${order.guestsCount}人</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">预订人</span><span class="text-ink-charcoal">${order.guestName}</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">手机号码</span><span class="text-ink-charcoal">${order.guestPhone}</span></div>
+                        <div class="flex justify-between py-0.5"><span class="text-ink-gray">备注</span><span class="text-ink-charcoal">${order.remark}</span></div>
+                    </div>
+
+                    <!-- 费用明细卡片 -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-ink-border/70 space-y-2.5 text-xs">
+                        <div class="flex items-center gap-2 pb-2 border-b border-ink-border/50">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h3 class="font-serif font-bold text-sm text-ink-woodDark">费用明细</h3>
+                        </div>
+                        <div class="flex justify-between"><span class="text-ink-gray">房费</span><span>¥${order.unitPrice} × ${order.nights}晚</span><span class="font-medium">¥${order.roomFee}</span></div>
+                        ${order.usedPoints > 0 ? `
+                            <div class="flex justify-between text-ink-cinnabar">
+                                <span>积分抵扣</span>
+                                <span>使用 ${order.usedPoints} 积分</span>
+                                <span class="font-semibold">－¥${order.discountAmount}</span>
+                            </div>
+                        ` : ''}
+                        <div class="pt-2.5 border-t border-ink-border/60 flex items-baseline justify-between">
+                            <span class="font-serif font-bold text-sm text-ink-charcoal">实付金额</span>
+                            <span class="text-lg font-bold text-ink-cinnabar">¥${order.paidAmount}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleCancelOrderClick(orderId) {
+            const order = state.orders.find(o => o.orderId === orderId);
+            if (!order) return;
+
+            if (!order.refundable) {
+                openDialog(`
+                    <div class="text-center">
+                        <div class="w-14 h-14 rounded-full bg-amber-50 text-amber-500 mx-auto flex items-center justify-center mb-3">
+                            <i data-lucide="alert-circle" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="font-serif text-lg font-bold text-ink-charcoal">不支持自助退款</h3>
+                        <p class="text-xs text-ink-gray mt-2 leading-relaxed">
+                            当前订单不支持自助退款（仅待确认/待入住且早于入住当日 18:00 可自助取消），如需退改请联系商家协商。
+                        </p>
+                        <div class="mt-4 p-3 rounded-2xl bg-ink-paper border border-ink-border flex items-center justify-between">
+                            <span class="text-xs text-ink-gray">商家电话</span>
+                            <a href="tel:057212345678" onclick="showToast('正在拨打 0572-1234 5678')" class="text-sm font-bold text-ink-wood flex items-center gap-1.5">
+                                0572-1234 5678
+                                <i data-lucide="phone-call" class="w-3.5 h-3.5"></i>
+                            </a>
+                        </div>
+                        <button onclick="closeDialog()" class="mt-5 w-full py-3 rounded-2xl bg-ink-wood text-white text-xs font-medium">
+                            我知道了
+                        </button>
+                    </div>
+                `);
+                return;
+            }
+
+            openDialog(`
+                <div class="text-center">
+                    <div class="w-12 h-12 rounded-full bg-ink-woodLight text-ink-wood mx-auto flex items-center justify-center mb-3">
+                        <i data-lucide="rotate-ccw" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-serif text-base font-bold text-ink-charcoal">确认取消订单并退款？</h3>
+                    <p class="text-xs text-ink-gray mt-2 leading-relaxed">
+                        退款金额 <span class="font-bold text-ink-cinnabar">¥${order.paidAmount}</span> 将同步模拟退回${order.usedPoints > 0 ? `，已抵扣的 <span class="font-bold text-ink-wood">${order.usedPoints} 积分</span> 将原路返还` : ''}。
+                    </p>
+                    <div class="grid grid-cols-2 gap-2.5 mt-5">
+                        <button onclick="closeDialog()" class="py-2.5 rounded-xl bg-ink-paper text-ink-charcoal text-xs font-medium border border-ink-border">再想想</button>
+                        <button onclick="confirmOrderRefund('${order.orderId}')" class="py-2.5 rounded-xl bg-ink-cinnabar text-white text-xs font-medium">确认退款</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 接口 P03: 同步模拟退款并返还积分、释放间夜
+        function confirmOrderRefund(orderId) {
+            const order = state.orders.find(o => o.orderId === orderId);
+            if (!order) return;
+            order.status = 'CANCELLED';
+            order.statusLabel = '已取消';
+            order.refundable = false;
+            order.refundHint = '订单已取消，房费及已使用积分已全额退还。';
+
+            // 释放房间对应住宿夜晚
+            const room = ROOMS.find(r => r.id === order.roomId);
+            if (room) {
+                const releasedNights = getStayNightsList(order.checkIn, order.checkOut);
+                room.unavailableDates = room.unavailableDates.filter(d => !releasedNights.includes(d));
+            }
+
+            // 返还已抵扣积分并写入含 balance_after 的积分流水
+            if (order.usedPoints > 0) {
+                state.member.availablePoints += order.usedPoints;
+                state.pointsLogs.unshift({
+                    id: Date.now(),
+                    month: '2026年11月',
+                    title: '取消订单返还',
+                    sub: `订单：${order.orderId}`,
+                    time: '11月18日 11:05',
+                    delta: +order.usedPoints,
+                    balanceAfter: state.member.availablePoints,
+                    icon: 'rotate-ccw'
+                });
+            }
+
+            closeDialog();
+            showToast('模拟退款成功，房间已释放且积分已返还');
+            render();
+        }
+
+        function callMerchantDialog() {
+            openDialog(`
+                <div class="text-center">
+                    <div class="w-12 h-12 rounded-full bg-ink-celadonBg text-ink-celadon mx-auto flex items-center justify-center mb-3">
+                        <i data-lucide="headphones" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="font-serif text-base font-bold text-ink-charcoal">联系芊浔驻店管家</h3>
+                    <p class="text-xs text-ink-gray mt-1.5">服务时间：07:30 - 23:30</p>
+                    <div class="mt-4 p-3 rounded-xl bg-ink-paper font-bold text-base text-ink-wood border border-ink-border">
+                        0572-1234 5678
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5 mt-5">
+                        <button onclick="closeDialog()" class="py-2.5 rounded-xl bg-ink-paper text-ink-charcoal text-xs border border-ink-border">取消</button>
+                        <button onclick="closeDialog(); showToast('正在呼出 0572-1234 5678...')" class="py-2.5 rounded-xl bg-ink-wood text-white text-xs font-medium">立即拨打</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        // 【09-会员中心】重构为新中式水乡暖金檀木风格（统一 09-会员中心.png 布局结构 + V3.1 规则）
+        function renderMemberPage() {
+            const tier = getCurrentTier();
+            const nextTier = getNextTier();
+            const gp = state.member.growthPoints;
+            const gapPoints = nextTier ? Math.max(0, nextTier.minPoints - gp) : 0;
+            const progressPct = nextTier
+                ? Math.min(100, Math.round(((gp - tier.minPoints) / (nextTier.minPoints - tier.minPoints)) * 100))
+                : 100;
+
+            return `
+                <div class="px-4 pt-2 pb-8 space-y-3.5 page-enter">
+                    <!-- 顶部水乡暖金会员尊享卡（将原冷蓝色升级为新中式暖金檀木渐变） -->
+                    <div class="relative rounded-3xl p-5 overflow-hidden bg-gradient-to-br from-[#5D3318] via-[#8B4D25] to-[#B57A44] text-white shadow-card">
+                        <div class="absolute -right-5 -bottom-5 opacity-15 pointer-events-none">
+                            <i data-lucide="crown" class="w-32 h-32"></i>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-full bg-white/15 border border-white/25 flex items-center justify-center text-[#FBE6C5]">
+                                <i data-lucide="crown" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-serif font-bold text-lg text-[#FFF3DF]">${tier.name}</span>
+                                    <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-white/20 text-white font-medium">当前等级</span>
+                                </div>
+                                <p class="text-[11px] text-white/85 mt-0.5">享受 ${tier.rate}积分=¥1 房费抵扣 · 永久保级</p>
+                            </div>
+                        </div>
+
+                        <!-- 升级进度白框 -->
+                        <div class="mt-4 bg-white/95 rounded-2xl p-3.5 text-ink-charcoal shadow-2xs">
+                            <div class="flex items-center justify-between text-xs mb-2">
+                                <span class="font-bold text-ink-woodDark">${nextTier ? `升级至${nextTier.name}` : '已达最高尊享等级'}</span>
+                                <span class="text-[11px] text-ink-gray">${nextTier ? `距离升级还差 ${gapPoints} 成长积分` : '尊享全店最高抵扣比例'}</span>
+                            </div>
+                            <div class="w-full h-2 rounded-full bg-ink-warm overflow-hidden">
+                                <div class="h-full rounded-full bg-gradient-to-r from-ink-wood to-ink-gold transition-all duration-500" style="width: ${progressPct}%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 三栏积分数据看板（严格对应 V3.1 第 3.6 节：累计成长积分 / 可用积分 / 当前兑换率） -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-ink-border/70 grid grid-cols-3 divide-x divide-ink-border/70 text-center">
+                        <div>
+                            <i data-lucide="trending-up" class="w-4 h-4 text-ink-wood mx-auto mb-1"></i>
+                            <div class="text-[11px] text-ink-gray">累计成长积分</div>
+                            <div class="text-[17px] font-bold text-ink-charcoal mt-0.5">${state.member.growthPoints.toLocaleString()}</div>
+                        </div>
+                        <div>
+                            <i data-lucide="wallet" class="w-4 h-4 text-ink-cinnabar mx-auto mb-1"></i>
+                            <div class="text-[11px] text-ink-gray">可用积分</div>
+                            <div class="text-[17px] font-bold text-ink-cinnabar mt-0.5">${state.member.availablePoints.toLocaleString()}</div>
+                        </div>
+                        <div>
+                            <i data-lucide="percent" class="w-4 h-4 text-ink-celadon mx-auto mb-1"></i>
+                            <div class="text-[11px] text-ink-gray">当前兑换率</div>
+                            <div class="text-[15px] font-bold text-ink-wood mt-1">${tier.rate}分=¥1</div>
+                        </div>
+                    </div>
+
+                    <!-- 功能入口列表 -->
+                    <div class="bg-white rounded-2xl divide-y divide-ink-border/60 shadow-soft border border-ink-border/70 overflow-hidden">
+                        <button onclick="navigateTo('pointsLog')" class="w-full p-4 flex items-center justify-between hover:bg-ink-paper/60 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-ink-woodLight text-ink-wood flex items-center justify-center">
+                                    <i data-lucide="coins" class="w-4 h-4"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-ink-charcoal">积分流水</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-[11px] text-ink-gray">
+                                <span>查看明细</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </div>
+                        </button>
+
+                        <button onclick="showPointsRuleModal()" class="w-full p-4 flex items-center justify-between hover:bg-ink-paper/60 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-ink-woodLight text-ink-wood flex items-center justify-center">
+                                    <i data-lucide="book-open" class="w-4 h-4"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-ink-charcoal">积分规则说明</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-[11px] text-ink-gray">
+                                <span>获取/抵扣/返还</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- 四档会员等级与兑换率说明矩阵（V3.1 需求 3.6：普通/银卡/金卡/钻石门槛与比例） -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-ink-border/70">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-woodDark">会员等级与兑换比例</h3>
+                            </div>
+                            <span class="text-[10px] text-ink-gray">单笔最高抵扣房费 20%</span>
+                        </div>
+
+                        <div class="grid grid-cols-4 gap-2 text-center">
+                            ${MEMBER_TIERS.map(t => {
+                                const isCurrent = t.key === tier.key;
+                                return `
+                                    <div class="p-2.5 rounded-xl border transition ${
+                                        isCurrent
+                                        ? 'bg-ink-wood text-white border-ink-wood shadow-xs'
+                                        : 'bg-ink-paper text-ink-charcoal border-ink-border/70'
+                                    }">
+                                        <i data-lucide="crown" class="w-4 h-4 mx-auto mb-1 ${isCurrent ? 'text-[#FBE6C5]' : 'text-ink-wood'}"></i>
+                                        <div class="text-[11px] font-bold">${t.name.replace('会员', '')}</div>
+                                        <div class="text-[10px] mt-0.5 ${isCurrent ? 'text-white/85' : 'text-ink-gray'}">
+                                            ${t.maxPoints > 50000 ? `≥${t.minPoints}` : `${t.minPoints}-${t.maxPoints}`}
+                                        </div>
+                                        <div class="mt-1.5 pt-1 border-t ${isCurrent ? 'border-white/20 text-[#FBE6C5]' : 'border-ink-border text-ink-wood'} text-[10px] font-semibold">
+                                            ${t.rate}分=¥1
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <p class="text-[10px] text-ink-gray mt-2.5 leading-relaxed">
+                            • 订单完成后按实付金额每满 ¥1 发 1 积分；历史消费补发计入成长积分，赠送补偿仅增可用积分，积分永久有效且不降级。
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showPointsRuleModal() {
+            openDialog(`
+                <div class="text-left">
+                    <h3 class="font-serif text-base font-bold text-ink-charcoal">会员等级与积分规则</h3>
+                    <div class="mt-3 overflow-hidden rounded-xl border border-ink-border text-[11px]">
+                        <div class="grid grid-cols-3 bg-ink-woodLight font-bold text-ink-wood p-2 text-center">
+                            <span>会员等级</span><span>成长积分门槛</span><span>抵扣比例</span>
+                        </div>
+                        ${MEMBER_TIERS.map(t => `
+                            <div class="grid grid-cols-3 p-2 text-center border-t border-ink-border/60">
+                                <span class="font-medium">${t.name}</span>
+                                <span class="text-ink-gray">${t.maxPoints > 50000 ? `≥ ${t.minPoints}` : `${t.minPoints} - ${t.maxPoints}`}</span>
+                                <span class="text-ink-wood font-semibold">${t.rate}积分 = ¥1</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <ul class="mt-3.5 space-y-1.5 text-[11px] text-ink-gray leading-relaxed">
+                        <li>• <strong class="text-ink-charcoal">消费获得积分：</strong>订单完成后按实付金额满 ¥1 发 1 积分（向下取整）。</li>
+                        <li>• <strong class="text-ink-charcoal">单笔抵扣上限：</strong>可用积分最高抵扣单笔房费的 <span class="text-ink-cinnabar font-semibold">20%</span>。</li>
+                        <li>• <strong class="text-ink-charcoal">取消订单返还：</strong>自助取消退款成功后，已抵扣积分全额退回账户。</li>
+                        <li>• <strong class="text-ink-charcoal">永久有效保级：</strong>积分不设有效期，消耗可用积分不降低会员等级。</li>
+                    </ul>
+                    <button onclick="closeDialog()" class="mt-5 w-full py-2.5 rounded-xl bg-ink-wood text-white text-xs font-medium">
+                        我明白了
+                    </button>
+                </div>
+            `);
+        }
+
+        // 【10-积分流水】完全重构为新中式水乡暖金风格（对齐 10-积分流水.png 布局 + 按月分组 + balance_after + 底部返回按钮）
+        function renderPointsLogPage() {
+            // 按月份分组
+            const groups = {};
+            state.pointsLogs.forEach(item => {
+                if (!groups[item.month]) groups[item.month] = [];
+                groups[item.month].push(item);
+            });
+
+            return `
+                <div class="px-4 pt-2 pb-8 space-y-4 page-enter">
+                    <!-- 顶部双栏积分概览卡（新中式暖金檀木风格） -->
+                    <div class="bg-white rounded-2xl p-4 shadow-soft border border-ink-border/70 grid grid-cols-2 divide-x divide-ink-border/70 items-center">
+                        <div class="flex items-center gap-3 pr-2">
+                            <div class="w-10 h-10 rounded-full bg-ink-woodLight text-ink-wood flex items-center justify-center shrink-0">
+                                <i data-lucide="coins" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="text-[11px] text-ink-gray">我的积分</div>
+                                <div class="text-xl font-bold text-ink-wood">${state.member.availablePoints.toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <div onclick="showPointsRuleModal()" class="flex items-center justify-between pl-3.5 cursor-pointer">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="gift" class="w-4 h-4 text-ink-wood shrink-0"></i>
+                                <div>
+                                    <div class="text-xs font-semibold text-ink-charcoal">积分可用于</div>
+                                    <div class="text-[10px] text-ink-gray mt-0.5">抵扣房费（最高20%）</div>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-ink-gray"></i>
+                        </div>
+                    </div>
+
+                    <!-- | 积分明细 -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h3 class="font-serif font-bold text-sm text-ink-woodDark">积分明细</h3>
+                        </div>
+                        <span class="text-[11px] text-ink-gray">共 ${state.pointsLogs.length} 条记录</span>
+                    </div>
+
+                    <!-- 按月分组明细卡片 -->
+                    ${Object.entries(groups).map(([month, list]) => `
+                        <div class="bg-white rounded-2xl overflow-hidden shadow-soft border border-ink-border/70">
+                            <div class="px-4 py-2 bg-ink-woodLight/80 text-xs font-bold text-ink-woodDark border-b border-ink-border/60">
+                                ${month}
+                            </div>
+                            <div class="divide-y divide-ink-border/60">
+                                ${list.map(item => `
+                                    <div class="p-4 flex items-center justify-between">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                                                item.delta > 0 ? 'bg-ink-celadonBg text-ink-celadon' : 'bg-ink-woodLight text-ink-wood'
+                                            }">
+                                                <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="text-xs font-semibold text-ink-charcoal truncate">${item.title}</div>
+                                                <div class="text-[11px] text-ink-gray truncate mt-0.5">${item.sub}</div>
+                                                <div class="text-[10px] text-ink-gray/80 mt-0.5">${item.time} · 余额 ${item.balanceAfter}</div>
+                                            </div>
+                                        </div>
+                                        <div class="font-mono font-bold text-[15px] shrink-0 ml-2 ${item.delta > 0 ? 'text-ink-celadon' : 'text-ink-cinnabar'}">
+                                            ${item.delta > 0 ? `+${item.delta}` : item.delta}
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+
+                    <!-- 底部返回会员中心轮廓按钮（复刻 10-积分流水.png 底部按钮） -->
+                    <button onclick="navigateTab('member')" class="w-full py-3 rounded-full bg-white border border-ink-wood text-ink-wood font-medium text-xs flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] transition">
+                        <i data-lucide="crown" class="w-3.5 h-3.5"></i>
+                        <span>返回会员中心</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        // 【08-我的（个人中心）】完全复刻 08-我的.png + V3.1 第 3.7 节（统一默认头像 + 手机号后四位昵称）
+        function renderMinePage() {
+            const tier = getCurrentTier();
+            return `
+                <div class="px-4 pt-2 pb-8 space-y-4 page-enter">
+                    <!-- 顶部水乡古镇背景个人名片卡 -->
+                    <div onclick="navigateTab('member')" class="relative rounded-3xl p-5 bg-white shadow-soft border border-ink-border/70 overflow-hidden flex items-center justify-between cursor-pointer">
+                        <img src="https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?auto=format&fit=crop&w=700&q=80" class="absolute right-0 inset-y-0 w-44 h-full object-cover opacity-25 pointer-events-none">
+                        <div class="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-transparent pointer-events-none"></div>
+
+                        <div class="flex items-center gap-3.5 relative z-10">
+                            <img src="${state.member.avatar}" alt="默认头像" class="w-[62px] h-[62px] rounded-full object-cover border-2 border-ink-warm shadow-2xs">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="font-serif text-lg font-bold text-ink-charcoal">尾号 ${state.member.nickname}</h2>
+                                    <span class="text-[11px] text-ink-gray font-mono">${maskPhone(state.member.phone)}</span>
+                                </div>
+                                <span class="mt-1.5 inline-flex items-center gap-1 px-3 py-0.5 rounded-full bg-ink-wood text-white text-[11px] font-medium">
+                                    <i data-lucide="crown" class="w-3 h-3 text-[#FBE6C5]"></i>
+                                    ${tier.name}
+                                </span>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-ink-wood relative z-10"></i>
+                    </div>
+
+                    <!-- 个人中心功能列表 -->
+                    <div class="bg-white rounded-2xl divide-y divide-ink-border/60 shadow-soft border border-ink-border/70 overflow-hidden">
+                        <button onclick="navigateTab('orders')" class="w-full p-4 flex items-center justify-between hover:bg-ink-paper/60 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-ink-woodLight text-ink-wood flex items-center justify-center">
+                                    <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-ink-charcoal">我的订单</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-ink-gray"></i>
+                        </button>
+
+                        <button onclick="navigateTab('member')" class="w-full p-4 flex items-center justify-between hover:bg-ink-paper/60 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-ink-woodLight text-ink-wood flex items-center justify-center">
+                                    <i data-lucide="crown" class="w-4 h-4"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-ink-charcoal">会员中心</span>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-ink-gray"></i>
+                        </button>
+
+                        <button onclick="navigateTo('pointsLog')" class="w-full p-4 flex items-center justify-between hover:bg-ink-paper/60 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-ink-woodLight text-ink-wood flex items-center justify-center">
+                                    <i data-lucide="coins" class="w-4 h-4"></i>
+                                </div>
+                                <span class="text-xs font-semibold text-ink-charcoal">积分流水</span>
+                            </div>
+                            <div class="flex items-center gap-1 text-[11px] text-ink-wood font-semibold">
+                                <span>${state.member.availablePoints.toLocaleString()} 积分</span>
+                                <i data-lucide="chevron-right" class="w-4 h-4 text-ink-gray"></i>
+                            </div>
+                        </button>
+
+                        <div onclick="showGuideModal('intro')" class="w-full p-4 flex items-center justify-between hover:bg-ink-paper/60 transition cursor-pointer">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-ink-celadonBg text-ink-celadon flex items-center justify-center">
+                                    <i data-lucide="map-pin" class="w-4 h-4"></i>
+                                </div>
+                                <div class="text-left">
+                                    <div class="text-xs font-semibold text-ink-charcoal">民宿地址</div>
+                                    <div class="text-[11px] text-ink-gray mt-0.5">浙江省湖州市南浔区南浔古镇88号</div>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-ink-gray"></i>
+                        </div>
+
+                        <button onclick="callMerchantDialog()" class="w-full p-4 flex items-center justify-between hover:bg-ink-paper/60 transition">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl bg-ink-woodLight text-ink-wood flex items-center justify-center">
+                                    <i data-lucide="headphones" class="w-4 h-4"></i>
+                                </div>
+                                <div class="text-left">
+                                    <div class="text-xs font-semibold text-ink-charcoal">联系我们</div>
+                                    <div class="text-[11px] text-ink-gray mt-0.5">0572-1234 5678</div>
+                                </div>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-ink-gray"></i>
+                        </button>
+                    </div>
+
+                    <button onclick="logoutToLogin()" class="w-full py-3 rounded-2xl bg-white border border-ink-border text-xs text-ink-gray font-medium active:bg-ink-paper transition">
+                        退出登录（切换其他会员手机号）
+                    </button>
+                </div>
+            `;
+        }
+
+        function logoutToLogin() {
+            state.isLoggedIn = false;
+            navigateTo('login');
+        }
+
+        // ==========================================
+        // 7. 未来 60 个自然日交互日历抽屉 (V3.1 第 3.2 节)
+        // ==========================================
+        function openCalendarDrawer(roomId = null) {
+            state.calendarContextRoomId = roomId;
+            state.tempCheckIn = state.checkIn;
+            state.tempCheckOut = state.checkOut;
+            state.selectingStep = 'checkin';
+            document.getElementById('calendar-drawer').classList.remove('hidden');
+            renderCalendarMonths();
+            lucide.createIcons();
+        }
+
+        function closeCalendarDrawer() {
+            document.getElementById('calendar-drawer').classList.add('hidden');
+        }
+
+        function renderCalendarMonths() {
+            const container = document.getElementById('calendar-months-container');
+            const nights = Math.max(1, diffDays(state.tempCheckIn, state.tempCheckOut));
+            const maxAllowedDate = addDays(TODAY_STR, MAX_WINDOW_DAYS - 1); // 今天为第1天，共60个自然日
+
+            document.getElementById('cal-nights-badge').textContent = `共 ${nights} 晚`;
+            document.getElementById('cal-confirm-nights').textContent = nights;
+            document.getElementById('cal-preview-in').textContent = `${formatMonthDay(state.tempCheckIn)} ${formatWeek(state.tempCheckIn)}`;
+            document.getElementById('cal-preview-out').textContent = `${formatMonthDay(state.tempCheckOut)} ${formatWeek(state.tempCheckOut)}`;
+
+            const targetRoom = state.calendarContextRoomId
+                ? ROOMS.find(r => r.id === state.calendarContextRoomId)
+                : null;
+
+            // 覆盖 2026-11、2026-12、2027-01 三个月以完整呈现未来 60 天
+            const months = [
+                { year: 2026, month: 11, days: 30, firstWeekday: 0 }, // 2026-11-01 周日
+                { year: 2026, month: 12, days: 31, firstWeekday: 2 }, // 2026-12-01 周二
+                { year: 2027, month: 1,  days: 31, firstWeekday: 5 }  // 2027-01-01 周五
+            ];
+
+            container.innerHTML = months.map(m => {
+                let cells = '';
+                for (let b = 0; b < m.firstWeekday; b++) {
+                    cells += `<div></div>`;
+                }
+                for (let d = 1; d <= m.days; d++) {
+                    const ymd = `${m.year}-${String(m.month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                    const outOfWindow = ymd < TODAY_STR || ymd > maxAllowedDate;
+                    const isRoomBlocked = targetRoom ? targetRoom.unavailableDates.includes(ymd) : false;
+                    const isStart = ymd === state.tempCheckIn;
+                    const isEnd = ymd === state.tempCheckOut;
+                    const inRange = ymd > state.tempCheckIn && ymd < state.tempCheckOut;
+
+                    let cls = 'h-10 flex flex-col items-center justify-center rounded-xl text-xs transition ';
+                    let clickable = !outOfWindow;
+
+                    if (outOfWindow) {
+                        cls += 'text-ink-gray/30 cursor-not-allowed';
+                    } else if (isStart || isEnd) {
+                        cls += 'bg-ink-wood text-white font-bold shadow-2xs cursor-pointer';
+                    } else if (inRange) {
+                        cls += 'bg-ink-woodLight text-ink-wood font-medium cursor-pointer';
+                    } else if (isRoomBlocked) {
+                        cls += 'bg-ink-warm/80 text-ink-gray/60 cursor-pointer';
+                    } else {
+                        cls += 'text-ink-charcoal hover:bg-ink-paper cursor-pointer';
+                    }
+
+                    cells += `
+                        <div ${clickable ? `onclick="pickCalendarDate('${ymd}')"` : ''} class="${cls}">
+                            <span>${ymd === TODAY_STR ? '今' : d}</span>
+                            ${isStart ? '<span class="text-[9px] leading-none mt-0.5">入住</span>' : ''}
+                            ${isEnd ? '<span class="text-[9px] leading-none mt-0.5">退房</span>' : ''}
+                            ${!isStart && !isEnd && isRoomBlocked && !outOfWindow ? '<span class="text-[8px] leading-none mt-0.5">已满</span>' : ''}
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-white rounded-2xl p-3.5 border border-ink-border/70">
+                        <div class="text-center font-serif font-bold text-xs text-ink-charcoal mb-2.5">${m.year}年 ${m.month}月</div>
+                        <div class="grid grid-cols-7 text-center text-[10px] text-ink-gray mb-1.5">
+                            <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
+                        </div>
+                        <div class="grid grid-cols-7 gap-y-1 text-center">
+                            ${cells}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function pickCalendarDate(ymd) {
+            const maxAllowedDate = addDays(TODAY_STR, MAX_WINDOW_DAYS - 1);
+            if (state.selectingStep === 'checkin' || ymd <= state.tempCheckIn) {
+                if (ymd >= maxAllowedDate) {
+                    showToast('入住日期需留出至少 1 晚退房窗口');
+                    return;
+                }
+                state.tempCheckIn = ymd;
+                state.tempCheckOut = addDays(ymd, 1);
+                state.selectingStep = 'checkout';
+            } else {
+                state.tempCheckOut = ymd;
+                state.selectingStep = 'checkin';
+            }
+            renderCalendarMonths();
+        }
+
+        function confirmCalendarSelection() {
+            state.checkIn = state.tempCheckIn;
+            state.checkOut = state.tempCheckOut;
+            closeCalendarDrawer();
+            showToast(`已更新行程：${formatMonthDay(state.checkIn)} - ${formatMonthDay(state.checkOut)}（共${diffDays(state.checkIn, state.checkOut)}晚）`);
+            render();
+        }
+
+        // ==========================================
+        // 8. 总控渲染引擎
+        // ==========================================
+        function render() {
+            syncChrome();
+            const viewport = document.getElementById('viewport');
+
+            const views = {
+                'login': renderLoginPage,
+                'home': renderHomePage,
+                'rooms': renderRoomsPage,
+                'detail': renderDetailPage,
+                'booking': renderBookingPage,
+                'success': renderSuccessPage,
+                'orders': renderOrdersPage,
+                'orderDetail': renderOrderDetailPage,
+                'member': renderMemberPage,
+                'pointsLog': renderPointsLogPage,
+                'mine': renderMinePage
+            };
+
+            const renderFn = views[state.route] || renderHomePage;
+            viewport.innerHTML = renderFn();
+            lucide.createIcons();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            render();
+        });
+    </script>
+</body>
+</html>
