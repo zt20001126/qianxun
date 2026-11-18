@@ -1,5 +1,8 @@
 .home-page { min-height: 100vh; padding: 30rpx 34rpx 26rpx; box-sizing: border-box; background: #fbf5ef; }
 .home-topline { display: flex; align-items: center; justify-content: space-between; padding: 12rpx 2rpx 28rpx; }
+.home-top-actions { display: flex; align-items: center; gap: 10rpx; }
+.orders-link { min-width: 112rpx; margin: 0; padding: 8rpx 14rpx; border: 1rpx solid #e5d9cb; border-radius: 999rpx; color: #795b43; background: #fffcf9; font-size: 20rpx; line-height: 1.5; }
+.orders-link::after { border: 0; }
 .brand-lockup { display: flex; align-items: center; }
 .brand-seal { display: grid; width: 70rpx; height: 70rpx; place-items: center; border: 2rpx solid #98501f; border-radius: 50%; color: #98501f; font-family: serif; font-size: 36rpx; }
 .brand-copy { display: flex; flex-direction: column; margin-left: 17rpx; }

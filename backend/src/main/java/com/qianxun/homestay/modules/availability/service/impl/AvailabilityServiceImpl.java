@@ -70,7 +70,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             return List.of();
         }
         TreeSet<LocalDate> unavailable = new TreeSet<>();
-        for (AvailabilityRangeEntity occupied : overlappingRanges(roomId, startDate, endDate, null, null)) {
+        for (AvailabilityRangeEntity occupied : overlappingRanges(roomId, startDate, endDate, null, null, null)) {
             LocalDate day = occupied.getStartDate().isAfter(startDate) ? occupied.getStartDate() : startDate;
             LocalDate end = occupied.getEndDate().isBefore(endDate) ? occupied.getEndDate() : endDate;
             while (day.isBefore(end)) {
@@ -127,17 +127,24 @@ public class AvailabilityServiceImpl implements AvailabilityService {
 
     @Override
     public boolean hasConflict(Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId) {
-        return !overlappingRanges(roomId, startDate, endDate, excludedBlockId, null).isEmpty();
+        return !overlappingRanges(roomId, startDate, endDate, excludedBlockId, null, null).isEmpty();
     }
 
     @Override
     public boolean hasConflictExcludingOrder(
             Long roomId, LocalDate startDate, LocalDate endDate, Long excludedOrderId) {
-        return !overlappingRanges(roomId, startDate, endDate, null, excludedOrderId).isEmpty();
+        return !overlappingRanges(roomId, startDate, endDate, null, excludedOrderId, null).isEmpty();
+    }
+
+    @Override
+    public boolean hasConflictExcludingBookingLock(
+            Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBookingLockId) {
+        return !overlappingRanges(roomId, startDate, endDate, null, null, excludedBookingLockId).isEmpty();
     }
 
     private List<AvailabilityRangeEntity> overlappingRanges(
-            Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId, Long excludedOrderId) {
+            Long roomId, LocalDate startDate, LocalDate endDate,
+            Long excludedBlockId, Long excludedOrderId, Long excludedBookingLockId) {
         return availabilityMapper.findOverlappingRanges(
                 roomId,
                 startDate,
@@ -146,6 +153,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                 OrderOccupancyStatus.CANCELLED.getCode(),
                 BookingLockOccupancyStatus.PENDING.getCode(),
                 excludedBlockId,
-                excludedOrderId);
+                excludedOrderId,
+                excludedBookingLockId);
     }
 }

@@ -23,5 +23,6 @@ public interface AvailabilityMapper {
             @Param("cancelledOrderStatus") String cancelledOrderStatus,
             @Param("pendingBookingStatus") String pendingBookingStatus,
             @Param("excludedBlockId") Long excludedBlockId,
-            @Param("excludedOrderId") Long excludedOrderId);
+            @Param("excludedOrderId") Long excludedOrderId,
+            @Param("excludedBookingLockId") Long excludedBookingLockId);
 }

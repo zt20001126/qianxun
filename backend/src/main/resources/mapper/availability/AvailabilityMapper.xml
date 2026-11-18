@@ -38,5 +38,8 @@
           AND expires_at &gt; #{now}
           AND check_in &lt; #{endDate}
           AND check_out &gt; #{startDate}
+        <if test="excludedBookingLockId != null">
+          AND id &lt;&gt; #{excludedBookingLockId}
+        </if>
     </select>
 </mapper>

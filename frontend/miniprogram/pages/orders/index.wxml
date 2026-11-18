@@ -1,0 +1,18 @@
+<view class="orders-page">
+  <view class="orders-heading"><text>我的订单</text><text>共 {{total}} 笔</text></view>
+  <view wx:if="{{loading}}" class="orders-state">正在读取订单…</view>
+  <view wx:elif="{{errorMessage}}" class="orders-state orders-error">
+    <text>{{errorMessage}}</text><button class="retry-button" bindtap="loadOrders">重新加载</button>
+  </view>
+  <view wx:elif="{{orders.length === 0}}" class="orders-state">
+    <text class="empty-seal">浔</text><text>还没有正式订单</text><button class="retry-button" bindtap="onHomeTap">返回首页预订</button>
+  </view>
+  <view wx:else class="orders-list">
+    <view wx:for="{{orders}}" wx:key="id" class="order-card" data-order-id="{{item.id}}" bindtap="onOrderTap">
+      <view class="order-card-top"><text class="order-number">{{item.order_no}}</text><text class="order-status">{{item.status_label}}</text></view>
+      <text class="order-room">{{item.room_number}} 房 · {{item.nights}} 晚</text>
+      <view class="order-dates"><text>{{item.check_in}}</text><text>至</text><text>{{item.check_out}}</text></view>
+      <view class="order-card-bottom"><text>实付 ¥{{item.paid_amount}}</text><text class="order-link">查看详情 ›</text></view>
+    </view>
+  </view>
+</view>

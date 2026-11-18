@@ -57,6 +57,10 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updatePointsBalance">
+        UPDATE members SET points = #{points}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = #{id}
+    </update>
+
     <select id="findById" resultMap="MemberResultMap">
         SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
         FROM members

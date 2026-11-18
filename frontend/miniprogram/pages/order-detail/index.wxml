@@ -1,0 +1,29 @@
+<view class="order-detail-page">
+  <view wx:if="{{loading}}" class="detail-state">正在读取订单详情…</view>
+  <view wx:elif="{{errorMessage}}" class="detail-state detail-error"><text>{{errorMessage}}</text><button class="detail-button" bindtap="onOrdersTap">返回订单列表</button></view>
+  <view wx:elif="{{order}}">
+    <view class="detail-card summary-card">
+      <view class="summary-heading"><text class="room-title">{{order.room_number}} 房</text><text class="status-tag">{{statusLabel}}</text></view>
+      <text class="order-no">{{order.order_no}}</text>
+      <view class="stay-period"><text>{{order.check_in}}</text><text>至</text><text>{{order.check_out}}</text></view>
+      <text class="stay-nights">{{order.nights}} 晚 · {{order.guest_count}} 位入住</text>
+    </view>
+    <view class="detail-card">
+      <text class="section-heading">联系人信息</text>
+      <view class="detail-row"><text>联系人</text><text>{{order.guest_name || '—'}}</text></view>
+      <view class="detail-row"><text>手机号</text><text>{{order.phone || '—'}}</text></view>
+      <view class="detail-row"><text>订单备注</text><text>{{order.remark || '—'}}</text></view>
+    </view>
+    <view class="detail-card amount-card">
+      <text class="section-heading">费用信息</text>
+      <view class="detail-row"><text>模拟实付</text><text class="paid-amount">¥{{order.paid_amount}}</text></view>
+      <text class="amount-note">第一期为模拟支付记录，不代表真实资金到账</text>
+    </view>
+    <view class="detail-card time-card">
+      <view class="detail-row"><text>创建时间</text><text>{{order.created_at}}</text></view>
+      <view class="detail-row"><text>更新时间</text><text>{{order.updated_at}}</text></view>
+    </view>
+    <button class="detail-button" bindtap="onOrdersTap">返回订单列表</button>
+    <button class="home-button" bindtap="onHomeTap">返回首页</button>
+  </view>
+</view>

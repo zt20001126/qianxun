@@ -36,4 +36,8 @@ public interface AvailabilityService {
 
     /** 判断指定区间是否被订单、封房或有效锁房占用，并可排除当前订单。 */
     boolean hasConflictExcludingOrder(Long roomId, LocalDate startDate, LocalDate endDate, Long excludedOrderId);
+
+    /** 支付时在房间行锁内复核库存，并排除当前支付对应的临时锁房记录。 */
+    boolean hasConflictExcludingBookingLock(
+            Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBookingLockId);
 }

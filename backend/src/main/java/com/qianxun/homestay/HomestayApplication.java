@@ -3,11 +3,13 @@ package com.qianxun.homestay;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 芊浔民宿后端启动入口，负责加载认证服务及其基础设施。
  */
 @SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class)
+@EnableScheduling
 public class HomestayApplication {
 
     /**

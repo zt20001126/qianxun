@@ -2,7 +2,12 @@
   "pages": [
     "pages/login/index",
     "pages/home/index",
-    "pages/room-detail/index"
+    "pages/room-detail/index",
+    "pages/booking/index",
+    "pages/payment/index",
+    "pages/payment-success/index",
+    "pages/orders/index",
+    "pages/order-detail/index"
   ],
   "window": {
     "navigationBarTitleText": "芊浔民宿",

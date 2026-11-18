@@ -1,0 +1,22 @@
+CREATE TABLE payments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    booking_id BIGINT UNSIGNED NOT NULL,
+    order_id BIGINT UNSIGNED NULL,
+    payment_no VARCHAR(64) NOT NULL,
+    transaction_id VARCHAR(64) NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    paid_at DATETIME(3) NULL,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_payments_payment_no (payment_no),
+    UNIQUE KEY uk_payments_transaction_id (transaction_id),
+    KEY idx_payments_booking_status (booking_id, status),
+    KEY idx_payments_order (order_id),
+    KEY idx_payments_status_created (status, created_at),
+    CONSTRAINT fk_payments_booking FOREIGN KEY (booking_id) REFERENCES booking_lock (id),
+    CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders (id),
+    CONSTRAINT chk_payments_amount CHECK (amount >= 0),
+    CONSTRAINT chk_payments_status CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED', 'CLOSED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='模拟支付流水';

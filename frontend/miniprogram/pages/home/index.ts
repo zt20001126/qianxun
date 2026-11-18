@@ -148,7 +148,14 @@ Page({
   onRoomTap(event: WechatMiniprogram.TouchEvent) {
     const roomId = Number(event.currentTarget.dataset.roomId)
     if (!Number.isInteger(roomId) || roomId <= 0) return
-    wx.navigateTo({ url: `/pages/room-detail/index?id=${roomId}` })
+    const stay = this.data.checkIn && this.data.checkOut
+      ? `&check_in=${encodeURIComponent(this.data.checkIn)}&check_out=${encodeURIComponent(this.data.checkOut)}`
+      : ''
+    wx.navigateTo({ url: `/pages/room-detail/index?id=${roomId}${stay}` })
+  },
+
+  onMyOrdersTap() {
+    wx.navigateTo({ url: '/pages/orders/index' })
   },
 
   onLogoutTap() {

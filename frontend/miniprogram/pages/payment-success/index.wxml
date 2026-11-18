@@ -1,0 +1,12 @@
+<view class="success-page">
+  <view class="success-card">
+    <view class="success-mark">✓</view>
+    <text class="success-title">预订已提交</text>
+    <text class="success-copy">管理员确认后，订单状态将更新</text>
+    <view class="success-order"><text>订单号</text><text>{{orderNo}}</text></view>
+    <view class="success-order"><text>模拟实付</text><text class="success-price">¥{{paidAmount}}</text></view>
+    <button class="primary-button" bindtap="onDetailTap">查看订单详情</button>
+    <button class="secondary-button" bindtap="onOrdersTap">我的订单</button>
+    <button class="text-button" bindtap="onHomeTap">返回首页</button>
+  </view>
+</view>

@@ -1,0 +1,20 @@
+.order-detail-page { min-height: 100vh; padding: 24rpx 26rpx 38rpx; box-sizing: border-box; background: #fbf5ef; }
+.detail-state { display: flex; min-height: 55vh; flex-direction: column; align-items: center; justify-content: center; gap: 15rpx; color: #918276; font-size: 22rpx; text-align: center; }
+.detail-error { color: #a94438; }
+.detail-card { margin-bottom: 16rpx; padding: 22rpx 20rpx; border: 1rpx solid #eee3d8; border-radius: 15rpx; background: #fffcf9; box-shadow: 0 8rpx 23rpx rgba(78, 54, 34, .04); }
+.summary-card { padding: 27rpx 21rpx; }
+.summary-heading { display: flex; align-items: center; justify-content: space-between; }
+.room-title { color: #512a18; font-family: serif; font-size: 29rpx; font-weight: 600; }
+.status-tag { padding: 7rpx 14rpx; border-radius: 999rpx; color: #8c643e; background: #f6eadb; font-size: 18rpx; }
+.order-no { display: block; margin-top: 13rpx; color: #887868; font-size: 18rpx; }
+.stay-period { display: flex; gap: 12rpx; margin-top: 22rpx; color: #512a18; font-family: Georgia, serif; font-size: 25rpx; }
+.stay-nights { display: block; margin-top: 9rpx; color: #9b8b7d; font-size: 18rpx; }
+.section-heading { display: block; margin-bottom: 10rpx; color: #512a18; font-family: serif; font-size: 23rpx; font-weight: 600; }
+.detail-row { display: flex; min-height: 58rpx; align-items: center; justify-content: space-between; gap: 15rpx; border-bottom: 1rpx solid #f1e9e0; color: #8c7c6d; font-size: 19rpx; }
+.detail-row:last-child { border-bottom: 0; }
+.detail-row text:last-child { max-width: 70%; color: #5b4c40; text-align: right; overflow-wrap: anywhere; }
+.paid-amount { color: #d74332 !important; font-size: 24rpx; font-weight: 600; }
+.amount-note { display: block; margin-top: 7rpx; color: #a29488; font-size: 16rpx; }
+.detail-button, .home-button { width: 100%; height: 74rpx; margin-top: 11rpx; border: 1rpx solid #decdbc; border-radius: 10rpx; color: #795b43; background: #fffdfa; font-size: 21rpx; line-height: 72rpx; }
+.detail-button::after, .home-button::after { border: 0; }
+.home-button { border-color: #98501f; color: #fffaf4; background: #98501f; }

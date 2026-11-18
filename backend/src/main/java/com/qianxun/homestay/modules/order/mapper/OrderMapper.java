@@ -22,6 +22,21 @@ public interface OrderMapper {
 
     long count(@Param("query") OrderQueryRequest query);
 
+    /** 查询当前小程序会员的订单页。 */
+    List<OrderViewEntity> findAppPage(
+            @Param("memberId") Long memberId,
+            @Param("status") String status,
+            @Param("offset") long offset,
+            @Param("size") int size);
+
+    /** 统计当前小程序会员符合筛选条件的订单数。 */
+    long countApp(@Param("memberId") Long memberId, @Param("status") String status);
+
+    /** 仅按订单 ID 与会员 ID 查询，避免返回其他会员订单。 */
+    OrderViewEntity findAppViewById(
+            @Param("memberId") Long memberId,
+            @Param("id") Long id);
+
     int insert(OrderEntity order);
 
     int updateEditableFields(OrderEntity order);

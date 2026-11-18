@@ -1,0 +1,35 @@
+<view class="booking-page">
+  <view wx:if="{{loading}}" class="booking-state">正在准备预订信息…</view>
+  <view wx:elif="{{errorMessage && !room}}" class="booking-state booking-error">{{errorMessage}}</view>
+  <view wx:else>
+    <view class="booking-card stay-card">
+      <text class="card-title">入住安排</text>
+      <view class="stay-line"><text>{{room.number}} 房 · {{room.name}}</text><text>{{nights}} 晚</text></view>
+      <view class="stay-dates"><text>{{checkIn}}</text><text>至</text><text>{{checkOut}}</text></view>
+      <text class="stay-price">基础房费 ¥{{preview.room_amount || '计算中'}}</text>
+    </view>
+
+    <view class="booking-card">
+      <text class="card-title">预订联系人</text>
+      <view class="form-row"><text>联系人</text><input maxlength="80" placeholder="填写姓名" value="{{guestName}}" bindinput="onGuestNameInput" /></view>
+      <view class="form-row"><text>手机号</text><input type="number" maxlength="11" placeholder="接收入住联系" value="{{phone}}" bindinput="onPhoneInput" /></view>
+      <view class="form-row"><text>入住人数</text><picker range="{{guestCountOptions}}" value="0" bindchange="onGuestCountChange"><view class="form-value">{{guestCount}} 人 ›</view></picker></view>
+      <view class="form-column"><text>备注</text><textarea maxlength="500" placeholder="选填" value="{{remark}}" bindinput="onRemarkInput" /></view>
+    </view>
+
+    <view class="booking-card points-card">
+      <view class="points-heading"><text class="card-title">积分抵扣</text><text>余额 {{preview.available_points || 0}} 分</text></view>
+      <view class="points-input-row"><input type="number" maxlength="8" value="{{pointsUsedInput}}" bindinput="onPointsInput" placeholder="输入抵扣积分" /><text>分</text><button bindtap="onPreviewTap">重新试算</button></view>
+      <view wx:if="{{preview}}" class="amount-lines">
+        <view><text>每元所需积分</text><text>{{preview.points_per_yuan}} 分</text></view>
+        <view><text>最多可用积分</text><text>{{preview.max_points_usable}} 分</text></view>
+        <view><text>积分抵扣</text><text>− ¥{{preview.discount_amount}}</text></view>
+        <view class="pay-total"><text>预计应付</text><text>¥{{preview.pay_amount}}</text></view>
+      </view>
+      <text wx:if="{{errorMessage}}" class="form-error">{{errorMessage}}</text>
+    </view>
+
+    <text class="booking-notice">创建预支付后房间将为你保留 10 分钟；积分在模拟支付成功时才扣减。</text>
+    <button class="submit-button" disabled="{{submitting || loading}}" bindtap="onSubmitTap">{{submitting ? '正在锁定客房…' : '确认并前往支付'}}</button>
+  </view>
+</view>

@@ -7,7 +7,10 @@
         <text class="brand-place">浙江 · 湖州 · 南浔</text>
       </view>
     </view>
-    <button class="logout-link" bindtap="onLogoutTap">退出</button>
+    <view class="home-top-actions">
+      <button class="orders-link" bindtap="onMyOrdersTap">我的订单</button>
+      <button class="logout-link" bindtap="onLogoutTap">退出</button>
+    </view>
   </view>
 
   <view wx:if="{{memberLoading}}" class="member-strip member-strip-loading">正在读取会员资料…</view>

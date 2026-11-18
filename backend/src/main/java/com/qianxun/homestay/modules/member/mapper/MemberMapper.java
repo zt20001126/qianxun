@@ -43,6 +43,9 @@ public interface MemberMapper {
     int updateRewardBalances(@Param("id") Long id, @Param("points") int points,
             @Param("growthPoints") int growthPoints);
 
+    /** 在会员行锁内写入抵扣后的可用积分余额。 */
+    int updatePointsBalance(@Param("id") Long id, @Param("points") int points);
+
     /**
      * 按 JWT 中的会员 ID 读取当前会员。
      *

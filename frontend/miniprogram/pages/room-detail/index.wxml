@@ -62,6 +62,7 @@
         <text wx:else>所选区间暂不可订，请调整日期</text>
       </view>
       <button wx:if="{{checkResult && checkResult.available}}" class="search-stay-button" bindtap="onSearchStayRooms">查询同期可订客房</button>
+      <button wx:if="{{checkResult && checkResult.available}}" class="book-stay-button" bindtap="onBookTap">预订此房</button>
       <text class="calendar-footnote">可订状态仅作查询参考，提交预订时服务端会再次锁定并校验。</text>
     </view>
     <button class="back-button detail-back" bindtap="onBackTap">返回客房列表</button>

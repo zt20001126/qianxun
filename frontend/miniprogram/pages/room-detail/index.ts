@@ -34,6 +34,7 @@ interface RoomDetailPageData {
   checkOutLabel: string
   checkResult: AppAvailabilityCheck | null
   checkLoading: boolean
+  selectedStay: boolean
 }
 
 Page({
@@ -57,6 +58,7 @@ Page({
     checkOutLabel: '请选择退房日期',
     checkResult: null,
     checkLoading: false,
+    selectedStay: false,
   } as RoomDetailPageData,
 
   async onLoad(options: Record<string, string | undefined>) {
@@ -74,8 +76,16 @@ Page({
       monthLabel: formatMonth(currentMonth),
       canGoPrevious: false,
       canGoNext: currentMonth < lastSelectableDate.slice(0, 7),
+      checkIn: options.check_in || '',
+      checkOut: options.check_out || '',
+      checkInLabel: options.check_in || '请选择入住日期',
+      checkOutLabel: options.check_out || '请选择退房日期',
+      selectedStay: !!options.check_in && !!options.check_out,
     })
     await Promise.all([this.loadRoom(roomId), this.loadCalendar(roomId, currentMonth)])
+    if (options.check_in && options.check_out) {
+      await this.checkSelectedStay(roomId, options.check_in, options.check_out)
+    }
   },
 
   async onPullDownRefresh() {
@@ -202,6 +212,22 @@ Page({
     if (!this.data.checkResult?.available || !this.data.checkIn || !this.data.checkOut) return
     wx.setStorageSync('qx_stay_selection', { check_in: this.data.checkIn, check_out: this.data.checkOut })
     wx.navigateBack({ delta: 1 })
+  },
+
+  async onBookTap() {
+    if (!this.data.room || !this.data.checkResult?.available || !this.data.checkIn || !this.data.checkOut) return
+    wx.navigateTo({
+      url: `/pages/booking/index?room_id=${this.data.room.id}&check_in=${encodeURIComponent(this.data.checkIn)}&check_out=${encodeURIComponent(this.data.checkOut)}`,
+    })
+  },
+
+  async checkSelectedStay(roomId: number, checkIn: string, checkOut: string) {
+    try {
+      const result = await checkRoomAvailability(roomId, checkIn, checkOut)
+      this.setData({ checkResult: result })
+    } catch (error) {
+      this.setData({ calendarError: error instanceof Error ? error.message : '日期复核失败' })
+    }
   },
 
   onBackTap() {

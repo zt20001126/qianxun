@@ -22,6 +22,8 @@ public class PointsLogEntity {
     private Integer balanceAfter;
     /** 本次积分变更关联的金额，金额单位为元。 */
     private BigDecimal amount;
+    /** 积分抵扣或返还关联的人民币金额快照。 */
+    private BigDecimal discountAmount;
     /** 业务幂等关联编号，用于识别重复流水。 */
     private String refNo;
     /** 积分变更说明。 */
@@ -43,6 +45,8 @@ public class PointsLogEntity {
     public void setBalanceAfter(Integer balanceAfter) { this.balanceAfter = balanceAfter; }
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
     public String getRefNo() { return refNo; }
     public void setRefNo(String refNo) { this.refNo = refNo; }
     public String getRemark() { return remark; }

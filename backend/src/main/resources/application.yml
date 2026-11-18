@@ -31,6 +31,8 @@ mybatis:
     map-underscore-to-camel-case: true
 
 app:
+  channel:
+    mini-program-id: ${APP_MINI_PROGRAM_CHANNEL_ID:1}
   jwt:
     secret: ${JWT_SECRET:}
     member-expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:2592000}
@@ -44,6 +46,9 @@ app:
     bucket: ${OSS_BUCKET:}
     access-key-id: ${OSS_ACCESS_KEY_ID:}
     access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
+
+booking:
+  payment-timeout-scan-interval-ms: ${BOOKING_PAYMENT_TIMEOUT_SCAN_INTERVAL_MS:30000}
 
 logging:
   level:

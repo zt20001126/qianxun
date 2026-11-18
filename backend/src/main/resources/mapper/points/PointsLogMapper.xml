@@ -7,9 +7,11 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO points_log (
-            member_id, order_id, type, points, growth_points, balance_after, amount, ref_no, remark
+            member_id, order_id, type, points, growth_points, balance_after, amount,
+            discount_amount, ref_no, remark
         ) VALUES (
-            #{memberId}, #{orderId}, #{type}, #{points}, #{growthPoints}, #{balanceAfter}, #{amount}, #{refNo}, #{remark}
+            #{memberId}, #{orderId}, #{type}, #{points}, #{growthPoints}, #{balanceAfter}, #{amount},
+            #{discountAmount}, #{refNo}, #{remark}
         )
     </insert>
 </mapper>
