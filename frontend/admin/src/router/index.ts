@@ -5,9 +5,19 @@ import { useAuthStore } from '../stores/auth'
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/home' },
+    { path: '/', redirect: '/rooms' },
     { path: '/login', component: () => import('../views/login/index.vue'), meta: { title: '管理员登录' } },
-    { path: '/home', component: () => import('../views/home/index.vue'), meta: { requiresAuth: true, title: '登录成功' } },
+    {
+      path: '/',
+      component: () => import('../layouts/AdminLayout.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: 'home', redirect: '/rooms' },
+        { path: 'rooms', component: () => import('../views/rooms/index.vue'), meta: { title: '客房管理' } },
+        { path: 'channels', component: () => import('../views/channels/index.vue'), meta: { title: '渠道管理' } },
+        { path: 'creators', component: () => import('../views/creators/index.vue'), meta: { title: '达人管理' } },
+      ],
+    },
     { path: '/:pathMatch(.*)*', redirect: '/login' },
   ],
 })

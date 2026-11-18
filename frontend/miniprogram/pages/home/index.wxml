@@ -1,26 +1,64 @@
-<view class="page-shell">
-  <view class="welcome-card">
-    <view class="seal">浔</view>
-    <text class="eyebrow">QIANXUN HOMESTAY</text>
-    <text class="title">登录成功</text>
-    <text class="subtitle">欢迎回到芊浔民宿</text>
+<view class="home-page">
+  <view class="home-topline">
+    <view class="brand-lockup">
+      <view class="brand-seal">浔</view>
+      <view class="brand-copy">
+        <text class="brand-name">芊浔民宿</text>
+        <text class="brand-place">浙江 · 湖州 · 南浔</text>
+      </view>
+    </view>
+    <button class="logout-link" bindtap="onLogoutTap">退出</button>
   </view>
 
-  <view wx:if="{{loading}}" class="state-message">正在读取会员资料…</view>
-  <view wx:elif="{{errorMessage}}" class="state-message error">{{errorMessage}}</view>
-  <view wx:elif="{{member}}" class="member-card">
-    <image class="avatar" src="{{avatarSource}}" mode="aspectFill" />
-    <view class="member-info">
-      <text class="nickname">{{member.nickname}}</text>
-      <text class="phone">{{member.phone}}</text>
+  <view wx:if="{{memberLoading}}" class="member-strip member-strip-loading">正在读取会员资料…</view>
+  <view wx:elif="{{member}}" class="member-strip">
+    <image class="member-avatar" src="{{avatarSource}}" mode="aspectFill" />
+    <view class="member-copy">
+      <text class="member-name">{{member.nickname}}，欢迎回来</text>
+      <text class="member-phone">{{member.phone}}</text>
     </view>
-    <view class="points-box">
-      <text class="points-value">{{member.points}}</text>
-      <text class="points-label">可用积分</text>
+    <view class="member-points"><text>{{member.points}}</text><text>积分</text></view>
+  </view>
+  <view wx:elif="{{memberError}}" class="member-strip member-strip-error">{{memberError}}</view>
+
+  <view class="intro-block">
+    <text class="intro-kicker">A QUIET STAY IN NANXUN</text>
+    <text class="intro-title">枕水而居，慢叙江南</text>
+    <text class="intro-copy">择一间雅室，在水巷烟雨间住下。</text>
+  </view>
+
+  <view class="section-heading">
+    <view><text class="section-title">客房一览</text><text class="section-caption">共 {{rooms.length}} 间客房</text></view>
+    <text class="section-note">基础夜价</text>
+  </view>
+
+  <view wx:if="{{roomsLoading}}" class="page-state">正在为你寻一间雅室…</view>
+  <view wx:elif="{{roomsError}}" class="page-state page-state-error">
+    <text>{{roomsError}}</text>
+    <button class="retry-button" bindtap="loadRooms">重新加载</button>
+  </view>
+  <view wx:elif="{{rooms.length === 0}}" class="page-state">
+    <text class="empty-mark">浔</text>
+    <text>客房资料正在准备中</text>
+  </view>
+
+  <view wx:else class="room-list">
+    <view wx:for="{{rooms}}" wx:key="id" class="room-card" data-room-id="{{item.id}}" bindtap="onRoomTap">
+      <image wx:if="{{item.images.length}}" class="room-cover" src="{{item.images[0]}}" mode="aspectFill" />
+      <view wx:else class="room-cover room-cover-empty"><text>客房实景</text></view>
+      <view class="room-card-content">
+        <view class="room-card-heading">
+          <view><text class="room-name">{{item.name}}</text><text class="room-meta">{{item.number}} 房 · 可住 {{item.capacity}} 人</text></view>
+          <view class="room-price"><text>¥{{item.price}}</text><text>/ 晚</text></view>
+        </view>
+        <view class="room-card-footer">
+          <text class="room-bed">{{item.bed_info || '房型信息详见房间详情'}}</text>
+          <text class="room-detail-link">查看详情 ›</text>
+        </view>
+      </view>
     </view>
   </view>
 
-  <view class="phase-note">当前阶段提供手机号登录与会员身份查询。</view>
-  <button class="logout-button" bindtap="onLogoutTap">退出登录</button>
-  <image class="townscape" src="../../assets/decoration-baijianlou-houses.webp" mode="widthFix" />
+  <image class="bottom-decoration" src="../../assets/decoration-baijianlou-houses.webp" mode="widthFix" />
+  <text class="home-footer">芊浔民宿 · 南浔水乡</text>
 </view>

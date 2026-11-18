@@ -23,7 +23,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
- * 配置认证接口的无状态安全链、会员/管理员隔离、BCrypt 和前端开发跨域。
+ * 配置无状态安全链、会员/管理员隔离、公开客房浏览、BCrypt 和前端开发跨域。
  *
  * <p>仅登录接口公开；新增业务接口时必须按所属角色显式配置访问范围。</p>
  */
@@ -31,7 +31,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     /**
-     * 创建无状态安全链。会员令牌只能访问小程序区域，管理员令牌只能访问管理端区域。
+     * 创建无状态安全链。公开客房接口无需登录，会员和管理员令牌仍按端隔离。
      *
      * @param http Spring Security 构造器
      * @param jwtFilter JWT 认证过滤器
@@ -50,6 +50,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/api/app/auth/login", "/api/admin/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/app/rooms", "/api/app/rooms/*").permitAll()
                         .requestMatchers("/api/app/**").hasRole(UserRole.MEMBER.name())
                         .requestMatchers("/api/admin/**").hasRole(UserRole.ADMIN.name())
                         .anyRequest().denyAll())

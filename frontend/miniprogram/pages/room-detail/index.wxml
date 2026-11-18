@@ -1,0 +1,36 @@
+<view class="detail-page">
+  <view wx:if="{{loading}}" class="detail-state">正在读取房间资料…</view>
+  <view wx:elif="{{errorMessage}}" class="detail-state detail-error">
+    <text>{{errorMessage}}</text>
+    <button class="back-button" bindtap="onBackTap">返回客房列表</button>
+  </view>
+  <view wx:elif="{{room}}" class="detail-content">
+    <swiper wx:if="{{room.images.length}}" class="room-gallery" indicator-dots="{{room.images.length > 1}}" indicator-color="rgba(255,255,255,.55)" indicator-active-color="#98501F" circular>
+      <swiper-item wx:for="{{room.images}}" wx:key="*this"><image class="gallery-image" src="{{item}}" mode="aspectFill" /></swiper-item>
+    </swiper>
+    <view wx:else class="room-gallery gallery-empty"><text>暂无客房图片</text></view>
+
+    <view class="detail-card">
+      <view class="detail-title-row">
+        <view><text class="detail-room-number">{{room.number}} 房 · {{room.floor}} 楼</text><text class="detail-room-name">{{room.name}}</text></view>
+        <view class="detail-price"><text>¥{{room.price}}</text><text>/ 晚</text></view>
+      </view>
+      <view class="room-quick-facts">
+        <view><text class="fact-label">入住人数</text><text class="fact-value">{{room.capacity}} 人</text></view>
+        <view><text class="fact-label">床型</text><text class="fact-value">{{room.bed_info || '以房间配置为准'}}</text></view>
+        <view wx:if="{{room.area}}"><text class="fact-label">房间面积</text><text class="fact-value">{{room.area}} ㎡</text></view>
+      </view>
+      <view wx:if="{{room.description}}" class="detail-section">
+        <text class="section-title">房间介绍</text>
+        <text class="description-text">{{room.description}}</text>
+      </view>
+      <view wx:if="{{room.facilities.length}}" class="detail-section">
+        <text class="section-title">房间设施</text>
+        <view class="facility-list"><text wx:for="{{room.facilities}}" wx:key="*this" class="facility-tag">{{item}}</text></view>
+      </view>
+    </view>
+
+    <view class="detail-note"><text>以上为房间基础资料与每晚价格，日期可订情况稍后开放查询。</text></view>
+    <button class="back-button detail-back" bindtap="onBackTap">返回客房列表</button>
+  </view>
+</view>

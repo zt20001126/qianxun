@@ -1,0 +1,45 @@
+<script setup lang="ts">
+/** 阶段二后台壳层，集中提供模块导航、管理员身份和退出入口。 */
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
+const router = useRouter()
+
+function logout(): void {
+  auth.clear()
+  void router.replace('/login')
+}
+</script>
+
+<template>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <span class="sidebar-mark">浔</span>
+        <div><strong>芊浔民宿</strong><small>经营管理后台</small></div>
+      </div>
+      <nav class="sidebar-nav" aria-label="主导航">
+        <RouterLink to="/rooms"><span>客</span>客房管理</RouterLink>
+        <RouterLink to="/channels"><span>渠</span>渠道管理</RouterLink>
+        <RouterLink to="/creators"><span>达</span>达人管理</RouterLink>
+      </nav>
+      <p class="sidebar-note">基础资料</p>
+    </aside>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-heading">
+          <p>芊浔民宿 · 南浔</p>
+          <strong>{{ $route.meta.title || '经营管理' }}</strong>
+        </div>
+        <div class="admin-account">
+          <span class="account-avatar">{{ auth.admin?.username?.slice(0, 1) || '管' }}</span>
+          <span class="account-name">{{ auth.admin?.username }}</span>
+          <button class="text-button" type="button" @click="logout">退出登录</button>
+        </div>
+      </header>
+      <main class="admin-content"><RouterView /></main>
+    </div>
+  </div>
+</template>

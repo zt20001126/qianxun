@@ -1,26 +1,39 @@
-# 芊浔民宿：第一阶段登录认证
+# 芊浔民宿：第二阶段客房、渠道与达人基础资料
 
-当前交付仅包含 A01–A04 四个认证接口，以及会员登录页、管理员登录页和管理员认证成功占位页。数据库只迁移 `members`、`admin` 两表。房间、订单、支付、积分业务不在本阶段。
+当前交付包含 A01–A04 认证接口，以及 R01/R02、R05–R09 客房接口、C01/C02 渠道接口和 D01–D05 达人接口。后台提供客房、渠道、达人管理页；小程序登录后可浏览房间列表和详情。
+
+Flyway 迁移创建 `members`、`admin`、`room`、`channels`、`creators` 五张表，并初始化七个固定渠道。六间客房资料通过独立的一次性脚本从旧库 `homestay_db.room` 与 `room_type` 导入。指定日期可订筛选、封房和房态日历属于后续阶段。
 
 文档分类和原型素材索引见 [docs 文档中心](docs/README.md)。
 
 ## 启动数据库与后端
 
-需要 Docker Desktop、Java 21（仅本地 Maven 测试时需要）和 Node.js 20.19+（管理后台开发时需要）。复制 `deploy/.env.example` 为 `deploy/.env`，填好 OSS 配置并生成一个固定保管的 JWT 密钥：
+需要 Docker Desktop、Java 21 和 Node.js 20.19+。复制 `deploy/.env.example` 为 `deploy/.env`，配置 OSS 和 JWT 密钥：
 
 ```powershell
 Copy-Item deploy/.env.example deploy/.env
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 ```
 
-将生成的密钥写入本机 `deploy/.env` 的 `JWT_SECRET`，不要提交该文件。数据库仍通过一行完整的 `DATABASE_URL` 配置；OSS 的 endpoint、bucket 和访问密钥从同一 `.env` 传给后端。`.env.example` 只提供空占位，真实访问密钥只保存在本机忽略文件中。Flyway 在管理员表为空时初始化管理员账号 `admin`；数据库只保存 BCrypt 哈希，不需要管理员密码环境变量。
+将生成的密钥写入本机 `deploy/.env` 的 `JWT_SECRET`，不要提交该文件。`DATABASE_URL` 配置目标开发库；OSS endpoint、bucket 和访问密钥从同一 `.env` 传给后端。真实访问密钥只保存在本机忽略文件中。
 
 ```powershell
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml up --build -d
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml logs -f backend
 ```
 
-Compose 项目名为 `qianxun`，只启动 MySQL 8.0 和 Java 21 后端。Flyway 在后端启动时创建本阶段的两张表并初始化管理员。MySQL 初始化账号和端口固定在 Compose 配置中；如需切换国内镜像，可通过命令行环境变量覆盖 `DOCKER_REGISTRY_PREFIX` 或 `MAVEN_MIRROR_PROFILE`，默认使用 DaoCloud Docker Hub 代理和阿里云 Maven 仓库。
+Compose 项目名为 `qianxun`，启动 MySQL 8.0 和 Java 21 后端。Flyway 在后端启动时创建当前阶段的数据库表并初始化管理员账号 `admin`；数据库只保存 BCrypt 哈希。MySQL 本地开发账号和端口见 `deploy/docker-compose.yml`。如需切换镜像，可通过命令行环境变量覆盖 `DOCKER_REGISTRY_PREFIX` 或 `MAVEN_MIRROR_PROFILE`。
+
+### 导入旧库客房
+
+新后端启动并完成 Flyway 迁移后，预览旧库房间映射，再导入目标开发库中缺少的固定房号。脚本只读取旧库，不修改或删除源数据；目标库同号房间会保留，不会覆盖管理员后续调整。
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/migrate_legacy_rooms.ps1
+powershell -ExecutionPolicy Bypass -File scripts/migrate_legacy_rooms.ps1 -Apply
+```
+
+脚本分别提示输入源库和目标库密码，凭据不会写入仓库。旧库图片以私有 OSS URI 保存；小程序房间接口会在后端 OSS 配置完整时生成一小时有效的签名读取地址。图片上传不在本阶段接口范围内。
 
 ## 启动管理后台
 
@@ -36,7 +49,7 @@ npm run dev
 
 用微信开发者工具打开 `frontend/miniprogram`。开发者工具中可启用本地调试的 request 域名校验例外；真机预览或发布时，需在 `frontend/miniprogram/config.ts` 配置可访问的 HTTPS API 地址，并在微信公众平台配置合法 request 域名。
 
-## 四个认证接口
+## 当前接口范围
 
 | 方法与路径 | 认证 | 说明 |
 |---|---|---|
@@ -44,16 +57,20 @@ npm run dev
 | `GET /api/app/auth/me` | `MEMBER` | 查询当前会员 |
 | `POST /api/admin/auth/login` | 公开 | 用户名与 BCrypt 密码登录 |
 | `GET /api/admin/auth/me` | `ADMIN` | 查询当前管理员 |
+| `GET /api/app/rooms` | 公开 | 查询已上架房间；日期可订筛选在房态阶段接入 |
+| `GET /api/app/rooms/{id}` | 公开 | 查询房间详情 |
+| `/api/admin/rooms` | `ADMIN` | 房间列表、新增、编辑、上下架 |
+| `/api/admin/channels` | `ADMIN` | 渠道列表、启用/停用 |
+| `/api/admin/creators` | `ADMIN` | 达人列表、详情、新增、编辑、启用/停用 |
 
-所有响应使用 `{"code":200,"message":"success","data":{...}}`。未登录/令牌失效返回 HTTP 401，已认证但角色不符返回 HTTP 403。会员手机号登录不验证号码归属，适用于受控测试环境。
+所有响应使用 `{"code":200,"message":"success","data":{...}}`，列表放在 `data.list`。未登录/令牌失效返回 HTTP 401，已认证但角色不符返回 HTTP 403。会员手机号登录不验证号码归属，适用于受控测试环境。
 
-## 验证
-
-在仓库根目录运行：
+## 质量检查
 
 ```powershell
-mvn -s backend/maven-settings/aliyun.xml -f backend/pom.xml test
+mvn -s backend/maven-settings/aliyun.xml -f backend/pom.xml -DskipTests package
 npm --prefix frontend/admin run build
+npm --prefix frontend/miniprogram run typecheck
 ```
 
-Maven 可选镜像配置为 `backend/maven-settings/aliyun.xml`、`huawei.xml`、`central.xml`。后端测试使用 Testcontainers 启动 MySQL 8，覆盖四个接口、手机号重复登录、并发首次登录、BCrypt、401、403 和手机号校验。
+Maven 可选镜像配置为 `backend/maven-settings/aliyun.xml`、`huawei.xml`、`central.xml`。现有 Testcontainers 集成测试覆盖认证接口；当前阶段新增模块尚未补充自动化测试。

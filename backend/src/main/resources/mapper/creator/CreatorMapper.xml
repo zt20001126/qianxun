@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.creator.mapper.CreatorMapper">
+    <resultMap id="creatorResultMap" type="com.qianxun.homestay.modules.creator.entity.CreatorEntity">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="channelId" column="channel_id"/>
+        <result property="enabled" column="enabled"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="creatorResultMap">
+        SELECT id, name, channel_id, enabled, created_at, updated_at
+        FROM creators
+        <where>
+            <if test="channelId != null">
+                AND channel_id = #{channelId}
+            </if>
+            <if test="enabled != null">
+                AND enabled = #{enabled}
+            </if>
+            <if test="name != null and name != ''">
+                AND name LIKE CONCAT('%', #{name}, '%')
+            </if>
+        </where>
+        ORDER BY channel_id, name, id
+    </select>
+
+    <select id="findById" resultMap="creatorResultMap">
+        SELECT id, name, channel_id, enabled, created_at, updated_at
+        FROM creators
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO creators (name, channel_id, enabled)
+        VALUES (#{name}, #{channelId}, 1)
+    </insert>
+
+    <update id="update">
+        UPDATE creators SET name = #{name}, channel_id = #{channelId}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateEnabled">
+        UPDATE creators SET enabled = #{enabled} WHERE id = #{id}
+    </update>
+</mapper>

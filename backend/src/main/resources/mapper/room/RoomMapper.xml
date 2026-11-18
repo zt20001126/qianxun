@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.room.mapper.RoomMapper">
+    <resultMap id="roomResultMap" type="com.qianxun.homestay.modules.room.entity.RoomEntity">
+        <id property="id" column="id"/>
+        <result property="number" column="number"/>
+        <result property="name" column="name"/>
+        <result property="floor" column="floor"/>
+        <result property="price" column="price"/>
+        <result property="capacity" column="capacity"/>
+        <result property="bedInfo" column="bed_info"/>
+        <result property="area" column="area"/>
+        <result property="facilities" column="facilities"
+                typeHandler="com.qianxun.homestay.common.persistence.JsonStringListTypeHandler"/>
+        <result property="images" column="images"
+                typeHandler="com.qianxun.homestay.common.persistence.JsonStringListTypeHandler"/>
+        <result property="description" column="description"/>
+        <result property="enabled" column="enabled"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="roomColumns">
+        id, number, name, floor, price, capacity, bed_info, area, facilities, images,
+        description, enabled, created_at, updated_at
+    </sql>
+
+    <select id="findAll" resultMap="roomResultMap">
+        SELECT <include refid="roomColumns"/>
+        FROM room
+        ORDER BY floor, number
+    </select>
+
+    <select id="findEnabled" resultMap="roomResultMap">
+        SELECT <include refid="roomColumns"/>
+        FROM room
+        WHERE enabled = 1
+        ORDER BY floor, number
+    </select>
+
+    <select id="findById" resultMap="roomResultMap">
+        SELECT <include refid="roomColumns"/>
+        FROM room
+        WHERE id = #{id}
+    </select>
+
+    <select id="findEnabledById" resultMap="roomResultMap">
+        SELECT <include refid="roomColumns"/>
+        FROM room
+        WHERE id = #{id} AND enabled = 1
+    </select>
+
+    <select id="existsNumber" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM room WHERE number = #{number})
+    </select>
+
+    <select id="existsNumberForOtherRoom" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM room WHERE number = #{number} AND id &lt;&gt; #{id})
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO room (
+            number, name, floor, price, capacity, bed_info, area, facilities, images, description, enabled
+        ) VALUES (
+            #{number}, #{name}, #{floor}, #{price}, #{capacity}, #{bedInfo}, #{area},
+            #{facilities,typeHandler=com.qianxun.homestay.common.persistence.JsonStringListTypeHandler},
+            #{images,typeHandler=com.qianxun.homestay.common.persistence.JsonStringListTypeHandler},
+            #{description}, 1
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE room
+        SET number = #{number}, name = #{name}, floor = #{floor}, price = #{price},
+            capacity = #{capacity}, bed_info = #{bedInfo}, area = #{area},
+            facilities = #{facilities,typeHandler=com.qianxun.homestay.common.persistence.JsonStringListTypeHandler},
+            images = #{images,typeHandler=com.qianxun.homestay.common.persistence.JsonStringListTypeHandler},
+            description = #{description}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateEnabled">
+        UPDATE room SET enabled = #{enabled} WHERE id = #{id}
+    </update>
+</mapper>

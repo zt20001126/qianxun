@@ -1,7 +1,8 @@
 {
   "pages": [
     "pages/login/index",
-    "pages/home/index"
+    "pages/home/index",
+    "pages/room-detail/index"
   ],
   "window": {
     "navigationBarTitleText": "芊浔民宿",
