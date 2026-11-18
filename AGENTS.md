@@ -18,16 +18,60 @@
 - 后端基线：Java 21、Spring Boot 3.x、MyBatis + XML、MySQL 8.0/InnoDB、Jakarta Validation、Spring Security/JWT、BCrypt。推荐 Flyway、springdoc-openapi、JUnit 5；已有等效工具时优先复用。
 - PC 管理后台建议 Vue 3 + TypeScript + Vite + Element Plus；小程序建议原生微信小程序 + TypeScript。若已有前端框架，保持现有技术栈，禁止未经批准整体迁移。
 - 第一阶段不引入 Redis、微服务、消息队列、真实微信支付、OpenID、短信验证码、多门店或多管理员 RBAC。
-- 后端按业务模块组织 `controller/`、`dto/`、`vo/`、`entity/`、`mapper/`、`service/`，复杂纯业务规则可放 `domain/`；MyBatis XML 放 `src/main/resources/mapper/<module>/`。
-- 如果现有包名为 `com.homestay.module.*`，继续使用；`com.qianxun.homestay` 仅是实施指南示例，不得无理由批量改包名。
+- Java 后端按现有模块化单体和业务模块组织代码。每个模块按实际需要使用 `controller/`、`service/`、`service/impl/`、`mapper/`、`entity/`、`dto/`、`vo/`、`convert/`、`enums/` 等目录；复杂纯业务规则可放 `domain/`。目录示例不要求创建空目录或无实际用途的类。MyBatis XML 统一放在 `src/main/resources/mapper/<module>/`。
+- 例如，当前 `modules/room/` 可按需组织为：
+  ```text
+  room/
+  ├── controller/RoomController.java
+  ├── service/
+  │   ├── RoomService.java
+  │   └── impl/RoomServiceImpl.java
+  ├── mapper/RoomMapper.java
+  ├── entity/RoomEntity.java
+  ├── dto/
+  │   ├── RoomCreateDTO.java
+  │   ├── RoomUpdateDTO.java
+  │   └── RoomQueryDTO.java
+  ├── vo/
+  │   ├── RoomVO.java
+  │   └── RoomDetailVO.java
+  ├── convert/RoomConvert.java
+  └── enums/（业务确有枚举时创建）
+  ```
+  这是职责与位置示意，不代表每个模块都必须创建全部文件。
+- 保持仓库现有包名、模块根目录及整体架构；当前后端包名为 `com.qianxun.homestay`，模块根目录为 `modules/`。不得将实施指南中的示例包名或目录结构作为批量改名、整体迁移的理由。
+- 新增 Java 业务模块应采用传统企业级分层：Controller → Service 接口 → ServiceImpl → Mapper/XML，并按实际业务需要使用 DTO、Entity、VO 和 Convert。不得跳过必要分层，也不得为形式完整而创建无用对象。
 - 模块包括认证、客房、房态校验、封房、临时锁房、订单、模拟支付、模拟退款、会员、积分、渠道、达人、房态日历、经营支出、报表及导入；避免跨模块循环依赖。
 
 ## 3. Java 与后端编码规范
 
+以下分层和对象规范是本项目所有 Java 后端新增、修改及重构任务的强制要求。实施任务时先检查对应模块现状，沿用项目实际包名、目录根和技术栈；只在本次涉及范围内进行必要规范化，不擅自重构无关模块。
+
+### 3.1 传统企业级分层
+
 - Java 类、方法、字段分别遵循 `PascalCase`、`camelCase`、`camelCase`；数据库表/字段和 JSON 属性使用 `snake_case`，通过统一 Jackson 配置映射。
-- Controller 负责路由、鉴权上下文、参数绑定、校验和响应封装；Service 负责业务规则、状态流转和事务；Mapper 接口声明数据库操作，**SQL 必须写在 MyBatis XML**，不在 Controller 或 Mapper 注解中编写业务 SQL。
-- Entity 仅映射数据库；Request/Query DTO 用于输入；VO/Response 用于输出。禁止直接暴露 Entity、密码哈希、其他顾客隐私或不必要的内部佣金字段。
-- `id` 使用 `Long`，金额使用 `BigDecimal`，数据库 `DECIMAL(12,2)`，接口金额使用十进制字符串；禁止 `float`/`double` 处理货币，金额按规则保留两位小数。
+- Controller 只负责路由、身份权限上下文、参数接收与校验、调用 Service 接口及响应封装；不得直接调用 Mapper、操作数据库或编写业务规则。
+- 每个新增业务 Service 必须采用接口与实现类分离：接口命名为 `XxxService` 并放在 `service/`，实现类命名为 `XxxServiceImpl` 并放在 `service/impl/`，实现类使用 `@Service` 并实现对应接口。Controller 和其他业务 Service 依赖 Service 接口，不依赖实现类。
+- Service 接口只声明业务方法；业务校验、状态流转、事务边界及跨表操作由 Service 实现类负责。Service 接口中的每个业务方法必须有简洁中文 JavaDoc。复杂业务方法的实现应注释关键业务规则。
+- 优先使用构造器注入；项目已使用 Lombok 时优先采用 `@RequiredArgsConstructor`。若项目未配置 Lombok，使用显式构造器，不为此单独引入依赖。
+- Mapper 接口只声明数据库访问方法，**SQL 必须写在对应的 MyBatis XML**，不得在 Controller、Service 或 Mapper 注解中编写 SQL，也不得在 Mapper 层实现业务规则。Mapper 与 Entity/数据库字段映射应清晰一致。
+- 目录示例仅用于说明分层，不要求每个模块创建所有目录；按实际业务创建文件，不生成空类、空目录或无意义的抽象。
+
+### 3.2 DTO、Entity、VO 与转换
+
+- **DTO** 放在 `dto/`，用于承接接口请求和业务输入；新对象按业务需要区分 `XxxCreateDTO`、`XxxUpdateDTO`、`XxxQueryDTO` 等，并使用 Jakarta Validation 校验。禁止使用 Entity 接收前端请求。
+- **Entity** 放在 `entity/`，使用 `XxxEntity` 命名，用于数据库表字段映射和持久化。Entity 与数据库设计保持一致；不同时创建重复的 PO 和 Entity。现有对象命名不一致时先检查调用关系，仅在任务范围确有必要时调整，不因本规范更新批量改名。
+- **VO** 放在 `vo/`，封装返回前端的列表、详情等视图数据。Controller 返回 VO 或项目已有的统一响应包装；不得将 Entity 作为接口响应，也不得暴露密码哈希、其他顾客隐私或不必要的内部佣金等字段。
+- **Convert** 按需放在 `convert/`，集中 DTO、Entity、VO 之间可复用的转换；简单转换可手写，不强制引入 MapStruct 等依赖。不得为了目录规范创建没有实际用途的 DTO、Entity、VO 或 Convert。
+- 对象职责保持明确：Controller 接收 DTO 并返回 VO/统一响应；Service 负责业务处理和对象协调；Mapper 负责数据库访问并与 Entity/明确的查询结果映射配合。不得相互混用。
+
+### 3.3 注释与通用质量要求
+
+- 所有新增或修改的 Java 业务代码都应带有简洁、准确、必要的简体中文注释。Controller、Service 接口/实现类、Mapper、DTO、Entity、VO、Convert、业务枚举等业务类必须有简洁的类级 JavaDoc，说明主要职责；不写作者、日期或冗长套话。
+- Service 接口业务方法必须有中文 JavaDoc，说明用途，必要时标明 `@param`、`@return`；实现类不重复完全相同的接口说明，但应解释复杂实现逻辑。
+- DTO、Entity、VO 中含义不直观的字段应添加中文说明；关键金额、状态和日期字段须明确业务含义。普通字段无需重复写无意义注释。
+- 复杂条件、状态流转、事务、并发控制和库存校验等关键逻辑应说明业务原因；注释必须与实际行为一致，不逐行解释显而易见的代码。修改逻辑时同步更新相关注释。
+- `id` 使用 `Long`；金额使用 `BigDecimal`，数据库 `DECIMAL(12,2)`，接口金额使用十进制字符串；禁止 `float`/`double` 处理货币，金额按规则保留两位小数。
 - 日期用 `LocalDate`；时间用 `Instant`/`LocalDateTime` 并明确存储时区；业务日期和 18:00 截止判断统一按 `Asia/Shanghai`。禁止混用系统默认时区。
 - 状态和积分流水类型使用集中定义的枚举，持久化稳定英文值，不使用中文展示文案判断业务。
 - 参数验证使用 Jakarta Validation 和必要的 Service 级业务校验；异常由全局处理器统一映射业务错误码与 HTTP 状态。
@@ -169,18 +213,20 @@
 ## 9. AI 执行任务流程
 
 **开始前**
-1. 阅读本文件和本次任务涉及的 V3.1 章节；检查 `git status`、目录、现有实现及相关测试。
+1. 每次 Java 后端开发任务首先阅读本文件及本次任务涉及的 V3.1 章节；检查 `git status`、对应模块目录、已有实现及相关测试。
 2. 明确本次任务的目标、涉及模块、接口、表和不可修改范围；复杂任务先给出简短实施方案。
 3. 对缺失或未确认的业务细节提问；不得把“建议”伪装为已确认需求。
 
 **开发中**
 1. 优先最小差异修改，不覆盖用户已有未提交更改；不无故格式化整个仓库、批量改名或升级依赖。
-2. 先保证后端业务规则、事务和测试，再接入 UI；前后端共享接口契约。
-3. 若需要新增接口/字段/表、改变已确认行为、执行危险数据库操作或引入新技术，先解释并请求批准。
-4. 发现安全问题、潜在超售、积分错账或财务口径错误时，优先指出并修复任务范围内的问题，不通过静默忽略异常绕过。
+2. 严格遵守本文件第 2、3 节的分层、对象职责和中文注释要求；所有新增业务 Service 都创建接口及 ServiceImpl，按需要创建 DTO、Entity、VO，数据库访问使用 Mapper + XML。
+3. 修改现有 Java 代码时，检查本次涉及代码是否符合上述规范并作必要规范化；不擅自重构无关模块。若规范化涉及大规模重构，先说明影响范围并请求确认。
+4. 先保证后端业务规则、事务和测试，再接入 UI；前后端共享接口契约。
+5. 若需要新增接口/字段/表、改变已确认行为、执行危险数据库操作或引入新技术，先解释并请求批准。
+6. 发现安全问题、潜在超售、积分错账或财务口径错误时，优先指出并修复任务范围内的问题，不通过静默忽略异常绕过。
 
 **完成后**
-1. 汇报修改文件、实现内容、影响范围、运行的命令和测试结果；明确未测试、失败及待确认项。
+1. 对 Java 后端改动检查编译错误、依赖注入、事务边界及 DTO/Entity/VO 转换；按第 8 节执行适用的质量检查，并如实汇报运行的命令、结果、未测试项和失败原因。
 2. 若接口或数据库契约经用户确认发生变化，同步更新对应文档、迁移和测试；不得只改代码造成文档漂移。
 3. 不自动提交、推送、部署或清理生产数据，除非用户明确要求。
 
