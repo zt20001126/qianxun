@@ -6,14 +6,14 @@
 
 ## 启动数据库与后端
 
-需要 Docker Desktop、Java 21（仅本地 Maven 测试时需要）和 Node.js 20.19+（管理后台开发时需要）。复制 `deploy/.env.example` 为 `deploy/.env`，只需生成并填入一个固定保管的 JWT 密钥：
+需要 Docker Desktop、Java 21（仅本地 Maven 测试时需要）和 Node.js 20.19+（管理后台开发时需要）。复制 `deploy/.env.example` 为 `deploy/.env`，填好 OSS 配置并生成一个固定保管的 JWT 密钥：
 
 ```powershell
 Copy-Item deploy/.env.example deploy/.env
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 ```
 
-将生成的密钥写入本机 `deploy/.env` 的 `JWT_SECRET`，不要提交该文件。`.env` 中数据库只配置一行完整的 `DATABASE_URL`，数据库名、应用用户名和密码均为 `qianxun`。Flyway 在管理员表为空时初始化管理员账号 `admin`，默认密码为 `qianxun`；数据库只保存 BCrypt 哈希，不需要管理员密码环境变量。
+将生成的密钥写入本机 `deploy/.env` 的 `JWT_SECRET`，不要提交该文件。数据库仍通过一行完整的 `DATABASE_URL` 配置；OSS 的 endpoint、bucket 和访问密钥从同一 `.env` 传给后端。`.env.example` 只提供空占位，真实访问密钥只保存在本机忽略文件中。Flyway 在管理员表为空时初始化管理员账号 `admin`；数据库只保存 BCrypt 哈希，不需要管理员密码环境变量。
 
 ```powershell
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml up --build -d

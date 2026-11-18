@@ -29,6 +29,11 @@ app:
     default-avatar: ${MEMBER_DEFAULT_AVATAR:/assets/avatar-default.webp}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  oss:
+    endpoint: ${OSS_ENDPOINT:}
+    bucket: ${OSS_BUCKET:}
+    access-key-id: ${OSS_ACCESS_KEY_ID:}
+    access-key-secret: ${OSS_ACCESS_KEY_SECRET:}
 
 logging:
   level:
