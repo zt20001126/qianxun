@@ -1,5 +1,8 @@
-package com.qianxun.homestay.common.security;
+package com.qianxun.homestay.common.security.service.impl;
 
+import com.qianxun.homestay.common.security.AuthPrincipal;
+import com.qianxun.homestay.common.security.UserRole;
+import com.qianxun.homestay.common.security.service.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,11 +14,9 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-/**
- * 签发和校验会员、管理员分离的 JWT；密钥由部署环境提供。
- */
+/** 签发和校验会员、管理员分离的 JWT；密钥由部署环境提供。 */
 @Service
-public class JwtService {
+public class JwtServiceImpl implements JwtService {
 
     private final SecretKey signingKey;
     private final long memberExpirationSeconds;
@@ -28,7 +29,7 @@ public class JwtService {
      * @param memberExpirationSeconds 会员令牌秒数
      * @param adminExpirationSeconds 管理员令牌秒数
      */
-    public JwtService(
+    public JwtServiceImpl(
             @Value("${app.jwt.secret}") String base64Secret,
             @Value("${app.jwt.member-expiration-seconds}") long memberExpirationSeconds,
             @Value("${app.jwt.admin-expiration-seconds}") long adminExpirationSeconds) {
@@ -44,6 +45,7 @@ public class JwtService {
      * @param memberId 会员 ID
      * @return JWT 字符串
      */
+    @Override
     public String issueMemberToken(Long memberId) {
         return issueToken(memberId, UserRole.MEMBER, memberExpirationSeconds);
     }
@@ -54,6 +56,7 @@ public class JwtService {
      * @param adminId 管理员 ID
      * @return JWT 字符串
      */
+    @Override
     public String issueAdminToken(Long adminId) {
         return issueToken(adminId, UserRole.ADMIN, adminExpirationSeconds);
     }
@@ -63,6 +66,7 @@ public class JwtService {
      *
      * @return 有效秒数
      */
+    @Override
     public long getMemberExpirationSeconds() {
         return memberExpirationSeconds;
     }
@@ -74,6 +78,7 @@ public class JwtService {
      * @return 当前认证身份
      * @throws JwtException 令牌无效或已过期
      */
+    @Override
     public AuthPrincipal parse(String token) throws JwtException {
         Claims claims = Jwts.parser().verifyWith(signingKey).build()
                 .parseSignedClaims(token).getPayload();

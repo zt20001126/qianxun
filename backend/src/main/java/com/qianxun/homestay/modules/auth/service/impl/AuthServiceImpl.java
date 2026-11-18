@@ -1,7 +1,7 @@
 package com.qianxun.homestay.modules.auth.service.impl;
 
 import com.qianxun.homestay.common.exception.BusinessException;
-import com.qianxun.homestay.common.security.JwtService;
+import com.qianxun.homestay.common.security.service.JwtService;
 import com.qianxun.homestay.modules.auth.service.AuthService;
 import com.qianxun.homestay.modules.auth.vo.AppLoginVO;
 import com.qianxun.homestay.modules.auth.vo.MemberVO;
