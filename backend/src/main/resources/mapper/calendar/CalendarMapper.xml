@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.calendar.mapper.CalendarMapper">
+    <resultMap id="calendarRoomResultMap" type="com.qianxun.homestay.modules.room.entity.RoomEntity">
+        <id property="id" column="id"/>
+        <result property="number" column="number"/>
+    </resultMap>
+
+    <resultMap id="calendarOrderResultMap" type="com.qianxun.homestay.modules.order.entity.OrderEntity">
+        <id property="id" column="id"/>
+        <result property="roomId" column="room_id"/>
+        <result property="checkIn" column="check_in"/>
+        <result property="checkOut" column="check_out"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap id="calendarBlockResultMap" type="com.qianxun.homestay.modules.roomblock.entity.RoomBlockEntity">
+        <id property="id" column="id"/>
+        <result property="roomId" column="room_id"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+    </resultMap>
+
+    <select id="findRooms" resultMap="calendarRoomResultMap">
+        SELECT id, number FROM room ORDER BY floor, number
+    </select>
+
+    <select id="findOverlappingOrders" resultMap="calendarOrderResultMap">
+        SELECT id, room_id, check_in, check_out, status
+        FROM orders
+        WHERE status &lt;&gt; #{cancelledStatus}
+          AND check_in &lt; #{monthEnd}
+          AND check_out &gt; #{monthStart}
+        ORDER BY check_in, id
+    </select>
+
+    <select id="findOverlappingBlocks" resultMap="calendarBlockResultMap">
+        SELECT id, room_id, start_date, end_date
+        FROM room_block
+        WHERE start_date &lt; #{monthEnd}
+          AND end_date &gt; #{monthStart}
+        ORDER BY start_date, id
+    </select>
+</mapper>
