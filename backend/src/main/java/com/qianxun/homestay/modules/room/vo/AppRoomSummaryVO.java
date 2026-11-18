@@ -10,5 +10,6 @@ public record AppRoomSummaryVO(
         String price,
         Integer capacity,
         String bedInfo,
-        List<String> images) {
+        List<String> images,
+        Boolean available) {
 }

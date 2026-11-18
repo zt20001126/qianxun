@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,13 +94,22 @@ class CatalogApiIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404));
 
-        mockMvc.perform(get("/api/app/rooms").param("check_in", "2026-11-20"))
+        LocalDate checkIn = LocalDate.now(ZoneId.of("Asia/Shanghai")).plusDays(1);
+        LocalDate checkOut = checkIn.plusDays(2);
+        mockMvc.perform(get("/api/app/rooms").param("check_in", checkIn.toString()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
 
         mockMvc.perform(get("/api/app/rooms")
-                        .param("check_in", "2026-11-20")
-                        .param("check_out", "2026-11-22"))
+                        .param("check_in", checkIn.toString())
+                        .param("check_out", checkOut.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.list.length()").value(1))
+                .andExpect(jsonPath("$.data.list[0].available").value(true));
+
+        mockMvc.perform(get("/api/app/rooms")
+                        .param("check_in", checkIn.minusDays(2).toString())
+                        .param("check_out", checkIn.minusDays(1).toString()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value(422));
     }

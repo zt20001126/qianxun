@@ -27,8 +27,26 @@
     <text class="intro-copy">择一间雅室，在水巷烟雨间住下。</text>
   </view>
 
+  <view class="date-search-card">
+    <view class="date-search-heading"><text>择日入住</text><text wx:if="{{nights}}">共 {{nights}} 晚</text></view>
+    <view class="date-pickers">
+      <picker mode="date" value="{{checkIn || today}}" start="{{today}}" end="{{checkInMax}}" bindchange="onCheckInChange">
+        <view class="date-choice"><text>入住</text><text class="date-value">{{checkInLabel}}</text></view>
+      </picker>
+      <view class="date-arrow">至</view>
+      <picker mode="date" value="{{checkOut || checkOutMin}}" start="{{checkOutMin}}" end="{{maxDate}}" bindchange="onCheckOutChange">
+        <view class="date-choice"><text>退房</text><text class="date-value">{{checkOutLabel}}</text></view>
+      </picker>
+    </view>
+    <view class="date-search-actions">
+      <button class="search-rooms-button" bindtap="onSearchTap" disabled="{{roomsLoading}}">查询可订客房</button>
+      <button wx:if="{{checkIn || checkOut}}" class="clear-dates-button" bindtap="onClearDatesTap">清除日期</button>
+    </view>
+    <text class="date-search-note">入住与退房日期均限未来 60 天，最终可订情况以后端复核为准</text>
+  </view>
+
   <view class="section-heading">
-    <view><text class="section-title">客房一览</text><text class="section-caption">共 {{rooms.length}} 间客房</text></view>
+    <view><text class="section-title">{{checkIn && checkOut ? '可订客房' : '客房一览'}}</text><text class="section-caption">共 {{rooms.length}} 间客房</text></view>
     <text class="section-note">基础夜价</text>
   </view>
 
@@ -39,7 +57,7 @@
   </view>
   <view wx:elif="{{rooms.length === 0}}" class="page-state">
     <text class="empty-mark">浔</text>
-    <text>客房资料正在准备中</text>
+    <text>{{checkIn && checkOut ? '所选日期暂无可订客房' : '客房资料正在准备中'}}</text>
   </view>
 
   <view wx:else class="room-list">

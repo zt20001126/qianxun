@@ -1,8 +1,8 @@
-# 芊浔民宿：第二阶段客房、渠道与达人基础资料
+# 芊浔民宿：第三阶段房态校验与封房
 
-当前交付包含 A01–A04 认证接口，以及 R01/R02、R05–R09 客房接口、C01/C02 渠道接口和 D01–D05 达人接口。后台提供客房、渠道、达人管理页；小程序登录后可浏览房间列表和详情。
+当前交付包含 A01–A04 认证接口、客房/封房 R01–R13、渠道 C01/C02 和达人 D01–D05。后台提供客房、封房、渠道、达人管理页；小程序支持浏览房间、按日期筛选可订房间、查看单房 60 天日历并复核日期区间。
 
-Flyway 迁移创建 `members`、`admin`、`room`、`channels`、`creators` 五张表，并初始化七个固定渠道。六间客房资料通过独立的一次性脚本从旧库 `homestay_db.room` 与 `room_type` 导入。指定日期可订筛选、封房和房态日历属于后续阶段。
+Flyway 迁移创建 `members`、`admin`、`room`、`channels`、`creators`、`room_block`、`orders` 和 `booking_lock`，并初始化七个固定渠道。`orders` 与 `booking_lock` 目前建立 V3.1 定义的完整表结构，供统一房态查询读取，录单、支付和积分流程仍属于后续阶段。六间客房资料通过独立的一次性脚本从旧库 `homestay_db.room` 与 `room_type` 导入。
 
 文档分类和原型素材索引见 [docs 文档中心](docs/README.md)。
 
@@ -57,9 +57,12 @@ npm run dev
 | `GET /api/app/auth/me` | `MEMBER` | 查询当前会员 |
 | `POST /api/admin/auth/login` | 公开 | 用户名与 BCrypt 密码登录 |
 | `GET /api/admin/auth/me` | `ADMIN` | 查询当前管理员 |
-| `GET /api/app/rooms` | 公开 | 查询已上架房间；日期可订筛选在房态阶段接入 |
+| `GET /api/app/rooms` | 公开 | 查询已上架房间；可同时提供 `check_in`、`check_out` 筛选可订房间 |
 | `GET /api/app/rooms/{id}` | 公开 | 查询房间详情 |
+| `GET /api/app/rooms/{id}/availability?month=YYYY-MM` | 公开 | 查询未来 60 天范围内该房间不可订日期 |
+| `POST /api/app/rooms/availability-check` | 公开 | 复核指定住宿区间、晚数和当前房费 |
 | `/api/admin/rooms` | `ADMIN` | 房间列表、新增、编辑、上下架 |
+| `/api/admin/room-blocks` | `ADMIN` | 封房列表、新增、调整、整段解封；写入时检查订单和有效临时锁房冲突 |
 | `/api/admin/channels` | `ADMIN` | 渠道列表、启用/停用 |
 | `/api/admin/creators` | `ADMIN` | 达人列表、详情、新增、编辑、启用/停用 |
 
@@ -68,9 +71,15 @@ npm run dev
 ## 质量检查
 
 ```powershell
-mvn -s backend/maven-settings/aliyun.xml -f backend/pom.xml -DskipTests package
+mvn -s backend/maven-settings/aliyun.xml -f backend/pom.xml test
 npm --prefix frontend/admin run build
 npm --prefix frontend/miniprogram run typecheck
 ```
 
-Maven 可选镜像配置为 `backend/maven-settings/aliyun.xml`、`huawei.xml`、`central.xml`。现有 Testcontainers 集成测试覆盖认证接口；当前阶段新增模块尚未补充自动化测试。
+打包可单独运行：
+
+```powershell
+mvn -s backend/maven-settings/aliyun.xml -f backend/pom.xml -DskipTests package
+```
+
+Maven 可选镜像配置为 `backend/maven-settings/aliyun.xml`、`huawei.xml`、`central.xml`。房态阶段 Testcontainers 集成测试覆盖日期筛选、R03/R04、60 天边界、封房冲突与管理员权限；运行这些接口测试需要 Docker Desktop。

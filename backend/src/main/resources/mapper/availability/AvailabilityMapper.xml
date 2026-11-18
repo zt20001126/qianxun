@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.availability.mapper.AvailabilityMapper">
+    <resultMap id="availabilityRangeResultMap"
+               type="com.qianxun.homestay.modules.availability.entity.AvailabilityRangeEntity">
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+    </resultMap>
+
+    <select id="lockRoom" resultType="long">
+        SELECT id FROM room WHERE id = #{roomId} FOR UPDATE
+    </select>
+
+    <select id="findOverlappingRanges" resultMap="availabilityRangeResultMap">
+        SELECT check_in AS start_date, check_out AS end_date
+        FROM orders
+        WHERE room_id = #{roomId}
+          AND status &lt;&gt; #{cancelledOrderStatus}
+          AND check_in &lt; #{endDate}
+          AND check_out &gt; #{startDate}
+        UNION ALL
+        SELECT start_date, end_date
+        FROM room_block
+        WHERE room_id = #{roomId}
+          AND start_date &lt; #{endDate}
+          AND end_date &gt; #{startDate}
+        <if test="excludedBlockId != null">
+          AND id &lt;&gt; #{excludedBlockId}
+        </if>
+        UNION ALL
+        SELECT check_in AS start_date, check_out AS end_date
+        FROM booking_lock
+        WHERE room_id = #{roomId}
+          AND status = #{pendingBookingStatus}
+          AND expires_at &gt; #{now}
+          AND check_in &lt; #{endDate}
+          AND check_out &gt; #{startDate}
+    </select>
+</mapper>

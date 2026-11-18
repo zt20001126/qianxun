@@ -101,6 +101,9 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .data-table td small { display: block; margin-top: 5px; color: #a0968d; font-size: 10px; }
 .rooms-table { min-width: 920px; }
 .room-number { color: #6f4022 !important; font-family: Georgia, serif; font-size: 15px !important; }
+.blocks-table { min-width: 760px; }
+.danger-action { color: #a1483b; }
+.form-help { margin: -2px 0 0; color: #8f8175; font-size: 11px; line-height: 1.6; }
 .price-cell { color: #c34e3d; font-family: Georgia, serif; font-size: 15px; font-weight: 600; }
 .price-cell small { display: inline !important; color: #a49a90 !important; font-family: Inter, "PingFang SC", sans-serif; font-size: 10px !important; font-weight: 400; }
 .actions-column { width: 160px; text-align: right !important; }

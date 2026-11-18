@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** R05-R09 客房资料维护。房态封房和日期可订筛选在后续房态阶段接入。 */
+/** R05-R09 客房资料维护。具体日期占用由房态模块统一校验。 */
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { roomApi } from '../../api/rooms'
 import type { Room, RoomSaveRequest } from '../../types/catalog'

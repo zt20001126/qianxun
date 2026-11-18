@@ -14,6 +14,7 @@ export const router = createRouter({
       children: [
         { path: 'home', redirect: '/rooms' },
         { path: 'rooms', component: () => import('../views/rooms/index.vue'), meta: { title: '客房管理' } },
+        { path: 'room-blocks', component: () => import('../views/room-blocks/index.vue'), meta: { title: '封房管理' } },
         { path: 'channels', component: () => import('../views/channels/index.vue'), meta: { title: '渠道管理' } },
         { path: 'creators', component: () => import('../views/creators/index.vue'), meta: { title: '达人管理' } },
       ],

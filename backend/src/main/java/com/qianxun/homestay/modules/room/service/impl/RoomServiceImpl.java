@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.room.service.impl;
 
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.util.ApiTime;
+import com.qianxun.homestay.modules.availability.service.AvailabilityService;
 import com.qianxun.homestay.modules.room.dto.RoomSaveRequest;
 import com.qianxun.homestay.modules.room.entity.RoomEntity;
 import com.qianxun.homestay.modules.room.mapper.RoomMapper;
@@ -19,7 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 客房基础资料查询和维护。日期可订判断由后续房态模块统一负责。 */
+/** 客房基础资料查询和维护；日期可订判断统一委托房态模块。 */
 @Service
 public class RoomServiceImpl implements RoomService {
 
@@ -27,10 +28,15 @@ public class RoomServiceImpl implements RoomService {
 
     private final RoomMapper roomMapper;
     private final RoomImageUrlService roomImageUrlService;
+    private final AvailabilityService availabilityService;
 
-    public RoomServiceImpl(RoomMapper roomMapper, RoomImageUrlService roomImageUrlService) {
+    public RoomServiceImpl(
+            RoomMapper roomMapper,
+            RoomImageUrlService roomImageUrlService,
+            AvailabilityService availabilityService) {
         this.roomMapper = roomMapper;
         this.roomImageUrlService = roomImageUrlService;
+        this.availabilityService = availabilityService;
     }
 
     @Override
@@ -49,9 +55,13 @@ public class RoomServiceImpl implements RoomService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "入住日期和退房日期必须同时提供");
         }
         if (checkIn != null) {
-            throw new BusinessException(HttpStatus.UNPROCESSABLE_ENTITY, "日期可订筛选将在房态校验阶段开放");
+            availabilityService.validateMiniProgramRange(checkIn, checkOut);
+            return roomMapper.findEnabled().stream()
+                    .filter(room -> availabilityService.isAvailable(room.getId(), checkIn, checkOut))
+                    .map(room -> toAppSummaryVO(room, true))
+                    .toList();
         }
-        return roomMapper.findEnabled().stream().map(this::toAppSummaryVO).toList();
+        return roomMapper.findEnabled().stream().map(room -> toAppSummaryVO(room, null)).toList();
     }
 
     @Override
@@ -149,10 +159,10 @@ public class RoomServiceImpl implements RoomService {
                 ApiTime.fromShanghai(room.getCreatedAt()), ApiTime.fromShanghai(room.getUpdatedAt()));
     }
 
-    private AppRoomSummaryVO toAppSummaryVO(RoomEntity room) {
+    private AppRoomSummaryVO toAppSummaryVO(RoomEntity room, Boolean available) {
         return new AppRoomSummaryVO(
                 room.getId(), room.getNumber(), room.getName(), formatPrice(room.getPrice()), room.getCapacity(),
-                room.getBedInfo(), roomImageUrlService.resolveForApp(room.getImages()));
+                room.getBedInfo(), roomImageUrlService.resolveForApp(room.getImages()), available);
     }
 
     private String formatPrice(BigDecimal price) {

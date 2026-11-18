@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.roomblock.mapper.RoomBlockMapper">
+    <resultMap id="roomBlockResultMap" type="com.qianxun.homestay.modules.roomblock.entity.RoomBlockEntity">
+        <id property="id" column="id"/>
+        <result property="roomId" column="room_id"/>
+        <result property="startDate" column="start_date"/>
+        <result property="endDate" column="end_date"/>
+        <result property="reason" column="reason"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="roomBlockColumns">
+        id, room_id, start_date, end_date, reason, created_at, updated_at
+    </sql>
+
+    <select id="findAll" resultMap="roomBlockResultMap">
+        SELECT <include refid="roomBlockColumns"/>
+        FROM room_block
+        <where>
+            <if test="roomId != null">AND room_id = #{roomId}</if>
+            <if test="monthStart != null and monthEnd != null">
+                AND start_date &lt; #{monthEnd} AND end_date &gt; #{monthStart}
+            </if>
+        </where>
+        ORDER BY start_date, room_id, id
+    </select>
+
+    <select id="findById" resultMap="roomBlockResultMap">
+        SELECT <include refid="roomBlockColumns"/> FROM room_block WHERE id = #{id}
+    </select>
+
+    <select id="findByIdForUpdate" resultMap="roomBlockResultMap">
+        SELECT <include refid="roomBlockColumns"/> FROM room_block WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO room_block (room_id, start_date, end_date, reason)
+        VALUES (#{roomId}, #{startDate}, #{endDate}, #{reason})
+    </insert>
+
+    <update id="update">
+        UPDATE room_block
+        SET room_id = #{roomId}, start_date = #{startDate}, end_date = #{endDate}, reason = #{reason}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM room_block WHERE id = #{id}
+    </delete>
+</mapper>

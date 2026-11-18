@@ -30,7 +30,40 @@
       </view>
     </view>
 
-    <view class="detail-note"><text>以上为房间基础资料与每晚价格，日期可订情况稍后开放查询。</text></view>
+    <view class="availability-card">
+      <view class="availability-heading">
+        <view><text class="section-title">60 天房态</text><text class="availability-subtitle">选择入住和退房日期，退房日不占房</text></view>
+      </view>
+      <view class="calendar-month-row">
+        <button class="month-step" data-delta="-1" disabled="{{!canGoPrevious || calendarLoading || checkLoading}}" bindtap="onMonthStep">‹</button>
+        <text class="month-title">{{monthLabel}}</text>
+        <button class="month-step" data-delta="1" disabled="{{!canGoNext || calendarLoading || checkLoading}}" bindtap="onMonthStep">›</button>
+      </view>
+      <view class="calendar-legend"><text><view class="legend-dot is-open"></view>可预订</text><text><view class="legend-dot is-closed"></view>不可预订</text></view>
+      <view wx:if="{{calendarLoading}}" class="calendar-message">正在读取日期…</view>
+      <view wx:elif="{{calendarError}}" class="calendar-message calendar-message-error">{{calendarError}}</view>
+      <view wx:else class="calendar-grid">
+        <text wx:for="{{weekdays}}" wx:key="*this" class="calendar-weekday">{{item}}</text>
+        <button
+          wx:for="{{calendarDays}}"
+          wx:key="key"
+          class="calendar-day {{item.empty ? 'is-empty' : ''}} {{item.unavailable ? 'is-unavailable' : ''}} {{item.disabled ? 'is-disabled' : ''}} {{item.selected ? 'is-selected' : ''}} {{item.inRange ? 'is-in-range' : ''}}"
+          disabled="{{item.disabled || checkLoading || calendarLoading}}"
+          data-date="{{item.date}}"
+          bindtap="onDayTap">{{item.label}}</button>
+      </view>
+      <view class="stay-summary">
+        <view><text>入住</text><text>{{checkInLabel}}</text></view>
+        <view><text>退房</text><text>{{checkOutLabel}}</text></view>
+      </view>
+      <view wx:if="{{checkLoading}}" class="availability-result">正在复核整段日期…</view>
+      <view wx:elif="{{checkResult}}" class="availability-result {{checkResult.available ? 'result-available' : 'result-unavailable'}}">
+        <text wx:if="{{checkResult.available}}">可订 · {{checkResult.nights}} 晚 · 房费 ¥{{checkResult.room_amount}}</text>
+        <text wx:else>所选区间暂不可订，请调整日期</text>
+      </view>
+      <button wx:if="{{checkResult && checkResult.available}}" class="search-stay-button" bindtap="onSearchStayRooms">查询同期可订客房</button>
+      <text class="calendar-footnote">可订状态仅作查询参考，提交预订时服务端会再次锁定并校验。</text>
+    </view>
     <button class="back-button detail-back" bindtap="onBackTap">返回客房列表</button>
   </view>
 </view>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** 阶段二后台壳层，集中提供模块导航、管理员身份和退出入口。 */
+/** 后台壳层，集中提供模块导航、管理员身份和退出入口。 */
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -21,6 +21,7 @@ function logout(): void {
       </div>
       <nav class="sidebar-nav" aria-label="主导航">
         <RouterLink to="/rooms"><span>客</span>客房管理</RouterLink>
+        <RouterLink to="/room-blocks"><span>封</span>封房管理</RouterLink>
         <RouterLink to="/channels"><span>渠</span>渠道管理</RouterLink>
         <RouterLink to="/creators"><span>达</span>达人管理</RouterLink>
       </nav>

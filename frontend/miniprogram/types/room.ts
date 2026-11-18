@@ -7,6 +7,7 @@ export interface AppRoomSummary {
   capacity: number
   bed_info: string | null
   images: string[]
+  available?: boolean
 }
 
 export interface AppRoomDetail extends AppRoomSummary {
@@ -14,4 +15,18 @@ export interface AppRoomDetail extends AppRoomSummary {
   area: number | null
   facilities: string[]
   description: string | null
+}
+
+/** R03 小程序月度房态，仅列出不可订住宿夜晚。 */
+export interface AppRoomAvailability {
+  room_id: number
+  month: string
+  unavailable_dates: string[]
+}
+
+/** R04 日期区间复核结果。 */
+export interface AppAvailabilityCheck {
+  available: boolean
+  nights: number
+  room_amount: string
 }

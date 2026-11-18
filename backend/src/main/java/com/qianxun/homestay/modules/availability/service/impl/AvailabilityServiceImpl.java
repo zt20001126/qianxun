@@ -1,0 +1,144 @@
+package com.qianxun.homestay.modules.availability.service.impl;
+
+import com.qianxun.homestay.common.exception.BusinessException;
+import com.qianxun.homestay.modules.availability.domain.StayDateRange;
+import com.qianxun.homestay.modules.availability.enums.BookingLockOccupancyStatus;
+import com.qianxun.homestay.modules.availability.enums.OrderOccupancyStatus;
+import com.qianxun.homestay.modules.availability.entity.AvailabilityRangeEntity;
+import com.qianxun.homestay.modules.availability.mapper.AvailabilityMapper;
+import com.qianxun.homestay.modules.availability.service.AvailabilityService;
+import com.qianxun.homestay.modules.availability.vo.AppAvailabilityCheckVO;
+import com.qianxun.homestay.modules.availability.vo.AppRoomAvailabilityVO;
+import com.qianxun.homestay.modules.room.entity.RoomEntity;
+import com.qianxun.homestay.modules.room.mapper.RoomMapper;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.ZoneId;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.TreeSet;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+/** 汇总订单、封房和未过期锁房，统一计算住宿区间的可用性。 */
+@Service
+public class AvailabilityServiceImpl implements AvailabilityService {
+
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
+    private static final int BOOKING_WINDOW_DAYS = 60;
+
+    private final AvailabilityMapper availabilityMapper;
+    private final RoomMapper roomMapper;
+
+    public AvailabilityServiceImpl(AvailabilityMapper availabilityMapper, RoomMapper roomMapper) {
+        this.availabilityMapper = availabilityMapper;
+        this.roomMapper = roomMapper;
+    }
+
+    @Override
+    public void validateStayRange(LocalDate checkIn, LocalDate checkOut) {
+        if (checkIn == null || checkOut == null || !checkIn.isBefore(checkOut)) {
+            throw new BusinessException(HttpStatus.UNPROCESSABLE_ENTITY, "退房日期必须晚于入住日期");
+        }
+    }
+
+    @Override
+    public void validateMiniProgramRange(LocalDate checkIn, LocalDate checkOut) {
+        validateStayRange(checkIn, checkOut);
+        LocalDate today = LocalDate.now(BUSINESS_ZONE);
+        LocalDate lastSelectableDate = today.plusDays(BOOKING_WINDOW_DAYS - 1L);
+        if (checkIn.isBefore(today) || checkOut.isBefore(today)
+                || checkIn.isAfter(lastSelectableDate) || checkOut.isAfter(lastSelectableDate)) {
+            throw new BusinessException(HttpStatus.UNPROCESSABLE_ENTITY, "入住和退房日期须在未来 60 天内");
+        }
+    }
+
+    @Override
+    public boolean isAvailable(Long roomId, LocalDate checkIn, LocalDate checkOut) {
+        validateStayRange(checkIn, checkOut);
+        return !hasConflict(roomId, checkIn, checkOut, null);
+    }
+
+    @Override
+    public List<LocalDate> findUnavailableDates(Long roomId, LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null || !startDate.isBefore(endDate)) {
+            return List.of();
+        }
+        TreeSet<LocalDate> unavailable = new TreeSet<>();
+        for (AvailabilityRangeEntity occupied : overlappingRanges(roomId, startDate, endDate, null)) {
+            LocalDate day = occupied.getStartDate().isAfter(startDate) ? occupied.getStartDate() : startDate;
+            LocalDate end = occupied.getEndDate().isBefore(endDate) ? occupied.getEndDate() : endDate;
+            while (day.isBefore(end)) {
+                unavailable.add(day);
+                day = day.plusDays(1);
+            }
+        }
+        return List.copyOf(unavailable);
+    }
+
+    @Override
+    public AppRoomAvailabilityVO getAppRoomAvailability(Long roomId, YearMonth month) {
+        RoomEntity room = roomMapper.findEnabledById(roomId);
+        if (room == null) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "房间不存在");
+        }
+        LocalDate today = LocalDate.now(BUSINESS_ZONE);
+        LocalDate windowEnd = today.plusDays(BOOKING_WINDOW_DAYS);
+        LocalDate monthStart = month.atDay(1);
+        LocalDate monthEnd = month.plusMonths(1).atDay(1);
+        LocalDate start = monthStart.isAfter(today) ? monthStart : today;
+        LocalDate end = monthEnd.isBefore(windowEnd) ? monthEnd : windowEnd;
+        List<LocalDate> unavailableDates = start.isBefore(end)
+                ? findUnavailableDates(roomId, start, end)
+                : List.of();
+        return new AppRoomAvailabilityVO(roomId, month.toString(), unavailableDates);
+    }
+
+    @Override
+    public AppAvailabilityCheckVO checkAppAvailability(Long roomId, LocalDate checkIn, LocalDate checkOut) {
+        validateMiniProgramRange(checkIn, checkOut);
+        RoomEntity room = roomMapper.findEnabledById(roomId);
+        if (room == null) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "房间不存在");
+        }
+        int nights = Math.toIntExact(new StayDateRange(checkIn, checkOut).nights());
+        BigDecimal roomAmount = room.getPrice().multiply(BigDecimal.valueOf(nights)).setScale(2, RoundingMode.HALF_UP);
+        return new AppAvailabilityCheckVO(
+                !hasConflict(roomId, checkIn, checkOut, null), nights, roomAmount.toPlainString());
+    }
+
+    @Override
+    public void lockRoomsForUpdate(Collection<Long> roomIds) {
+        roomIds.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .sorted(Comparator.naturalOrder())
+                .forEach(roomId -> {
+                    if (availabilityMapper.lockRoom(roomId) == null) {
+                        throw new BusinessException(HttpStatus.NOT_FOUND, "房间不存在");
+                    }
+                });
+    }
+
+    @Override
+    public boolean hasConflict(Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId) {
+        return !overlappingRanges(roomId, startDate, endDate, excludedBlockId).isEmpty();
+    }
+
+    private List<AvailabilityRangeEntity> overlappingRanges(
+            Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId) {
+        return availabilityMapper.findOverlappingRanges(
+                roomId,
+                startDate,
+                endDate,
+                LocalDateTime.now(BUSINESS_ZONE),
+                OrderOccupancyStatus.CANCELLED.getCode(),
+                BookingLockOccupancyStatus.PENDING.getCode(),
+                excludedBlockId);
+    }
+}

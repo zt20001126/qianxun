@@ -1,4 +1,4 @@
-/** 阶段二客房、渠道和达人接口数据结构，字段与 V3.1 snake_case 契约一致。 */
+/** 客房、渠道和达人接口数据结构，字段与 V3.1 snake_case 契约一致。 */
 export interface Room {
   id: number
   number: string
