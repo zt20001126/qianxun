@@ -102,6 +102,33 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .rooms-table { min-width: 920px; }
 .room-number { color: #6f4022 !important; font-family: Georgia, serif; font-size: 15px !important; }
 .blocks-table { min-width: 760px; }
+.orders-table { min-width: 1260px; }
+.orders-table .order-actions-heading { min-width: 245px; text-align: right; }
+.order-filter-card { flex-wrap: wrap; }
+.order-filter-card label { flex: 1 1 135px; }
+.order-filter-card .filter-name { flex: 1.4 1 160px; }
+.order-filter-actions { display: flex; gap: 7px; }
+.order-actions { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+.order-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 13px 15px; border-top: 1px solid #f0e9e1; color: #877a6e; font-size: 11px; }
+.order-pagination label { display: flex; align-items: center; gap: 6px; }
+.order-pagination select { min-height: 30px; padding: 3px 7px; border: 1px solid #e5dbd0; border-radius: 6px; color: #5e5146; background: #fffdfa; font: inherit; }
+.status-pill.is-pending { color: #89643d; background: #f8f0e3; }
+.status-pill.is-occupied { color: #536d7b; background: #edf3f4; }
+.status-pill.is-complete { color: #4f7653; background: #edf5eb; }
+.order-dialog { width: min(100%, 760px); }
+.order-detail-dialog { width: min(100%, 720px); }
+.amount-snapshot-block { display: grid; gap: 13px; padding: 15px; border: 1px solid #eee4da; border-radius: 9px; background: #fcf8f3; }
+.amount-snapshot-block h3, .detail-section-title { margin: 0; color: #604b38; font-size: 13px; font-weight: 600; }
+.order-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border: 1px solid #eee4da; border-radius: 9px; overflow: hidden; }
+.order-detail-grid > div { display: grid; gap: 7px; min-width: 0; padding: 13px 15px; border-bottom: 1px solid #f0e9e1; }
+.order-detail-grid > div:nth-child(odd) { border-right: 1px solid #f0e9e1; }
+.order-detail-grid > div:nth-last-child(-n + 2) { border-bottom: 0; }
+.order-detail-grid small, .order-detail-note small { color: #95877a; font-size: 10px; }
+.order-detail-grid strong { overflow-wrap: anywhere; color: #4f443a; font-size: 12px; font-weight: 600; }
+.detail-section-title { margin: 19px 0 10px; }
+.money-detail-grid strong { color: #a24a34; }
+.order-detail-note { margin-top: 14px; padding: 13px 15px; border-radius: 8px; background: #fcf8f3; }
+.order-detail-note p { margin: 7px 0 0; color: #5e5349; font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .danger-action { color: #a1483b; }
 .form-help { margin: -2px 0 0; color: #8f8175; font-size: 11px; line-height: 1.6; }
 .price-cell { color: #c34e3d; font-family: Georgia, serif; font-size: 15px; font-weight: 600; }
@@ -162,6 +189,10 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
   .filter-card label { flex: 1 1 42%; }
   .filter-name { flex-basis: 100% !important; }
   .filter-card > button { flex: 1; }
+  .order-filter-actions { flex: 1 1 100%; }
+  .order-filter-actions .button { flex: 1; }
+  .order-pagination { justify-content: center; flex-wrap: wrap; gap: 8px; padding: 12px 9px; }
+  .order-detail-grid > div { padding: 11px 10px; }
   .form-dialog { padding: 19px 16px 16px; }
   .form-grid { gap: 11px; }
 }

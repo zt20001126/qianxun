@@ -29,6 +29,34 @@
         LIMIT 1
     </select>
 
+    <select id="findByPhoneForUpdate" resultMap="MemberResultMap">
+        SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
+        FROM members
+        WHERE phone = #{phone}
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <insert id="ensureExternalMember">
+        INSERT INTO members (phone, openid, nickname, avatar, growth_points, points, created_at, updated_at)
+        VALUES (#{phone}, NULL, #{nickname}, #{avatar}, 0, 0, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+        ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)
+    </insert>
+
+    <select id="findByIdForUpdate" resultMap="MemberResultMap">
+        SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
+        FROM members
+        WHERE id = #{id}
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <update id="updateRewardBalances">
+        UPDATE members
+        SET points = #{points}, growth_points = #{growthPoints}, updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id}
+    </update>
+
     <select id="findById" resultMap="MemberResultMap">
         SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
         FROM members

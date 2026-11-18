@@ -5,10 +5,15 @@ import java.time.LocalDateTime;
 /** 渠道表映射实体。 */
 public class ChannelEntity {
 
+    /** 渠道数据库主键。 */
     private Long id;
+    /** 渠道展示名称。 */
     private String name;
+    /** 渠道是否启用。 */
     private Boolean enabled;
+    /** 渠道记录创建时间。 */
     private LocalDateTime createdAt;
+    /** 渠道记录最近更新时间。 */
     private LocalDateTime updatedAt;
 
     public Long getId() { return id; }

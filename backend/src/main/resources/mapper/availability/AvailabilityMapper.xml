@@ -18,6 +18,9 @@
           AND status &lt;&gt; #{cancelledOrderStatus}
           AND check_in &lt; #{endDate}
           AND check_out &gt; #{startDate}
+        <if test="excludedOrderId != null">
+          AND id &lt;&gt; #{excludedOrderId}
+        </if>
         UNION ALL
         SELECT start_date, end_date
         FROM room_block

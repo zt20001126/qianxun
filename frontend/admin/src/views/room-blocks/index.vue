@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** R10-R13 管理员封房记录维护与日期冲突提示。 */
 import { onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { roomBlockApi } from '../../api/room-blocks'
 import { roomApi } from '../../api/rooms'
 import type { Room } from '../../types/catalog'
@@ -14,6 +15,8 @@ interface RoomBlockForm {
 }
 
 const blocks = ref<RoomBlock[]>([])
+const route = useRoute()
+const router = useRouter()
 const rooms = ref<Room[]>([])
 const roomFilter = ref<number | ''>('')
 const monthFilter = ref('')
@@ -26,7 +29,14 @@ const editingBlock = ref<RoomBlock | null>(null)
 const form = reactive<RoomBlockForm>(emptyForm())
 
 onMounted(async () => {
+  const action = route.query.calendar_action
+  const roomId = Number(route.query.room_id)
+  if (action === 'block' && Number.isSafeInteger(roomId) && roomId > 0) roomFilter.value = roomId
+  if (action === 'block' && typeof route.query.month === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(route.query.month)) {
+    monthFilter.value = route.query.month
+  }
   await Promise.all([loadRooms(), loadBlocks()])
+  if (action === 'block') await router.replace({ path: route.path, query: {} })
 })
 
 function emptyForm(): RoomBlockForm {

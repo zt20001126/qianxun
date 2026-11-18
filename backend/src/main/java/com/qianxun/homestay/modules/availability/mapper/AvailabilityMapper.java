@@ -22,5 +22,6 @@ public interface AvailabilityMapper {
             @Param("now") LocalDateTime now,
             @Param("cancelledOrderStatus") String cancelledOrderStatus,
             @Param("pendingBookingStatus") String pendingBookingStatus,
-            @Param("excludedBlockId") Long excludedBlockId);
+            @Param("excludedBlockId") Long excludedBlockId,
+            @Param("excludedOrderId") Long excludedOrderId);
 }

@@ -70,7 +70,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             return List.of();
         }
         TreeSet<LocalDate> unavailable = new TreeSet<>();
-        for (AvailabilityRangeEntity occupied : overlappingRanges(roomId, startDate, endDate, null)) {
+        for (AvailabilityRangeEntity occupied : overlappingRanges(roomId, startDate, endDate, null, null)) {
             LocalDate day = occupied.getStartDate().isAfter(startDate) ? occupied.getStartDate() : startDate;
             LocalDate end = occupied.getEndDate().isBefore(endDate) ? occupied.getEndDate() : endDate;
             while (day.isBefore(end)) {
@@ -127,11 +127,17 @@ public class AvailabilityServiceImpl implements AvailabilityService {
 
     @Override
     public boolean hasConflict(Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId) {
-        return !overlappingRanges(roomId, startDate, endDate, excludedBlockId).isEmpty();
+        return !overlappingRanges(roomId, startDate, endDate, excludedBlockId, null).isEmpty();
+    }
+
+    @Override
+    public boolean hasConflictExcludingOrder(
+            Long roomId, LocalDate startDate, LocalDate endDate, Long excludedOrderId) {
+        return !overlappingRanges(roomId, startDate, endDate, null, excludedOrderId).isEmpty();
     }
 
     private List<AvailabilityRangeEntity> overlappingRanges(
-            Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId) {
+            Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId, Long excludedOrderId) {
         return availabilityMapper.findOverlappingRanges(
                 roomId,
                 startDate,
@@ -139,6 +145,7 @@ public class AvailabilityServiceImpl implements AvailabilityService {
                 LocalDateTime.now(BUSINESS_ZONE),
                 OrderOccupancyStatus.CANCELLED.getCode(),
                 BookingLockOccupancyStatus.PENDING.getCode(),
-                excludedBlockId);
+                excludedBlockId,
+                excludedOrderId);
     }
 }

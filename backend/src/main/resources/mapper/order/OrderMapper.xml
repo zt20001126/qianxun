@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.order.mapper.OrderMapper">
+    <resultMap id="orderResultMap" type="com.qianxun.homestay.modules.order.entity.OrderEntity">
+        <id property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="platformOrderNo" column="platform_order_no"/>
+        <result property="roomId" column="room_id"/>
+        <result property="channelId" column="channel_id"/>
+        <result property="creatorId" column="creator_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="guestName" column="guest_name"/>
+        <result property="phone" column="phone"/>
+        <result property="guestCount" column="guest_count"/>
+        <result property="checkIn" column="check_in"/>
+        <result property="checkOut" column="check_out"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <resultMap id="orderViewResultMap" type="com.qianxun.homestay.modules.order.entity.OrderViewEntity">
+        <id property="id" column="id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="platformOrderNo" column="platform_order_no"/>
+        <result property="roomId" column="room_id"/>
+        <result property="roomNumber" column="room_number"/>
+        <result property="channelId" column="channel_id"/>
+        <result property="channelName" column="channel_name"/>
+        <result property="creatorId" column="creator_id"/>
+        <result property="memberId" column="member_id"/>
+        <result property="guestName" column="guest_name"/>
+        <result property="phone" column="phone"/>
+        <result property="guestCount" column="guest_count"/>
+        <result property="checkIn" column="check_in"/>
+        <result property="checkOut" column="check_out"/>
+        <result property="nights" column="nights"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="platformFee" column="platform_fee"/>
+        <result property="platformCommission" column="platform_commission"/>
+        <result property="extraCommission" column="extra_commission"/>
+        <result property="expectedAmount" column="expected_amount"/>
+        <result property="netAmount" column="net_amount"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="viewColumns">
+        o.id, o.order_no, o.platform_order_no, o.room_id, r.number AS room_number,
+        o.channel_id, c.name AS channel_name, o.creator_id, o.member_id, o.guest_name, o.phone,
+        o.guest_count, o.check_in, o.check_out, DATEDIFF(o.check_out, o.check_in) AS nights,
+        o.status, o.remark, a.paid_amount, a.platform_fee, a.platform_commission,
+        a.extra_commission, a.expected_amount, a.net_amount, o.created_at, o.updated_at
+    </sql>
+
+    <select id="findById" resultMap="orderResultMap">
+        SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
+               guest_name, phone, guest_count, check_in, check_out, status, remark
+        FROM orders WHERE id = #{id}
+    </select>
+
+    <select id="findByIdForUpdate" resultMap="orderResultMap">
+        SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
+               guest_name, phone, guest_count, check_in, check_out, status, remark
+        FROM orders WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="findViewById" resultMap="orderViewResultMap">
+        SELECT <include refid="viewColumns"/>
+        FROM orders o
+        INNER JOIN room r ON r.id = o.room_id
+        INNER JOIN channels c ON c.id = o.channel_id
+        INNER JOIN order_amount a ON a.order_id = o.id
+        WHERE o.id = #{id}
+    </select>
+
+    <sql id="queryFilters">
+        <where>
+            <if test="query.channelId != null">AND o.channel_id = #{query.channelId}</if>
+            <if test="query.roomId != null">AND o.room_id = #{query.roomId}</if>
+            <if test="query.creatorId != null">AND o.creator_id = #{query.creatorId}</if>
+            <if test="query.status != null">AND o.status = #{query.status}</if>
+            <if test="query.checkInFrom != null">AND o.check_in &gt;= #{query.checkInFrom}</if>
+            <if test="query.checkInTo != null">AND o.check_in &lt;= #{query.checkInTo}</if>
+            <if test="query.guestName != null and query.guestName != ''">
+                AND o.guest_name LIKE CONCAT('%', #{query.guestName}, '%')
+            </if>
+            <if test="query.phone != null and query.phone != ''">
+                AND o.phone LIKE CONCAT('%', #{query.phone}, '%')
+            </if>
+        </where>
+    </sql>
+
+    <select id="findPage" resultMap="orderViewResultMap">
+        SELECT <include refid="viewColumns"/>
+        FROM orders o
+        INNER JOIN room r ON r.id = o.room_id
+        INNER JOIN channels c ON c.id = o.channel_id
+        INNER JOIN order_amount a ON a.order_id = o.id
+        <include refid="queryFilters"/>
+        ORDER BY o.created_at DESC, o.id DESC
+        LIMIT #{query.size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM orders o
+        <include refid="queryFilters"/>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO orders (
+            order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
+            guest_name, phone, guest_count, check_in, check_out, status, remark
+        ) VALUES (
+            #{orderNo}, #{platformOrderNo}, #{roomId}, #{channelId}, #{creatorId}, #{memberId},
+            #{guestName}, #{phone}, #{guestCount}, #{checkIn}, #{checkOut}, #{status}, #{remark}
+        )
+    </insert>
+
+    <update id="updateEditableFields">
+        UPDATE orders
+        SET room_id = #{roomId}, guest_name = #{guestName}, phone = #{phone}, guest_count = #{guestCount},
+            check_in = #{checkIn}, check_out = #{checkOut}, remark = #{remark}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE orders SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="attachMemberIfMissing">
+        UPDATE orders SET member_id = #{memberId} WHERE id = #{id} AND member_id IS NULL
+    </update>
+
+    <select id="existsPlatformOrderNo" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM orders WHERE channel_id = #{channelId} AND platform_order_no = #{platformOrderNo}
+        )
+    </select>
+
+    <select id="lockOrderNumberGeneration" resultType="long">
+        SELECT id FROM admin ORDER BY id LIMIT 1 FOR UPDATE
+    </select>
+
+    <select id="findMaxOrderSequence" resultType="long">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(order_no, 11) AS UNSIGNED)), 0)
+        FROM orders WHERE order_no LIKE #{orderNoPattern}
+    </select>
+
+</mapper>

@@ -13,42 +13,52 @@ import java.util.List;
 /** R07/R08 客房资料和基础价格请求。 */
 public class RoomSaveRequest {
 
+    /** 客房对外房号。 */
     @NotBlank(message = "房号不能为空")
     @Size(max = 10, message = "房号不能超过 10 个字符")
     private String number;
 
+    /** 客房名称。 */
     @NotBlank(message = "房间名称不能为空")
     @Size(max = 80, message = "房间名称不能超过 80 个字符")
     private String name;
 
+    /** 客房所在楼层。 */
     @NotNull(message = "楼层不能为空")
     @Min(value = 1, message = "楼层必须大于 0")
     @Max(value = Short.MAX_VALUE, message = "楼层超出允许范围")
     private Integer floor;
 
+    /** 客房每晚基础价格，单位为元。 */
     @NotNull(message = "每晚房价不能为空")
     @DecimalMin(value = "0.00", message = "每晚房价不能为负数")
     @Digits(integer = 10, fraction = 2, message = "每晚房价最多两位小数")
     private BigDecimal price;
 
+    /** 客房允许入住的最大人数。 */
     @NotNull(message = "最大入住人数不能为空")
     @Min(value = 1, message = "最大入住人数必须大于 0")
     @Max(value = 65535, message = "最大入住人数超出允许范围")
     private Integer capacity;
 
+    /** 客房床型说明。 */
     @Size(max = 120, message = "床型信息不能超过 120 个字符")
     private String bedInfo;
 
+    /** 客房建筑面积，单位为平方米。 */
     @Digits(integer = 4, fraction = 2, message = "面积最多两位小数")
     @DecimalMin(value = "0.00", message = "面积不能为负数")
     private BigDecimal area;
 
+    /** 客房设施名称列表。 */
     @Size(max = 100, message = "设施数量不能超过 100 项")
     private List<@NotBlank(message = "设施内容不能为空") @Size(max = 100, message = "单项设施不能超过 100 个字符") String> facilities;
 
+    /** 客房图片地址列表。 */
     @Size(max = 50, message = "图片数量不能超过 50 张")
     private List<@NotBlank(message = "图片地址不能为空") @Size(max = 2048, message = "图片地址过长") String> images;
 
+    /** 客房介绍。 */
     private String description;
 
     public String getNumber() { return number; }

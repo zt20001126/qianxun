@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.order.mapper.OrderAmountMapper">
+    <resultMap id="orderAmountResultMap" type="com.qianxun.homestay.modules.order.entity.OrderAmountEntity">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="platformFee" column="platform_fee"/>
+        <result property="platformCommission" column="platform_commission"/>
+        <result property="extraCommission" column="extra_commission"/>
+        <result property="expectedAmount" column="expected_amount"/>
+        <result property="netAmount" column="net_amount"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO order_amount (
+            order_id, paid_amount, platform_fee, platform_commission, extra_commission, expected_amount
+        ) VALUES (
+            #{orderId}, #{paidAmount}, #{platformFee}, #{platformCommission}, #{extraCommission}, #{expectedAmount}
+        )
+    </insert>
+
+    <select id="findByOrderId" resultMap="orderAmountResultMap">
+        SELECT id, order_id, paid_amount, platform_fee, platform_commission, extra_commission,
+               expected_amount, net_amount
+        FROM order_amount WHERE order_id = #{orderId}
+    </select>
+</mapper>

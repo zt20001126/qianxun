@@ -20,7 +20,9 @@ function logout(): void {
         <div><strong>芊浔民宿</strong><small>经营管理后台</small></div>
       </div>
       <nav class="sidebar-nav" aria-label="主导航">
+        <RouterLink to="/room-calendar"><span>历</span>房态日历</RouterLink>
         <RouterLink to="/rooms"><span>客</span>客房管理</RouterLink>
+        <RouterLink to="/orders"><span>单</span>订单管理</RouterLink>
         <RouterLink to="/room-blocks"><span>封</span>封房管理</RouterLink>
         <RouterLink to="/channels"><span>渠</span>渠道管理</RouterLink>
         <RouterLink to="/creators"><span>达</span>达人管理</RouterLink>

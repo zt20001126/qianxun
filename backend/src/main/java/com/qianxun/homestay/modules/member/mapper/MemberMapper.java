@@ -29,6 +29,20 @@ public interface MemberMapper {
      */
     MemberEntity findByPhone(@Param("phone") String phone);
 
+    /** 按手机号锁定会员，供订单奖励与余额流水在同一事务中更新。 */
+    MemberEntity findByPhoneForUpdate(@Param("phone") String phone);
+
+    /** 按手机号创建会员或锁定已有会员，不覆盖其固定昵称和头像。 */
+    int ensureExternalMember(@Param("phone") String phone, @Param("nickname") String nickname,
+            @Param("avatar") String avatar);
+
+    /** 按会员主键锁定会员资料。 */
+    MemberEntity findByIdForUpdate(@Param("id") Long id);
+
+    /** 在持有会员行锁时写入奖励后的积分余额。 */
+    int updateRewardBalances(@Param("id") Long id, @Param("points") int points,
+            @Param("growthPoints") int growthPoints);
+
     /**
      * 按 JWT 中的会员 ID 读取当前会员。
      *

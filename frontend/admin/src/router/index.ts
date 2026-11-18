@@ -13,7 +13,9 @@ export const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: 'home', redirect: '/rooms' },
+        { path: 'room-calendar', component: () => import('../views/calendar/index.vue'), meta: { title: '房态日历' } },
         { path: 'rooms', component: () => import('../views/rooms/index.vue'), meta: { title: '客房管理' } },
+        { path: 'orders', component: () => import('../views/orders/index.vue'), meta: { title: '订单管理' } },
         { path: 'room-blocks', component: () => import('../views/room-blocks/index.vue'), meta: { title: '封房管理' } },
         { path: 'channels', component: () => import('../views/channels/index.vue'), meta: { title: '渠道管理' } },
         { path: 'creators', component: () => import('../views/creators/index.vue'), meta: { title: '达人管理' } },

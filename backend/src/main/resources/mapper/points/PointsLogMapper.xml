@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.points.mapper.PointsLogMapper">
+    <select id="existsByRefNo" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM points_log WHERE ref_no = #{refNo})
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO points_log (
+            member_id, order_id, type, points, growth_points, balance_after, amount, ref_no, remark
+        ) VALUES (
+            #{memberId}, #{orderId}, #{type}, #{points}, #{growthPoints}, #{balanceAfter}, #{amount}, #{refNo}, #{remark}
+        )
+    </insert>
+</mapper>

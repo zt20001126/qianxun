@@ -33,4 +33,7 @@ public interface AvailabilityService {
 
     /** 判断区间是否冲突，可排除正在修改的封房记录。 */
     boolean hasConflict(Long roomId, LocalDate startDate, LocalDate endDate, Long excludedBlockId);
+
+    /** 判断指定区间是否被订单、封房或有效锁房占用，并可排除当前订单。 */
+    boolean hasConflictExcludingOrder(Long roomId, LocalDate startDate, LocalDate endDate, Long excludedOrderId);
 }

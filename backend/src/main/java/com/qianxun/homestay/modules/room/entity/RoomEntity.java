@@ -7,19 +7,33 @@ import java.util.List;
 /** 客房表映射实体。 */
 public class RoomEntity {
 
+    /** 客房数据库主键。 */
     private Long id;
+    /** 客房对外房号。 */
     private String number;
+    /** 客房名称。 */
     private String name;
+    /** 客房所在楼层。 */
     private Integer floor;
+    /** 客房每晚基础价格，单位为元。 */
     private BigDecimal price;
+    /** 客房允许入住的最大人数。 */
     private Integer capacity;
+    /** 客房床型说明。 */
     private String bedInfo;
+    /** 客房建筑面积，单位为平方米。 */
     private BigDecimal area;
+    /** 客房设施名称列表，对应数据库 JSON 字段。 */
     private List<String> facilities;
+    /** 客房图片地址列表，对应数据库 JSON 字段。 */
     private List<String> images;
+    /** 客房介绍。 */
     private String description;
+    /** 客房是否上架可供预订。 */
     private Boolean enabled;
+    /** 客房记录创建时间。 */
     private LocalDateTime createdAt;
+    /** 客房记录最近更新时间。 */
     private LocalDateTime updatedAt;
 
     public Long getId() { return id; }

@@ -5,11 +5,17 @@ import java.time.LocalDateTime;
 /** 达人表映射实体。 */
 public class CreatorEntity {
 
+    /** 达人数据库主键。 */
     private Long id;
+    /** 达人名称。 */
     private String name;
+    /** 达人所属渠道编号。 */
     private Long channelId;
+    /** 达人是否启用。 */
     private Boolean enabled;
+    /** 达人记录创建时间。 */
     private LocalDateTime createdAt;
+    /** 达人记录最近更新时间。 */
     private LocalDateTime updatedAt;
 
     public Long getId() { return id; }
