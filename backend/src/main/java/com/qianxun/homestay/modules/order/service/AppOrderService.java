@@ -3,6 +3,7 @@ package com.qianxun.homestay.modules.order.service;
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.order.vo.AppOrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.AppOrderPageVO;
+import com.qianxun.homestay.modules.order.vo.OrderCancellationEligibilityVO;
 
 /** 提供小程序当前会员自己的正式订单查询。 */
 public interface AppOrderService {
@@ -12,4 +13,7 @@ public interface AppOrderService {
 
     /** 查询当前会员的指定订单；不存在或不属于本人时返回 404。 */
     AppOrderDetailVO findMyOrder(Long memberId, Long orderId);
+
+    /** 查询本人订单是否符合入住当日 18:00 前自助取消条件。 */
+    OrderCancellationEligibilityVO getCancellationEligibility(Long memberId, Long orderId);
 }

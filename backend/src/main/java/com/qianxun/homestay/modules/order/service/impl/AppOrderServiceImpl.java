@@ -3,14 +3,20 @@ package com.qianxun.homestay.modules.order.service.impl;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.util.ApiTime;
 import com.qianxun.homestay.modules.order.entity.OrderViewEntity;
+import com.qianxun.homestay.modules.order.entity.OrderEntity;
+import com.qianxun.homestay.modules.order.domain.OrderCancellationDecision;
+import com.qianxun.homestay.modules.order.domain.OrderCancellationPolicy;
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.order.mapper.OrderMapper;
 import com.qianxun.homestay.modules.order.service.AppOrderService;
 import com.qianxun.homestay.modules.order.vo.AppOrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.AppOrderListItemVO;
 import com.qianxun.homestay.modules.order.vo.AppOrderPageVO;
+import com.qianxun.homestay.modules.order.vo.OrderCancellationEligibilityVO;
 import java.math.RoundingMode;
 import java.util.List;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class AppOrderServiceImpl implements AppOrderService {
 
-    private final OrderMapper orderMapper;
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
 
-    public AppOrderServiceImpl(OrderMapper orderMapper) {
+    private final OrderMapper orderMapper;
+    private final OrderCancellationPolicy cancellationPolicy;
+
+    public AppOrderServiceImpl(OrderMapper orderMapper, OrderCancellationPolicy cancellationPolicy) {
         this.orderMapper = orderMapper;
+        this.cancellationPolicy = cancellationPolicy;
     }
 
     @Override
@@ -48,6 +58,18 @@ public class AppOrderServiceImpl implements AppOrderService {
                 order.getPhone(), order.getGuestCount(), order.getCheckIn(), order.getCheckOut(), order.getNights(),
                 order.getStatus(), order.getRemark(), money(order), ApiTime.fromShanghai(order.getCreatedAt()),
                 ApiTime.fromShanghai(order.getUpdatedAt()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public OrderCancellationEligibilityVO getCancellationEligibility(Long memberId, Long orderId) {
+        OrderEntity order = orderMapper.findAppById(memberId, orderId);
+        if (order == null) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "订单不存在");
+        }
+        OrderCancellationDecision decision = cancellationPolicy.evaluate(order, LocalDateTime.now(BUSINESS_ZONE));
+        return new OrderCancellationEligibilityVO(
+                decision.eligible(), decision.reason(), ApiTime.fromShanghai(decision.deadline()));
     }
 
     private AppOrderListItemVO toListItem(OrderViewEntity order) {

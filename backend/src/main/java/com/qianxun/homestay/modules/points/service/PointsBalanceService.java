@@ -20,4 +20,7 @@ public interface PointsBalanceService {
     /** 模拟支付成功时扣减积分并写入带余额快照的抵扣流水。 */
     void consumeForPaidOrder(
             Long memberId, int pointsUsed, BigDecimal discountAmount, Long orderId);
+
+    /** 模拟退款成功时返还订单实际扣除的积分，并按订单幂等记账。 */
+    void returnForRefund(Long memberId, Long orderId);
 }

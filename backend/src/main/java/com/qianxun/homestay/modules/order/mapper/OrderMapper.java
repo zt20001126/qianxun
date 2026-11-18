@@ -16,6 +16,12 @@ public interface OrderMapper {
 
     OrderEntity findByIdForUpdate(@Param("id") Long id);
 
+    /** 按订单 ID 和会员 ID 查询本人订单。 */
+    OrderEntity findAppById(@Param("memberId") Long memberId, @Param("id") Long id);
+
+    /** 按订单 ID 和会员 ID 锁定本人订单，串行处理重复取消请求。 */
+    OrderEntity findAppByIdForUpdate(@Param("memberId") Long memberId, @Param("id") Long id);
+
     OrderViewEntity findViewById(@Param("id") Long id);
 
     List<OrderViewEntity> findPage(@Param("query") OrderQueryRequest query, @Param("offset") long offset);
@@ -42,6 +48,9 @@ public interface OrderMapper {
     int updateEditableFields(OrderEntity order);
 
     int updateStatus(@Param("id") Long id, @Param("status") String status);
+
+    /** 将仍处于可取消状态的本人订单标记为已取消。 */
+    int cancelForRefund(@Param("id") Long id);
 
     int attachMemberIfMissing(@Param("id") Long id, @Param("memberId") Long memberId);
 

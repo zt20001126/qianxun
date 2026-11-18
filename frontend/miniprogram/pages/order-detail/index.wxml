@@ -23,6 +23,8 @@
       <view class="detail-row"><text>创建时间</text><text>{{order.created_at}}</text></view>
       <view class="detail-row"><text>更新时间</text><text>{{order.updated_at}}</text></view>
     </view>
+    <button wx:if="{{order.status !== 'CANCELLED'}}" class="cancel-button {{cancellation && !cancellation.eligible ? 'cancel-unavailable' : ''}}" loading="{{refundSubmitting}}" disabled="{{cancelConfirming || refundSubmitting}}" bindtap="onCancelTap">取消订单</button>
+    <view wx:else class="cancelled-note">此订单已取消</view>
     <button class="detail-button" bindtap="onOrdersTap">返回订单列表</button>
     <button class="home-button" bindtap="onHomeTap">返回首页</button>
   </view>

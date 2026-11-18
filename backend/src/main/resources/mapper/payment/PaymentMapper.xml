@@ -35,6 +35,32 @@
         SELECT <include refid="paymentColumns"/> FROM payments WHERE id = #{id} FOR UPDATE
     </select>
 
+    <select id="findByOrderIdForUpdate" resultMap="paymentResultMap">
+        SELECT <include refid="paymentColumns"/>
+        FROM payments WHERE order_id = #{orderId} ORDER BY id DESC LIMIT 1 FOR UPDATE
+    </select>
+
+    <sql id="adminFilters">
+        <where>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="startAt != null">AND paid_at &gt;= #{startAt}</if>
+            <if test="endBefore != null">AND paid_at &lt; #{endBefore}</if>
+        </where>
+    </sql>
+
+    <select id="findAdminPage" resultMap="paymentResultMap">
+        SELECT <include refid="paymentColumns"/>
+        FROM payments
+        <include refid="adminFilters"/>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAdmin" resultType="long">
+        SELECT COUNT(*) FROM payments
+        <include refid="adminFilters"/>
+    </select>
+
     <select id="findExpiredPaymentIds" resultType="long">
         SELECT p.id
         FROM payments p

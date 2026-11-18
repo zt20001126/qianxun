@@ -23,6 +23,8 @@ function logout(): void {
         <RouterLink to="/room-calendar"><span>历</span>房态日历</RouterLink>
         <RouterLink to="/rooms"><span>客</span>客房管理</RouterLink>
         <RouterLink to="/orders"><span>单</span>订单管理</RouterLink>
+        <RouterLink to="/payments"><span>付</span>支付流水</RouterLink>
+        <RouterLink to="/refunds"><span>退</span>退款流水</RouterLink>
         <RouterLink to="/room-blocks"><span>封</span>封房管理</RouterLink>
         <RouterLink to="/channels"><span>渠</span>渠道管理</RouterLink>
         <RouterLink to="/creators"><span>达</span>达人管理</RouterLink>

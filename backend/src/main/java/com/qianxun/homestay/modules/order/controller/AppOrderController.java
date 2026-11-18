@@ -6,6 +6,7 @@ import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.order.service.AppOrderService;
 import com.qianxun.homestay.modules.order.vo.AppOrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.AppOrderPageVO;
+import com.qianxun.homestay.modules.order.vo.OrderCancellationEligibilityVO;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -44,5 +45,13 @@ public class AppOrderController {
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable Long id) {
         return ApiResponse.success(appOrderService.findMyOrder(principal.id(), id));
+    }
+
+    /** 查询当前会员订单的自助取消资格；结果仅供页面展示。 */
+    @GetMapping("/{id}/cancel-eligibility")
+    public ApiResponse<OrderCancellationEligibilityVO> cancellationEligibility(
+            @AuthenticationPrincipal AuthPrincipal principal,
+            @PathVariable Long id) {
+        return ApiResponse.success(appOrderService.getCancellationEligibility(principal.id(), id));
     }
 }

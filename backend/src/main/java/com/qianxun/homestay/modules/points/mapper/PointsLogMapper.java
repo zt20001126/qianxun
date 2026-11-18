@@ -10,5 +10,8 @@ public interface PointsLogMapper {
 
     boolean existsByRefNo(@Param("refNo") String refNo);
 
+    /** 按稳定业务号读取积分流水，用于退款返积分和幂等校验。 */
+    PointsLogEntity findByRefNo(@Param("refNo") String refNo);
+
     int insert(PointsLogEntity pointsLog);
 }

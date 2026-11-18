@@ -1,6 +1,7 @@
 package com.qianxun.homestay.modules.payment.mapper;
 
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
+import com.qianxun.homestay.modules.payment.enums.PaymentStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
@@ -21,6 +22,23 @@ public interface PaymentMapper {
 
     /** 按主键锁定支付流水，供超时任务与支付请求串行处理。 */
     PaymentEntity findByIdForUpdate(@Param("id") Long id);
+
+    /** 按正式订单锁定模拟支付流水，退款与重复取消请求串行处理。 */
+    PaymentEntity findByOrderIdForUpdate(@Param("orderId") Long orderId);
+
+    /** 分页查询后台支付流水。 */
+    List<PaymentEntity> findAdminPage(
+            @Param("status") PaymentStatus status,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endBefore") LocalDateTime endBefore,
+            @Param("offset") long offset,
+            @Param("size") int size);
+
+    /** 统计后台支付流水筛选结果。 */
+    long countAdmin(
+            @Param("status") PaymentStatus status,
+            @Param("startAt") LocalDateTime startAt,
+            @Param("endBefore") LocalDateTime endBefore);
 
     /** 查询已过期且仍待支付的支付流水编号。 */
     List<Long> findExpiredPaymentIds(@Param("now") LocalDateTime now, @Param("limit") int limit);

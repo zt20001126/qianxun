@@ -66,6 +66,18 @@
         FROM orders WHERE id = #{id} FOR UPDATE
     </select>
 
+    <select id="findAppById" resultMap="orderResultMap">
+        SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
+               guest_name, phone, guest_count, check_in, check_out, status, remark
+        FROM orders WHERE id = #{id} AND member_id = #{memberId}
+    </select>
+
+    <select id="findAppByIdForUpdate" resultMap="orderResultMap">
+        SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
+               guest_name, phone, guest_count, check_in, check_out, status, remark
+        FROM orders WHERE id = #{id} AND member_id = #{memberId} FOR UPDATE
+    </select>
+
     <select id="findViewById" resultMap="orderViewResultMap">
         SELECT <include refid="viewColumns"/>
         FROM orders o
@@ -155,6 +167,11 @@
 
     <update id="updateStatus">
         UPDATE orders SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="cancelForRefund">
+        UPDATE orders SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND status IN ('PENDING_CONFIRM', 'PENDING_CHECKIN')
     </update>
 
     <update id="attachMemberIfMissing">

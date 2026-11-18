@@ -1,4 +1,4 @@
-/** P01/P02/P08、T03 和 O01/O02 的小程序接口结构。 */
+/** P01/P02/P03/P08、T03 和 O01/O02/O03 的小程序接口结构。 */
 export interface PointsPreview {
   room_amount: string
   available_points: number
@@ -55,6 +55,20 @@ export interface AppOrderDetail extends Omit<AppOrder, 'channel_id' | 'creator_i
   remark: string | null
   created_at: string
   updated_at: string
+}
+
+/** O03 自助取消资格查询结果。 */
+export interface OrderCancellationEligibility {
+  eligible: boolean
+  reason: string | null
+  deadline: string
+}
+
+/** P03 同步模拟退款结果。 */
+export interface RefundResult {
+  refund_id: number
+  refund_no: string
+  status: 'PENDING' | 'SUCCESS' | 'FAILED'
 }
 
 export interface AppOrderPage {

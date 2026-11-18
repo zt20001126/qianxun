@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.refund.mapper.RefundMapper">
+    <resultMap id="refundResultMap" type="com.qianxun.homestay.modules.refund.entity.RefundEntity">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="paymentId" column="payment_id"/>
+        <result property="refundNo" column="refund_no"/>
+        <result property="wechatRefundId" column="wechat_refund_id"/>
+        <result property="amount" column="amount"/>
+        <result property="status" column="status"/>
+        <result property="reason" column="reason"/>
+        <result property="refundedAt" column="refunded_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <sql id="refundColumns">
+        id, order_id, payment_id, refund_no, wechat_refund_id, amount, status, reason,
+        refunded_at, created_at, updated_at
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO refunds (order_id, payment_id, refund_no, amount, status, reason, refunded_at)
+        VALUES (#{orderId}, #{paymentId}, #{refundNo}, #{amount}, #{status}, #{reason}, #{refundedAt})
+    </insert>
+
+    <select id="findSuccessfulByOrderId" resultMap="refundResultMap">
+        SELECT <include refid="refundColumns"/>
+        FROM refunds WHERE order_id = #{orderId} AND status = 'SUCCESS'
+        ORDER BY id DESC LIMIT 1
+    </select>
+
+    <sql id="adminFilters">
+        <where>
+            <if test="status != null">AND status = #{status}</if>
+            <if test="startAt != null">AND refunded_at &gt;= #{startAt}</if>
+            <if test="endBefore != null">AND refunded_at &lt; #{endBefore}</if>
+        </where>
+    </sql>
+
+    <select id="findAdminPage" resultMap="refundResultMap">
+        SELECT <include refid="refundColumns"/>
+        FROM refunds
+        <include refid="adminFilters"/>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAdmin" resultType="long">
+        SELECT COUNT(*) FROM refunds
+        <include refid="adminFilters"/>
+    </select>
+</mapper>

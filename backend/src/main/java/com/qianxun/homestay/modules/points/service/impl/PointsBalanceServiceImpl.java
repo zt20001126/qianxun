@@ -110,6 +110,53 @@ public class PointsBalanceServiceImpl implements PointsBalanceService {
         }
     }
 
+    @Override
+    @Transactional
+    public void returnForRefund(Long memberId, Long orderId) {
+        String returnRefNo = "RETURN:ORDER:" + orderId;
+        if (pointsLogMapper.existsByRefNo(returnRefNo)) {
+            return;
+        }
+
+        PointsLogEntity redemption = pointsLogMapper.findByRefNo("REDEEM:ORDER:" + orderId);
+        if (redemption == null) {
+            return;
+        }
+        if (!memberId.equals(redemption.getMemberId()) || redemption.getPoints() == null
+                || redemption.getPoints() >= 0) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "订单积分抵扣流水不一致");
+        }
+
+        MemberEntity member = memberMapper.findByIdForUpdate(memberId);
+        if (member == null) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "退款会员不存在");
+        }
+        int pointsToReturn = Math.negateExact(redemption.getPoints());
+        int balanceAfter;
+        try {
+            balanceAfter = Math.addExact(member.getPoints() == null ? 0 : member.getPoints(), pointsToReturn);
+        } catch (ArithmeticException exception) {
+            throw new BusinessException(HttpStatus.CONFLICT, "积分余额超出可用范围，退款未完成");
+        }
+        if (memberMapper.updatePointsBalance(memberId, balanceAfter) != 1) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "退款积分余额更新失败");
+        }
+
+        PointsLogEntity returned = new PointsLogEntity();
+        returned.setMemberId(memberId);
+        returned.setOrderId(orderId);
+        returned.setType(PointsLogType.RETURN);
+        returned.setPoints(pointsToReturn);
+        returned.setGrowthPoints(0);
+        returned.setBalanceAfter(balanceAfter);
+        returned.setDiscountAmount(redemption.getDiscountAmount());
+        returned.setRefNo(returnRefNo);
+        returned.setRemark("订单模拟退款返还抵扣积分");
+        if (pointsLogMapper.insert(returned) != 1) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "退款积分流水写入失败");
+        }
+    }
+
     private PointsRedemptionQuote calculateForMember(
             MemberEntity member, BigDecimal roomAmount, Integer pointsUsed, LocalDateTime now) {
         int reservedPoints = bookingLockMapper.sumReservedPoints(member.getId(), now);

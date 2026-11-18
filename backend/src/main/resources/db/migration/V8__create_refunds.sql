@@ -1,0 +1,23 @@
+CREATE TABLE refunds (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_id BIGINT UNSIGNED NOT NULL,
+    payment_id BIGINT UNSIGNED NOT NULL,
+    refund_no VARCHAR(64) NOT NULL,
+    wechat_refund_id VARCHAR(64) NULL,
+    amount DECIMAL(12,2) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    reason VARCHAR(300) NULL,
+    refunded_at DATETIME(3) NULL,
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_refunds_refund_no (refund_no),
+    UNIQUE KEY uk_refunds_wechat_refund_id (wechat_refund_id),
+    KEY idx_refunds_order (order_id),
+    KEY idx_refunds_payment (payment_id),
+    KEY idx_refunds_status_refunded_at (status, refunded_at),
+    CONSTRAINT fk_refunds_order FOREIGN KEY (order_id) REFERENCES orders (id),
+    CONSTRAINT fk_refunds_payment FOREIGN KEY (payment_id) REFERENCES payments (id),
+    CONSTRAINT chk_refunds_amount CHECK (amount >= 0),
+    CONSTRAINT chk_refunds_status CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='模拟退款流水';
