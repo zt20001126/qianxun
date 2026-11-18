@@ -13,12 +13,35 @@
         <result property="discountAmount" column="discount_amount"/>
         <result property="refNo" column="ref_no"/>
         <result property="remark" column="remark"/>
+        <result property="createdAt" column="created_at"/>
     </resultMap>
 
     <select id="findByRefNo" resultMap="pointsLogResultMap">
         SELECT id, member_id, order_id, type, points, growth_points, balance_after,
-               amount, discount_amount, ref_no, remark
+               amount, discount_amount, ref_no, remark, created_at
         FROM points_log WHERE ref_no = #{refNo}
+    </select>
+
+    <sql id="pointsLogFilters">
+        <where>
+            <if test="memberId != null">AND member_id = #{memberId}</if>
+            <if test="orderId != null">AND order_id = #{orderId}</if>
+            <if test="type != null">AND type = #{type}</if>
+        </where>
+    </sql>
+
+    <select id="findPage" resultMap="pointsLogResultMap">
+        SELECT id, member_id, order_id, type, points, growth_points, balance_after,
+               amount, discount_amount, ref_no, remark, created_at
+        FROM points_log
+        <include refid="pointsLogFilters"/>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPage" resultType="long">
+        SELECT COUNT(*) FROM points_log
+        <include refid="pointsLogFilters"/>
     </select>
 
     <select id="existsByRefNo" resultType="boolean">

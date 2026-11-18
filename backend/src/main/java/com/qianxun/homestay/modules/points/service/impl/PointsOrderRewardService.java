@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class PointsOrderRewardService implements OrderRewardService {
 
-    private static final Long MINI_PROGRAM_CHANNEL_ID = 1L;
     private static final Pattern MAINLAND_PHONE = Pattern.compile("^1[3-9]\\d{9}$");
 
     private final OrderMapper orderMapper;
@@ -33,18 +32,21 @@ public class PointsOrderRewardService implements OrderRewardService {
     private final MemberMapper memberMapper;
     private final PointsLogMapper pointsLogMapper;
     private final String defaultAvatar;
+    private final Long miniProgramChannelId;
 
     public PointsOrderRewardService(
             OrderMapper orderMapper,
             OrderAmountMapper orderAmountMapper,
             MemberMapper memberMapper,
             PointsLogMapper pointsLogMapper,
-            @Value("${app.auth.default-avatar}") String defaultAvatar) {
+            @Value("${app.auth.default-avatar}") String defaultAvatar,
+            @Value("${app.channel.mini-program-id}") Long miniProgramChannelId) {
         this.orderMapper = orderMapper;
         this.orderAmountMapper = orderAmountMapper;
         this.memberMapper = memberMapper;
         this.pointsLogMapper = pointsLogMapper;
         this.defaultAvatar = defaultAvatar;
+        this.miniProgramChannelId = miniProgramChannelId;
     }
 
     @Override
@@ -74,7 +76,7 @@ public class PointsOrderRewardService implements OrderRewardService {
         if (memberMapper.updateRewardBalances(member.getId(), newPoints, newGrowthPoints) != 1) {
             throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "会员积分更新失败");
         }
-        if (!MINI_PROGRAM_CHANNEL_ID.equals(order.getChannelId())) {
+        if (!miniProgramChannelId.equals(order.getChannelId())) {
             orderMapper.attachMemberIfMissing(orderId, member.getId());
         }
 
@@ -88,11 +90,13 @@ public class PointsOrderRewardService implements OrderRewardService {
         log.setAmount(amount.getPaidAmount());
         log.setRefNo(refNo);
         log.setRemark("订单完成奖励");
-        pointsLogMapper.insert(log);
+        if (pointsLogMapper.insert(log) != 1) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "订单积分奖励流水写入失败");
+        }
     }
 
     private MemberEntity resolveMember(OrderEntity order) {
-        if (MINI_PROGRAM_CHANNEL_ID.equals(order.getChannelId())) {
+        if (miniProgramChannelId.equals(order.getChannelId())) {
             return order.getMemberId() == null ? null : memberMapper.findByIdForUpdate(order.getMemberId());
         }
         if (order.getMemberId() != null) {

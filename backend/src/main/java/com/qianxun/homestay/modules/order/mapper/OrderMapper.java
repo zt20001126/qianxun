@@ -43,6 +43,9 @@ public interface OrderMapper {
             @Param("memberId") Long memberId,
             @Param("id") Long id);
 
+    /** 查询按 member_id 归属指定会员的订单摘要。 */
+    List<OrderViewEntity> findMemberOrders(@Param("memberId") Long memberId);
+
     int insert(OrderEntity order);
 
     int updateEditableFields(OrderEntity order);

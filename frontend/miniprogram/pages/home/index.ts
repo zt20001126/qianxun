@@ -155,7 +155,7 @@ Page({
   },
 
   onMyOrdersTap() {
-    wx.navigateTo({ url: '/pages/orders/index' })
+    wx.switchTab({ url: '/pages/orders/index' })
   },
 
   onLogoutTap() {

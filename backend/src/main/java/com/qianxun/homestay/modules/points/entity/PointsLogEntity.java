@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.points.entity;
 
 import com.qianxun.homestay.modules.points.enums.PointsLogType;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /** points_log 表的订单奖励流水映射。 */
 public class PointsLogEntity {
@@ -28,6 +29,8 @@ public class PointsLogEntity {
     private String refNo;
     /** 积分变更说明。 */
     private String remark;
+    /** 流水创建时间。 */
+    private LocalDateTime createdAt;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -51,4 +54,6 @@ public class PointsLogEntity {
     public void setRefNo(String refNo) { this.refNo = refNo; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

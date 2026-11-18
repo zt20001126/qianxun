@@ -7,13 +7,26 @@
     "pages/payment/index",
     "pages/payment-success/index",
     "pages/orders/index",
-    "pages/order-detail/index"
+    "pages/order-detail/index",
+    "pages/member-center/index",
+    "pages/points-logs/index"
   ],
   "window": {
     "navigationBarTitleText": "芊浔民宿",
     "navigationBarBackgroundColor": "#FBF5EF",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#FBF5EF"
+  },
+  "tabBar": {
+    "color": "#86796D",
+    "selectedColor": "#98501F",
+    "backgroundColor": "#FFFCF9",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/home/index", "text": "首页" },
+      { "pagePath": "pages/orders/index", "text": "订单" },
+      { "pagePath": "pages/member-center/index", "text": "会员中心" }
+    ]
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

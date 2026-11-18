@@ -60,11 +60,11 @@ Page({
   },
 
   onOrdersTap() {
-    wx.navigateBack({ delta: 1 })
+    wx.switchTab({ url: '/pages/orders/index' })
   },
 
   onHomeTap() {
-    wx.reLaunch({ url: '/pages/home/index' })
+    wx.switchTab({ url: '/pages/home/index' })
   },
 
   async onCancelTap() {

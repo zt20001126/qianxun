@@ -1,0 +1,19 @@
+<view class="logs-page">
+  <view class="logs-heading"><text>积分明细</text><text>共 {{total}} 条</text></view>
+  <view wx:if="{{loading && logs.length === 0}}" class="logs-state">正在读取积分流水…</view>
+  <view wx:elif="{{errorMessage && logs.length === 0}}" class="logs-state logs-error">
+    <text>{{errorMessage}}</text><button class="retry-button" bindtap="loadLogs">重新加载</button>
+  </view>
+  <view wx:elif="{{logs.length === 0}}" class="logs-state">还没有积分流水</view>
+  <view wx:else class="logs-card">
+    <view wx:for="{{logs}}" wx:key="id" class="log-row">
+      <view class="log-main">
+        <view class="log-title"><text>{{item.type_label}}</text><text class="log-points {{item.points > 0 ? 'positive' : 'negative'}}">{{item.points_label}}</text></view>
+        <text class="log-source">{{item.source_label}}</text>
+        <text class="log-time">{{item.created_label}}</text>
+      </view>
+      <view class="log-balance"><text>余额</text><text>{{item.balance_after}}</text></view>
+    </view>
+    <view class="logs-footer">{{loadingMore ? '正在加载…' : logs.length < total ? '上拉加载更多' : '已显示全部流水'}}</view>
+  </view>
+</view>

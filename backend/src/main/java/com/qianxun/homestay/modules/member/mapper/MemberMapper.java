@@ -1,6 +1,7 @@
 package com.qianxun.homestay.modules.member.mapper;
 
 import com.qianxun.homestay.modules.member.entity.MemberEntity;
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -39,7 +40,7 @@ public interface MemberMapper {
     /** 按会员主键锁定会员资料。 */
     MemberEntity findByIdForUpdate(@Param("id") Long id);
 
-    /** 在持有会员行锁时写入奖励后的积分余额。 */
+    /** 在持有会员行锁时写入发放后的积分与成长积分余额。 */
     int updateRewardBalances(@Param("id") Long id, @Param("points") int points,
             @Param("growthPoints") int growthPoints);
 
@@ -53,4 +54,13 @@ public interface MemberMapper {
      * @return 会员实体；不存在时为空
      */
     MemberEntity findById(@Param("id") Long id);
+
+    /** 按手机号筛选会员并分页返回。 */
+    List<MemberEntity> findPage(@Param("phone") String phone, @Param("offset") long offset, @Param("size") int size);
+
+    /** 统计手机号筛选命中的会员数。 */
+    long count(@Param("phone") String phone);
+
+    /** 新建未登录会员资料；积分余额统一由积分流水服务更新。 */
+    int insertMember(MemberEntity member);
 }

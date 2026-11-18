@@ -67,4 +67,26 @@
         WHERE id = #{id}
         LIMIT 1
     </select>
+
+    <select id="findPage" resultMap="MemberResultMap">
+        SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
+        FROM members
+        <where>
+            <if test="phone != null and phone != ''">AND phone LIKE CONCAT('%', #{phone}, '%')</if>
+        </where>
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM members
+        <where>
+            <if test="phone != null and phone != ''">AND phone LIKE CONCAT('%', #{phone}, '%')</if>
+        </where>
+    </select>
+
+    <insert id="insertMember" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO members (phone, openid, nickname, avatar, growth_points, points, created_at, updated_at)
+        VALUES (#{phone}, NULL, #{nickname}, #{avatar}, 0, 0, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
+    </insert>
 </mapper>

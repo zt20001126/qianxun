@@ -103,6 +103,25 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .room-number { color: #6f4022 !important; font-family: Georgia, serif; font-size: 15px !important; }
 .blocks-table { min-width: 760px; }
 .orders-table { min-width: 1260px; }
+.members-table { min-width: 1040px; }
+.points-table { min-width: 1120px; }
+.member-level-pill { display: inline-flex; min-height: 24px; align-items: center; padding: 0 10px; border-radius: 999px; color: #865027; background: #f7eadb; font-size: 11px; }
+.member-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 16px; border-top: 1px solid #f1ece6; color: #93867a; font-size: 11px; }
+.member-pagination > div { display: flex; align-items: center; gap: 10px; }
+.member-detail-dialog { width: min(100%, 1120px); }
+.member-detail-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 23px; }
+.member-detail-summary > div { display: grid; gap: 8px; padding: 13px; border: 1px solid #eee4da; border-radius: 8px; background: #fcf8f3; }
+.member-detail-summary small { color: #988a7d; font-size: 10px; }
+.member-detail-summary strong { color: #554638; font-size: 13px; }
+.detail-title-row { display: flex; align-items: baseline; justify-content: space-between; margin: 17px 0 9px; }
+.detail-title-row h3 { margin: 0; color: #594535; font-size: 13px; }
+.detail-title-row span { color: #9a8d80; font-size: 10px; }
+.detail-table-wrap { max-height: 270px; overflow-y: auto; border: 1px solid #eee4da; border-radius: 8px; }
+.detail-table-wrap .data-table { min-width: 800px; }
+.compact-state { min-height: 80px; border: 1px solid #eee4da; border-radius: 8px; background: #fcf8f3; }
+.points-positive { color: #55764d !important; font-weight: 600; }
+.points-negative { color: #aa493b !important; font-weight: 600; }
+.load-more-button { display: flex; margin: 12px auto 0; }
 .orders-table .order-actions-heading { min-width: 245px; text-align: right; }
 .order-filter-card { flex-wrap: wrap; }
 .order-filter-card label { flex: 1 1 135px; }
@@ -196,4 +215,7 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
   .order-detail-grid > div { padding: 11px 10px; }
   .form-dialog { padding: 19px 16px 16px; }
   .form-grid { gap: 11px; }
+  .member-pagination { align-items: flex-start; flex-direction: column; }
+  .member-pagination > div { width: 100%; justify-content: space-between; }
+  .member-detail-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

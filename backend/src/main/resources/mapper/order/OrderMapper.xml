@@ -148,6 +148,16 @@
         WHERE o.id = #{id} AND o.member_id = #{memberId}
     </select>
 
+    <select id="findMemberOrders" resultMap="orderViewResultMap">
+        SELECT <include refid="viewColumns"/>
+        FROM orders o
+        INNER JOIN room r ON r.id = o.room_id
+        INNER JOIN channels c ON c.id = o.channel_id
+        INNER JOIN order_amount a ON a.order_id = o.id
+        WHERE o.member_id = #{memberId}
+        ORDER BY o.created_at DESC, o.id DESC
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO orders (
             order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
