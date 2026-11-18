@@ -2,9 +2,7 @@ spring:
   application:
     name: qianxun-homestay-backend
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/qianxun_homestay?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectionTimeZone=Asia/Shanghai}
-    username: ${SPRING_DATASOURCE_USERNAME:qianxun}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: "${DATABASE_URL:jdbc:mysql://localhost:3306/qianxun?user=qianxun&password=qianxun&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectionTimeZone=Asia/Shanghai}"
     driver-class-name: com.mysql.cj.jdbc.Driver
   flyway:
     enabled: true
@@ -28,10 +26,7 @@ app:
     member-expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:2592000}
     admin-expiration-seconds: ${ADMIN_JWT_EXPIRATION_SECONDS:28800}
   auth:
-    default-avatar: ${MEMBER_DEFAULT_AVATAR:/assets/avatar-default.png}
-  admin:
-    bootstrap-username: ${ADMIN_BOOTSTRAP_USERNAME:}
-    bootstrap-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+    default-avatar: ${MEMBER_DEFAULT_AVATAR:/assets/avatar-default.webp}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
 

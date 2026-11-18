@@ -26,18 +26,4 @@ public interface AdminMapper {
      */
     AdminEntity findById(@Param("id") Long id);
 
-    /**
-     * 统计管理员账号数，用于首次安全初始化。
-     *
-     * @return 当前账号数
-     */
-    long countAdmins();
-
-    /**
-     * 插入首次初始化的管理员 BCrypt 哈希。
-     *
-     * @param admin 管理员资料
-     * @return 插入行数
-     */
-    int insert(AdminEntity admin);
 }

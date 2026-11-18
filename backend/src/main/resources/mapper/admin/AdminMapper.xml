@@ -24,12 +24,4 @@
         LIMIT 1
     </select>
 
-    <select id="countAdmins" resultType="long">
-        SELECT COUNT(*) FROM admin
-    </select>
-
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO admin (username, password_hash, enabled, created_at, updated_at)
-        VALUES (#{username}, #{passwordHash}, 1, CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3))
-    </insert>
 </mapper>

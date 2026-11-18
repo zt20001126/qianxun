@@ -33,9 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
         "app.jwt.secret=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
         "app.jwt.member-expiration-seconds=2592000",
         "app.jwt.admin-expiration-seconds=28800",
-        "app.auth.default-avatar=/assets/avatar-default.png",
-        "app.admin.bootstrap-username=",
-        "app.admin.bootstrap-password="
+        "app.auth.default-avatar=/assets/avatar-default.png"
 })
 @AutoConfigureMockMvc
 class AuthApiIntegrationTest {
