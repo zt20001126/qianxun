@@ -49,6 +49,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/app/auth/login", "/api/admin/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/rooms", "/api/app/rooms/*").permitAll()
                         .requestMatchers("/api/app/**").hasRole(UserRole.MEMBER.name())
