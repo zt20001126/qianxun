@@ -31,11 +31,12 @@
           <view class="section-mark"></view>
           <text>费用明细</text>
         </view>
-        <view class="fee-row">
+        <view wx:if="{{roomAmountLabel !== '—'}}" class="fee-row">
           <text class="fee-label">房费</text>
           <text class="fee-summary">¥{{unitPrice}} × {{order.nights}}晚</text>
           <text class="fee-total">¥{{roomAmountLabel}}</text>
         </view>
+        <text wx:else class="fee-unavailable">房费明细暂不可用</text>
         <view wx:if="{{order.points_used > 0}}" class="fee-row discount-row">
           <text class="fee-label">积分抵扣</text>
           <text class="fee-summary">使用 {{order.points_used}} 积分</text>

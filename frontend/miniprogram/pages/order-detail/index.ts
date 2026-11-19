@@ -33,21 +33,67 @@ interface OrderDetailPageData {
   paidAmountLabel: string
 }
 
-function formatDateWithWeekday(value: string): string {
+function formatDateWithWeekday(value?: string | null): string {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return '—'
   const [year, month, day] = value.split('-').map(Number)
   const weekday = ['日', '一', '二', '三', '四', '五', '六'][new Date(Date.UTC(year, month - 1, day)).getUTCDay()]
   return `${value}（周${weekday}）`
 }
 
-function formatMoney(value: string): string {
-  return value.endsWith('.00') ? value.slice(0, -3) : value
+function normalizeMoney(value?: string | null): string | null {
+  if (typeof value !== 'string' || !/^\d+(?:\.\d{1,2})?$/.test(value)) return null
+  const [whole, fraction = ''] = value.split('.')
+  return `${whole.replace(/^0+(?=\d)/, '')}.${fraction.padEnd(2, '0')}`
 }
 
-/** 按分做字符串长除法，避免用浮点数计算页面展示金额。 */
-function divideMoneyByNights(roomAmount: string, nights: number): string {
-  if (nights <= 0) return '0.00'
-  const [whole, fraction = ''] = roomAmount.split('.')
-  const cents = `${whole}${fraction.padEnd(2, '0').slice(0, 2)}`.replace(/^0+(?=\d)/, '')
+function formatMoney(value?: string | null): string {
+  const normalized = normalizeMoney(value)
+  if (!normalized) return '—'
+  return normalized.endsWith('.00') ? normalized.slice(0, -3) : normalized
+}
+
+/** 使用契约中的等式兼容缺少 room_amount 的旧版详情响应。 */
+function resolveRoomAmount(order: AppOrderDetail): string | null {
+  const roomAmount = normalizeMoney(order.room_amount)
+  if (roomAmount) return roomAmount
+
+  const paidAmount = normalizeMoney(order.paid_amount)
+  const discountAmount = normalizeMoney(order.discount_amount)
+  if (paidAmount && discountAmount) return addMoneyStrings(paidAmount, discountAmount)
+  if (paidAmount && Number(order.points_used || 0) === 0) return paidAmount
+  return null
+}
+
+/** 按十进制字符串逐位相加，避免用浮点数处理金额。 */
+function addMoneyStrings(left: string, right: string): string {
+  const [leftWhole, leftFraction = ''] = left.split('.')
+  const [rightWhole, rightFraction = ''] = right.split('.')
+  const fractionSum = Number(leftFraction) + Number(rightFraction)
+  let whole = addIntegerStrings(leftWhole, rightWhole)
+  if (fractionSum >= 100) whole = addIntegerStrings(whole, '1')
+  return `${whole}.${String(fractionSum % 100).padStart(2, '0')}`
+}
+
+function addIntegerStrings(left: string, right: string): string {
+  let leftIndex = left.length - 1
+  let rightIndex = right.length - 1
+  let carry = 0
+  let result = ''
+  while (leftIndex >= 0 || rightIndex >= 0 || carry > 0) {
+    const sum = Number(left[leftIndex] || 0) + Number(right[rightIndex] || 0) + carry
+    result = String(sum % 10) + result
+    carry = Math.floor(sum / 10)
+    leftIndex -= 1
+    rightIndex -= 1
+  }
+  return result.replace(/^0+(?=\d)/, '')
+}
+
+function divideMoneyByNights(roomAmount: string | null, nights: number): string {
+  const normalizedAmount = normalizeMoney(roomAmount)
+  if (!normalizedAmount || !Number.isInteger(nights) || nights <= 0) return '—'
+  const [whole, fraction = ''] = normalizedAmount.split('.')
+  const cents = `${whole}${fraction}`.replace(/^0+(?=\d)/, '')
   let remainder = 0
   let quotient = ''
 
@@ -126,6 +172,7 @@ Page({
             })),
       ])
       const roomName = room ? `${order.room_number} · ${room.name}` : `${order.room_number} 房`
+      const roomAmount = resolveRoomAmount(order)
       const detailRows: DetailRow[] = [
         { label: '订单号', value: order.order_no, isMono: true },
         { label: '房间', value: roomName, isStrong: true },
@@ -143,8 +190,8 @@ Page({
         cancellation,
         statusLabel: getOrderStatusLabel(order.status),
         statusHint: getStatusHint(order, cancellation),
-        unitPrice: divideMoneyByNights(order.room_amount, order.nights),
-        roomAmountLabel: formatMoney(order.room_amount),
+        unitPrice: divideMoneyByNights(roomAmount, order.nights),
+        roomAmountLabel: roomAmount ? formatMoney(roomAmount) : '—',
         discountAmountLabel: formatMoney(order.discount_amount),
         paidAmountLabel: formatMoney(order.paid_amount),
       })

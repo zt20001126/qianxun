@@ -161,6 +161,13 @@
   white-space: nowrap;
 }
 
+.fee-unavailable {
+  display: block;
+  padding: 18rpx 0;
+  color: #94877b;
+  font-size: 22rpx;
+}
+
 .discount-row {
   color: #b83b2a;
 }
