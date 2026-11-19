@@ -1,0 +1,27 @@
+<view class="my-page">
+  <view class="profile-card">
+    <image class="profile-avatar" src="{{avatarSource}}" mode="aspectFill" />
+    <view class="profile-copy">
+      <text class="profile-name">{{nickname}}</text>
+      <text class="profile-hint">{{profileHint}}</text>
+    </view>
+  </view>
+
+  <view class="entry-card">
+    <view class="entry-row" bindtap="onOrdersTap">
+      <view class="entry-icon"><image src="/assets/tab-orders-active.png" mode="aspectFit" /></view>
+      <text class="entry-label">我的订单</text>
+      <text class="entry-arrow">›</text>
+    </view>
+    <view class="entry-row" bindtap="onMemberCenterTap">
+      <view class="entry-icon"><image src="/assets/tab-member-active.png" mode="aspectFit" /></view>
+      <text class="entry-label">会员中心</text>
+      <text class="entry-arrow">›</text>
+    </view>
+    <view class="entry-row entry-row-last" bindtap="onContactTap">
+      <view class="entry-icon"><image src="/assets/entry-contact.png" mode="aspectFit" /></view>
+      <text class="entry-label">联系我们</text>
+      <text class="entry-arrow">›</text>
+    </view>
+  </view>
+</view>

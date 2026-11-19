@@ -9,6 +9,7 @@
     "pages/orders/index",
     "pages/order-detail/index",
     "pages/member-center/index",
+    "pages/my/index",
     "pages/points-logs/index"
   ],
   "window": {
@@ -23,9 +24,30 @@
     "backgroundColor": "#FFFCF9",
     "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/home/index", "text": "首页" },
-      { "pagePath": "pages/orders/index", "text": "订单" },
-      { "pagePath": "pages/member-center/index", "text": "会员中心" }
+      {
+        "pagePath": "pages/home/index",
+        "text": "首页",
+        "iconPath": "assets/tab-home.png",
+        "selectedIconPath": "assets/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/orders/index",
+        "text": "订单",
+        "iconPath": "assets/tab-orders.png",
+        "selectedIconPath": "assets/tab-orders-active.png"
+      },
+      {
+        "pagePath": "pages/member-center/index",
+        "text": "会员",
+        "iconPath": "assets/tab-member.png",
+        "selectedIconPath": "assets/tab-member-active.png"
+      },
+      {
+        "pagePath": "pages/my/index",
+        "text": "我的",
+        "iconPath": "assets/tab-my.png",
+        "selectedIconPath": "assets/tab-my-active.png"
+      }
     ]
   },
   "style": "v2",

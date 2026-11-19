@@ -1,0 +1,103 @@
+.my-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 28rpx 28rpx 48rpx;
+  color: #292522;
+  background: #fbf5ef;
+}
+
+.profile-card,
+.entry-card {
+  overflow: hidden;
+  border: 1rpx solid #eee4da;
+  border-radius: 24rpx;
+  background: #fffcf9;
+  box-shadow: 0 8rpx 24rpx rgba(87, 60, 39, .045);
+}
+
+.profile-card {
+  display: flex;
+  min-height: 190rpx;
+  align-items: center;
+  gap: 24rpx;
+  margin-bottom: 28rpx;
+  padding: 28rpx 32rpx;
+  box-sizing: border-box;
+}
+
+.profile-avatar {
+  width: 112rpx;
+  height: 112rpx;
+  flex: 0 0 112rpx;
+  border: 4rpx solid #f1e4d5;
+  border-radius: 50%;
+  background: #f5e5d6;
+}
+
+.profile-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+.profile-name {
+  overflow: hidden;
+  color: #512a18;
+  font-size: 34rpx;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-hint {
+  color: #94877a;
+  font-size: 23rpx;
+}
+
+.entry-card {
+  padding: 0 28rpx;
+}
+
+.entry-row {
+  display: flex;
+  min-height: 108rpx;
+  align-items: center;
+  gap: 22rpx;
+  border-bottom: 1rpx solid #f1eae2;
+}
+
+.entry-row-last {
+  border-bottom: 0;
+}
+
+.entry-icon {
+  display: flex;
+  width: 58rpx;
+  height: 58rpx;
+  flex: 0 0 58rpx;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18rpx;
+  background: #f7eee6;
+}
+
+.entry-icon image {
+  width: 38rpx;
+  height: 38rpx;
+}
+
+.entry-label {
+  flex: 1;
+  color: #3c342e;
+  font-size: 27rpx;
+  font-weight: 500;
+}
+
+.entry-arrow {
+  color: #8d8176;
+  font-family: Arial, sans-serif;
+  font-size: 42rpx;
+  line-height: 1;
+}

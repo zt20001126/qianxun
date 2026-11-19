@@ -1,0 +1,2362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>芊浔民宿 · PC 管理后台管理系统 (V3.1)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: {
+                            paper: '#F7F4EE',
+                            card: '#FFFFFF',
+                            warm: '#EFE9DE',
+                            wood: '#8B4D25',
+                            woodDark: '#693718',
+                            woodLight: '#F6EDE5',
+                            cinnabar: '#B83B2A',
+                            celadon: '#3D6E58',
+                            celadonBg: '#E7F1EC',
+                            charcoal: '#231F1D',
+                            gray: '#756D66',
+                            border: '#E5DDD0',
+                            gold: '#C49655'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans SC"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        serif: ['"Noto Serif SC"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.22s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-ink-paper text-ink-charcoal font-sans antialiased selection:bg-ink-wood/15 selection:text-ink-wood">
+
+    <!-- 管理员登录遮罩（V3.1 单管理员安全登录） -->
+    <div id="admin-login-screen" class="hidden fixed inset-0 z-50 bg-ink-paper flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-ink-border fade-in">
+            <div class="flex items-center justify-center gap-2.5 mb-2">
+                <div class="w-10 h-10 rounded-2xl bg-ink-wood text-white flex items-center justify-center font-serif font-bold text-lg">芊</div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-serif text-xl font-bold text-ink-charcoal">芊浔民宿 · 管理后台</h1>
+                        <span class="px-1.5 py-0.5 rounded bg-ink-cinnabar text-white text-[10px] font-serif">南浔</span>
+                    </div>
+                    <p class="text-xs text-ink-gray">V3.1 运营与财务管理中台</p>
+                </div>
+            </div>
+            <div class="mt-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-ink-charcoal mb-1.5">管理员账号</label>
+                    <input id="login-username" type="text" value="admin" class="w-full px-3.5 py-2.5 rounded-xl bg-ink-paper border border-ink-border text-sm focus:outline-hidden focus:border-ink-wood">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-ink-charcoal mb-1.5">登录密码</label>
+                    <input id="login-password" type="password" value="qianxun2026" class="w-full px-3.5 py-2.5 rounded-xl bg-ink-paper border border-ink-border text-sm focus:outline-hidden focus:border-ink-wood">
+                </div>
+                <button onclick="handleAdminLogin()" class="w-full py-3 rounded-xl bg-ink-wood hover:bg-ink-woodDark text-white font-medium text-sm shadow-md shadow-ink-wood/20 transition">
+                    登录管理后台
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主布局容器 -->
+    <div id="app-shell" class="min-h-screen flex flex-col lg:flex-row">
+        <!-- 左侧导航边栏 -->
+        <aside class="w-full lg:w-60 shrink-0 bg-[#231E1B] text-white flex flex-col justify-between">
+            <div>
+                <!-- Brand -->
+                <div class="px-5 py-5 border-b border-white/10 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-ink-wood flex items-center justify-center font-serif font-bold text-base text-[#FBE6C5] shadow-inner">芊</div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-serif font-bold text-base tracking-wide text-[#FAF5EE]">芊浔民宿</span>
+                                <span class="px-1 py-0.2 rounded bg-ink-cinnabar text-[9px] font-serif">南浔</span>
+                            </div>
+                            <p class="text-[11px] text-white/50 mt-0.5">PC 管理中台 · V3.1</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 菜单导航（严格对应需求规格说明书第4章八大业务模块，第4.9节系统设置按规范精简） -->
+                <nav id="sidebar-nav" class="p-3 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-1 gap-1 text-xs">
+                    <!-- JS 动态渲染 -->
+                </nav>
+            </div>
+
+            <!-- 底部管理员状态 -->
+            <div class="hidden lg:block p-4 border-t border-white/10">
+                <div class="flex items-center justify-between bg-white/5 rounded-xl p-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-full bg-ink-wood/80 flex items-center justify-center text-xs font-bold text-[#FBE6C5]">管</div>
+                        <div>
+                            <div class="text-xs font-medium text-white">admin（主理人）</div>
+                            <div class="text-[10px] text-white/50">单店 · 6间客房</div>
+                        </div>
+                    </div>
+                    <button onclick="logoutAdmin()" title="退出登录" class="p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧主工作区 -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- 顶部通栏 -->
+            <header class="h-14 bg-white border-b border-ink-border px-5 flex items-center justify-between shrink-0 sticky top-0 z-30">
+                <div class="flex items-center gap-3">
+                    <h2 id="page-heading" class="font-serif font-bold text-base text-ink-charcoal">经营总览</h2>
+                    <span class="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-ink-paper border border-ink-border text-[11px] text-ink-gray">
+                        <i data-lucide="calendar-clock" class="w-3 h-3 text-ink-wood"></i>
+                        北京时间基准：2026-11-18
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                    <button onclick="openNewExternalOrderModal()" class="px-3.5 py-1.5 rounded-xl bg-ink-wood hover:bg-ink-woodDark text-white text-xs font-medium flex items-center gap-1.5 shadow-2xs transition">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>录入第三方订单</span>
+                    </button>
+                    <button onclick="logoutAdmin()" class="lg:hidden px-2.5 py-1.5 rounded-xl border border-ink-border text-xs text-ink-gray">退出</button>
+                </div>
+            </header>
+
+            <!-- 内容渲染区 -->
+            <main id="main-content" class="flex-1 p-4 sm:p-6 max-w-[1440px] w-full mx-auto">
+                <!-- 动态注入 -->
+            </main>
+        </div>
+    </div>
+
+    <!-- 通用模态框容器 -->
+    <div id="modal-backdrop" class="hidden fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px] flex items-center justify-center p-4 overflow-y-auto">
+        <div id="modal-panel" class="bg-white rounded-3xl shadow-2xl border border-ink-border w-full max-w-xl p-6 my-auto fade-in">
+            <!-- 动态注入 -->
+        </div>
+    </div>
+
+    <!-- 全局 Toast -->
+    <div class="pointer-events-none fixed top-5 right-5 z-50">
+        <div id="toast-box" class="opacity-0 translate-y-2 transition-all duration-300 px-4 py-2.5 rounded-xl bg-ink-charcoal text-white text-xs font-medium shadow-xl flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-ink-gold"></span>
+            <span id="toast-text">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 1. V3.1 核心数据模型与初始业务数据（严格对应数据库 13 张正式表结构）
+        // =========================================================================
+        const TODAY = '2026-11-18';
+
+        const NAV_ITEMS = [
+            { id: 'dashboard', label: '经营总览', icon: 'layout-dashboard' },
+            { id: 'calendar',  label: '房态日历', icon: 'calendar-days' },
+            { id: 'orders',    label: '订单管理', icon: 'clipboard-list' },
+            { id: 'rooms',     label: '客房与封房', icon: 'bed-double' },
+            { id: 'members',   label: '会员与积分', icon: 'users' },
+            { id: 'channels',  label: '平台与达人', icon: 'share-2' },
+            { id: 'expenses',  label: '经营支出', icon: 'receipt' },
+            { id: 'reports',   label: '经营报表', icon: 'bar-chart-3' }
+        ];
+
+        // 7种固定渠道（数据库 channels 表，ID=1 为小程序）
+        const CHANNELS = [
+            { id: 1, name: '小程序', enabled: true, isMini: true },
+            { id: 2, name: '抖音',   enabled: true, isMini: false },
+            { id: 3, name: '美团',   enabled: true, isMini: false },
+            { id: 4, name: '携程',   enabled: true, isMini: false },
+            { id: 5, name: '同程',   enabled: true, isMini: false },
+            { id: 6, name: '飞猪',   enabled: true, isMini: false },
+            { id: 7, name: '途家',   enabled: true, isMini: false }
+        ];
+
+        // 达人/主播表（creators）
+        const CREATORS = [
+            { id: 1, name: '江南慢游记', channel_id: 2, enabled: true },
+            { id: 2, name: '南浔小筑探店', channel_id: 2, enabled: true },
+            { id: 3, name: '苏杭周末去哪儿', channel_id: 3, enabled: true },
+            { id: 4, name: '古镇民宿严选', channel_id: 4, enabled: false }
+        ];
+
+        // 6间房表（room）
+        const ROOMS = [
+            { id: 1, number: '101', name: '雅致大床房', floor: 1, price: 328, capacity: 2, bed_info: '大床1.8m', area: 22, enabled: true, facilities: ['空调', '独立卫浴', 'Wi-Fi', '电视'], desc: '一楼庭院景观雅致大床房，木格花窗，静谧舒适。', image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=400&q=80' },
+            { id: 2, number: '102', name: '舒适双床房', floor: 1, price: 348, capacity: 2, bed_info: '双床1.2m×2', area: 26, enabled: true, facilities: ['空调', '独立卫浴', 'Wi-Fi', '电视'], desc: '一楼宽敞双床房，配禅意品茗茶席，适合亲子或结伴。', image: 'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=400&q=80' },
+            { id: 3, number: '103', name: '临水双床房', floor: 1, price: 358, capacity: 2, bed_info: '双床1.35m×2', area: 28, enabled: true, facilities: ['空调', '独立卫浴', 'Wi-Fi', '电视'], desc: '一楼亲水步道旁双床房，推门听水声。', image: 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=400&q=80' },
+            { id: 4, number: '201', name: '观景大床房', floor: 2, price: 368, capacity: 2, bed_info: '大床1.8m', area: 24, enabled: true, facilities: ['空调', '独立卫浴', 'Wi-Fi', '电视'], desc: '二楼向阳全景木窗，俯瞰古镇石桥水巷。', image: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=400&q=80' },
+            { id: 5, number: '202', name: '临水大床房', floor: 2, price: 398, capacity: 2, bed_info: '大床2.0m', area: 30, enabled: true, facilities: ['空调', '独立卫浴', 'Wi-Fi', '电视', '观景浴缸'], desc: '二楼旗舰临河大床房，赏百间楼灯笼夜景。', image: 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=400&q=80' },
+            { id: 6, number: '203', name: '阁楼星空大床房', floor: 2, price: 428, capacity: 2, bed_info: '大床2.0m', area: 34, enabled: true, facilities: ['空调', '独立卫浴', 'Wi-Fi', '电视', '观星天窗'], desc: '清代老宅木梁阁楼，坡顶观星天窗与茶书案。', image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=400&q=80' }
+        ];
+
+        // 管理员封房记录表（room_block，只记录主动封房，不关联 order_id）
+        let ROOM_BLOCKS = [
+            { id: 1, room_id: 6, start_date: '2026-11-26', end_date: '2026-11-28', reason: '老宅木梁例行养护', created_at: '2026-11-10 09:30' }
+        ];
+
+        // 有效临时支付锁房（booking_lock：后台日历按 V3.1 规范不显示，但占房写入强制校验）
+        const BOOKING_LOCKS = [
+            { id: 1, room_id: 1, check_in: '2026-11-29', check_out: '2026-11-30', status: 'PENDING', expires_at: '2026-11-18 16:15:00' }
+        ];
+
+        // 正式订单表（orders + order_amount，严格遵循 V3.1 字段与计算口径）
+        let ORDERS = [
+            {
+                id: 101, order_no: 'QX202611170001', platform_order_no: null,
+                room_id: 1, channel_id: 1, creator_id: null, member_id: 1,
+                guest_name: '张先生', phone: '13800005678', guest_count: 2,
+                check_in: '2026-11-17', check_out: '2026-11-20',
+                status: 'CHECKED_IN', remark: '需要安静的房间', created_at: '2026-11-17 10:20',
+                amount: { paid_amount: 888.00, platform_fee: 0.00, platform_commission: 0.00, extra_commission: 0.00, expected_amount: null }
+            },
+            {
+                id: 102, order_no: 'QX202611180002', platform_order_no: null,
+                room_id: 5, channel_id: 1, creator_id: null, member_id: 1,
+                guest_name: '林女士', phone: '13800005678', guest_count: 2,
+                check_in: '2026-11-18', check_out: '2026-11-20',
+                status: 'PENDING_CONFIRM', remark: '下午三点左右到店', created_at: '2026-11-18 09:15',
+                amount: { paid_amount: 796.00, platform_fee: 0.00, platform_commission: 0.00, extra_commission: 0.00, expected_amount: null }
+            },
+            {
+                id: 103, order_no: 'QX202611160003', platform_order_no: 'DY8829104412',
+                room_id: 3, channel_id: 2, creator_id: 1, member_id: 2,
+                guest_name: '陈默', phone: '13900008899', guest_count: 2,
+                check_in: '2026-11-18', check_out: '2026-11-21',
+                status: 'PENDING_CHECKIN', remark: '抖音团购核销，需靠河房间', created_at: '2026-11-16 14:40',
+                amount: { paid_amount: 990.00, platform_fee: 49.50, platform_commission: 60.00, extra_commission: 80.50, expected_amount: 800.00 }
+            },
+            {
+                id: 104, order_no: 'QX202611120004', platform_order_no: 'CT772109331',
+                room_id: 4, channel_id: 4, creator_id: null, member_id: 3,
+                guest_name: '周先生', phone: '13600009999', guest_count: 2,
+                check_in: '2026-11-12', check_out: '2026-11-15',
+                status: 'COMPLETED', remark: '已退房并自动发放积分', created_at: '2026-11-10 18:05',
+                amount: { paid_amount: 1104.00, platform_fee: 110.40, platform_commission: 0.00, extra_commission: 0.00, expected_amount: null }
+            },
+            {
+                id: 105, order_no: 'QX202611190005', platform_order_no: 'MT550192831',
+                room_id: 2, channel_id: 3, creator_id: 3, member_id: null,
+                guest_name: '赵小姐', phone: '13711112222', guest_count: 2,
+                check_in: '2026-11-21', check_out: '2026-11-23',
+                status: 'PENDING_CHECKIN', remark: '美团达人直播间套餐', created_at: '2026-11-15 20:10',
+                amount: { paid_amount: 680.00, platform_fee: 34.00, platform_commission: 40.00, extra_commission: 26.00, expected_amount: 580.00 }
+            },
+            {
+                id: 106, order_no: 'QX202611290006', platform_order_no: null,
+                room_id: 4, channel_id: 1, creator_id: null, member_id: 2,
+                guest_name: '陈默', phone: '13900008899', guest_count: 2,
+                check_in: '2026-11-29', check_out: '2026-12-02',
+                status: 'PENDING_CHECKIN', remark: '跨月连住测试订单（11月2晚+12月1晚）', created_at: '2026-11-17 19:22',
+                amount: { paid_amount: 1104.00, platform_fee: 0.00, platform_commission: 0.00, extra_commission: 0.00, expected_amount: null }
+            }
+        ];
+
+        // 会员表（members，昵称固定手机号后四位）
+        let MEMBERS = [
+            { id: 1, phone: '13800005678', nickname: '5678', growth_points: 760,  points: 2400, created_at: '2026-09-12 10:15' },
+            { id: 2, phone: '13900008899', nickname: '8899', growth_points: 1260, points: 3200, created_at: '2026-08-03 16:40' },
+            { id: 3, phone: '13600009999', nickname: '9999', growth_points: 1850, points: 4500, created_at: '2026-06-21 09:05' }
+        ];
+
+        // 积分流水表（points_log，不含 admin_id / balance_before，严格保留 balance_after）
+        let POINTS_LOGS = [
+            { id: 1, member_id: 3, order_id: 104, type: 'ORDER_REWARD', points: 1104, growth_points: 1104, balance_after: 4500, amount: 1104.00, discount_amount: null, remark: '订单 QX202611120004 完成自动奖励', created_at: '2026-11-15 12:08' },
+            { id: 2, member_id: 1, order_id: 101, type: 'REDEEM', points: -2400, growth_points: 0, balance_after: 2400, amount: null, discount_amount: 96.00, remark: '小程序订单抵扣房费（银卡25:1）', created_at: '2026-11-17 10:20' },
+            { id: 3, member_id: 2, order_id: null, type: 'HISTORY_REWARD', points: 500, growth_points: 500, balance_after: 3200, amount: null, discount_amount: null, remark: '历史线下入住消费补发成长积分', created_at: '2026-11-10 15:30' }
+        ];
+
+        // 经营支出表（expenses，只增查统，创建后不可修改或删除）
+        let EXPENSES = [
+            { id: 1, content: '布草清洗与一次性洗漱用品补货', amount: 460.00, date: '2026-11-05', created_at: '2026-11-05 17:20' },
+            { id: 2, content: '南浔古镇店11月水电燃气费', amount: 890.50, date: '2026-11-12', created_at: '2026-11-12 10:05' },
+            { id: 3, content: '庭院绿植修剪与三道茶原料采购', amount: 320.00, date: '2026-11-16', created_at: '2026-11-16 14:12' }
+        ];
+
+        // 全局 UI 状态
+        const ui = {
+            tab: 'dashboard',
+            month: '2026-11',
+            reportScope: 'ALL',     // 'ALL' | 'NOT_CHECKED_IN' | 'CHECKED_IN'
+            reportDimension: 'overview', // 'overview' | 'channels' | 'creators' | 'rooms'
+            orderFilter: { channel_id: '', room_id: '', status: '', keyword: '' },
+            memberPhoneSearch: ''
+        };
+
+        // =========================================================================
+        // 2. 财务、间夜分摊与占房冲突核心计算引擎（严格对齐 V3.1 规则）
+        // =========================================================================
+        function parseYMD(str) {
+            const [y, m, d] = str.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+        function fmtYMD(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+        function addDays(ymd, n) {
+            const d = parseYMD(ymd);
+            d.setDate(d.getDate() + n);
+            return fmtYMD(d);
+        }
+        function diffDays(a, b) {
+            return Math.round((parseYMD(b) - parseYMD(a)) / 86400000);
+        }
+        function getNightsArray(checkIn, checkOut) {
+            const arr = [];
+            const n = diffDays(checkIn, checkOut);
+            for (let i = 0; i < n; i++) arr.push(addDays(checkIn, i));
+            return arr;
+        }
+        function fmtMoney(num) {
+            return Number(num || 0).toFixed(2);
+        }
+
+        // 实时计算单笔订单额外提成与商家到手金额
+        function calcOrderAmounts(amt) {
+            const paid = Number(amt.paid_amount || 0);
+            const fee = Number(amt.platform_fee || 0);
+            const pComm = Number(amt.platform_commission || 0);
+            let eComm = 0;
+            if (amt.expected_amount !== null && amt.expected_amount !== '' && !isNaN(Number(amt.expected_amount))) {
+                eComm = Math.max(0, Number((paid - fee - pComm - Number(amt.expected_amount)).toFixed(2)));
+            } else {
+                eComm = Number(amt.extra_commission || 0);
+            }
+            const net = Number((paid - fee - pComm - eComm).toFixed(2));
+            return { paid, fee, pComm, eComm, net };
+        }
+
+        // 检查区间 [checkIn, checkOut) 是否与有效订单、封房或有效锁房冲突
+        function checkRangeConflict(roomId, checkIn, checkOut, ignoreOrderId = null) {
+            const targetNights = getNightsArray(checkIn, checkOut);
+            if (targetNights.length <= 0) return '退房日期必须晚于入住日期';
+
+            for (const o of ORDERS) {
+                if (o.status === 'CANCELLED' || o.room_id !== Number(roomId)) continue;
+                if (ignoreOrderId && o.id === Number(ignoreOrderId)) continue;
+                const oNights = getNightsArray(o.check_in, o.check_out);
+                if (targetNights.some(d => oNights.includes(d))) {
+                    return `与有效订单 ${o.order_no}（${o.check_in} ~ ${o.check_out}）住宿日期重叠`;
+                }
+            }
+
+            for (const b of ROOM_BLOCKS) {
+                if (b.room_id !== Number(roomId)) continue;
+                const bNights = getNightsArray(b.start_date, b.end_date);
+                if (targetNights.some(d => bNights.includes(d))) {
+                    return `与管理员封房（${b.start_date} ~ ${b.end_date}，${b.reason || '封房'}）冲突，请先解封`;
+                }
+            }
+
+            for (const lk of BOOKING_LOCKS) {
+                if (lk.room_id !== Number(roomId) || lk.status !== 'PENDING') continue;
+                const lNights = getNightsArray(lk.check_in, lk.check_out);
+                if (targetNights.some(d => lNights.includes(d))) {
+                    return `该房间当前存在小程序未过期的 10 分钟临时锁房，请稍后再试`;
+                }
+            }
+
+            return null;
+        }
+
+        // 将单笔订单金额按住宿间夜平均分摊，分币尾差归最后一晚（V3.1 第 13 节第 2 条）
+        function allocateOrderToMonth(order, targetMonth) {
+            const nights = getNightsArray(order.check_in, order.check_out);
+            const totalN = nights.length;
+            if (totalN === 0) return { nights: 0, paid: 0, fee: 0, pComm: 0, eComm: 0, net: 0 };
+
+            const { paid, fee, pComm, eComm, net } = calcOrderAmounts(order.amount);
+
+            function splitMetric(totalVal) {
+                const totalCents = Math.round(totalVal * 100);
+                const baseCents = Math.floor(totalCents / totalN);
+                const remainder = totalCents - baseCents * totalN;
+                let monthCents = 0;
+                nights.forEach((d, idx) => {
+                    if (d.startsWith(targetMonth)) {
+                        monthCents += baseCents + (idx === totalN - 1 ? remainder : 0);
+                    }
+                });
+                return monthCents / 100;
+            }
+
+            const monthNights = nights.filter(d => d.startsWith(targetMonth)).length;
+            return {
+                nights: monthNights,
+                paid: splitMetric(paid),
+                fee: splitMetric(fee),
+                pComm: splitMetric(pComm),
+                eComm: splitMetric(eComm),
+                net: splitMetric(net)
+            };
+        }
+
+        // 计算月度统计与四维报表（严格按 V3.1 统计口径）
+        function computeMonthlyMetrics(month, scope = 'ALL') {
+            const validStatuses = ['PENDING_CONFIRM', 'PENDING_CHECKIN', 'CHECKED_IN', 'COMPLETED'];
+            const notCheckedInStatuses = ['PENDING_CONFIRM', 'PENDING_CHECKIN'];
+            const checkedInStatuses = ['CHECKED_IN', 'COMPLETED'];
+
+            const matchScope = (status) => {
+                if (!validStatuses.includes(status)) return false;
+                if (scope === 'NOT_CHECKED_IN') return notCheckedInStatuses.includes(status);
+                if (scope === 'CHECKED_IN') return checkedInStatuses.includes(status);
+                return true;
+            };
+
+            let orderCount = 0;
+            let nightCount = 0;
+            let paidAmount = 0;
+            let platformFee = 0;
+            let platformCommission = 0;
+            let extraCommission = 0;
+            let netAmount = 0;
+
+            let unoccupiedOrderRevenue = 0;
+            let checkedInOrderRevenue = 0;
+            let checkedInNetTotal = 0; // 净利润固定只取已入住订单当月到手金额
+            let checkedInNightsTotal = 0; // 入住率分子
+
+            ORDERS.forEach(o => {
+                if (!validStatuses.includes(o.status)) return;
+                const alloc = allocateOrderToMonth(o, month);
+
+                // 固定口径指标（不受 scope 筛选改变）
+                if (notCheckedInStatuses.includes(o.status)) {
+                    unoccupiedOrderRevenue += alloc.paid;
+                }
+                if (checkedInStatuses.includes(o.status)) {
+                    checkedInOrderRevenue += alloc.paid;
+                    checkedInNetTotal += alloc.net;
+                    checkedInNightsTotal += alloc.nights;
+                }
+
+                // 随 scope 筛选变化的指标
+                if (matchScope(o.status)) {
+                    if (o.check_in.startsWith(month)) orderCount += 1; // 订单数只归属入住日期所在月份
+                    nightCount += alloc.nights;
+                    paidAmount += alloc.paid;
+                    platformFee += alloc.fee;
+                    platformCommission += alloc.pComm;
+                    extraCommission += alloc.eComm;
+                    netAmount += alloc.net;
+                }
+            });
+
+            // 当月经营支出（按实际支出日期 date 统计）
+            const expenseAmount = EXPENSES
+                .filter(e => e.date.startsWith(month))
+                .reduce((sum, e) => sum + Number(e.amount), 0);
+
+            // 净利润 = 已入住订单当月到手金额 - 当月实际经营支出（不受 scope 筛选影响）
+            const operatingProfit = checkedInNetTotal - expenseAmount;
+
+            // 计算当月总日历间夜与封房间夜
+            const [y, m] = month.split('-').map(Number);
+            const daysInMonth = new Date(y, m, 0).getDate();
+            const totalCalendarNights = ROOMS.length * daysInMonth;
+
+            let blockedNights = 0;
+            ROOM_BLOCKS.forEach(b => {
+                blockedNights += getNightsArray(b.start_date, b.end_date).filter(d => d.startsWith(month)).length;
+            });
+
+            const denom = totalCalendarNights - blockedNights;
+            const occupancyRate = denom > 0 ? ((checkedInNightsTotal / denom) * 100).toFixed(1) + '%' : '—';
+
+            return {
+                orderCount, nightCount,
+                paidAmount, platformFee, platformCommission, extraCommission, netAmount,
+                unoccupiedOrderRevenue, checkedInOrderRevenue,
+                expenseAmount, operatingProfit,
+                checkedInNightsTotal, totalCalendarNights, blockedNights, occupancyRate
+            };
+        }
+
+        function getMemberTier(gp) {
+            if (gp >= 1500) return { name: '钻石会员', badge: 'bg-amber-100 text-amber-900 border-amber-300', rate: 15 };
+            if (gp >= 1000) return { name: '金卡会员', badge: 'bg-yellow-50 text-yellow-800 border-yellow-300', rate: 20 };
+            if (gp >= 500)  return { name: '银卡会员', badge: 'bg-slate-100 text-slate-700 border-slate-300', rate: 25 };
+            return { name: '普通会员', badge: 'bg-stone-100 text-stone-600 border-stone-200', rate: 30 };
+        }
+
+        // =========================================================================
+        // 3. 基础交互工具函数
+        // =========================================================================
+        function showToast(msg) {
+            const box = document.getElementById('toast-box');
+            document.getElementById('toast-text').textContent = msg;
+            box.classList.remove('opacity-0', 'translate-y-2');
+            clearTimeout(window._adminToastTimer);
+            window._adminToastTimer = setTimeout(() => {
+                box.classList.add('opacity-0', 'translate-y-2');
+            }, 2600);
+        }
+
+        function openModal(html, maxWidthClass = 'max-w-xl') {
+            const backdrop = document.getElementById('modal-backdrop');
+            const panel = document.getElementById('modal-panel');
+            panel.className = `bg-white rounded-3xl shadow-2xl border border-ink-border w-full ${maxWidthClass} p-6 my-auto fade-in`;
+            panel.innerHTML = html;
+            backdrop.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            document.getElementById('modal-backdrop').classList.add('hidden');
+        }
+
+        function switchTab(tabId) {
+            ui.tab = tabId;
+            renderApp();
+        }
+
+        function handleAdminLogin() {
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            if (!u || !p) {
+                showToast('请输入管理员账号与密码');
+                return;
+            }
+            document.getElementById('admin-login-screen').classList.add('hidden');
+            showToast('登录成功，欢迎回来 admin');
+        }
+
+        function logoutAdmin() {
+            document.getElementById('admin-login-screen').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // =========================================================================
+        // 4. 八大后台模块视图渲染
+        // =========================================================================
+
+        // (1) 经营总览 Dashboard
+        function renderDashboard() {
+            const m = computeMonthlyMetrics(ui.month, 'ALL');
+
+            // 计算今日（TODAY）6间房状态
+            const roomTodayCards = ROOMS.map(room => {
+                const activeOrder = ORDERS.find(o =>
+                    o.room_id === room.id &&
+                    o.status !== 'CANCELLED' &&
+                    o.check_in <= TODAY && o.check_out > TODAY
+                );
+                const block = ROOM_BLOCKS.find(b =>
+                    b.room_id === room.id &&
+                    b.start_date <= TODAY && b.end_date > TODAY
+                );
+
+                let statusLabel = '空房可售';
+                let badgeCls = 'bg-ink-celadonBg text-ink-celadon border-ink-celadon/25';
+                if (block) {
+                    statusLabel = '不可预订（封房）';
+                    badgeCls = 'bg-stone-200 text-stone-700 border-stone-300';
+                } else if (activeOrder) {
+                    const map = {
+                        'PENDING_CONFIRM': ['已预订（待确认）', 'bg-amber-50 text-amber-800 border-amber-200'],
+                        'PENDING_CHECKIN': ['待入住', 'bg-orange-50 text-orange-800 border-orange-200'],
+                        'CHECKED_IN':      ['已入住', 'bg-ink-woodLight text-ink-wood border-ink-wood/25'],
+                        'COMPLETED':       ['已退房', 'bg-stone-100 text-stone-600 border-stone-200']
+                    };
+                    [statusLabel, badgeCls] = map[activeOrder.status] || ['占用', 'bg-stone-100'];
+                }
+
+                return { room, activeOrder, block, statusLabel, badgeCls };
+            });
+
+            const occupiedToday = roomTodayCards.filter(c => c.activeOrder || c.block).length;
+
+            // 今日当晚住宿归属收入（按 TODAY 所在间夜归属）
+            let todayStayRevenue = 0;
+            ORDERS.forEach(o => {
+                if (o.status === 'CANCELLED') return;
+                const nights = getNightsArray(o.check_in, o.check_out);
+                if (nights.includes(TODAY)) {
+                    const { paid } = calcOrderAmounts(o.amount);
+                    todayStayRevenue += paid / nights.length;
+                }
+            });
+
+            return `
+                <div class="space-y-6 fade-in">
+                    <!-- 顶部月份选择器与口径说明 -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-ink-border">
+                        <div class="flex items-center gap-3">
+                            <span class="w-1.5 h-5 rounded-full bg-ink-wood"></span>
+                            <div>
+                                <h3 class="font-serif font-bold text-sm text-ink-charcoal">实时房态与月度经营看板</h3>
+                                <p class="text-[11px] text-ink-gray">今日住宿收入按当晚住宿归属；净利润 = 已入住订单当月到手金额 − 当月实际经营支出</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-ink-gray">统计月份：</label>
+                            <select onchange="ui.month = this.value; renderApp()" class="px-3 py-1.5 rounded-xl bg-ink-paper border border-ink-border text-xs font-semibold text-ink-charcoal focus:outline-hidden">
+                                <option value="2026-11" ${ui.month === '2026-11' ? 'selected' : ''}>2026年 11月（当月）</option>
+                                <option value="2026-12" ${ui.month === '2026-12' ? 'selected' : ''}>2026年 12月</option>
+                                <option value="2026-10" ${ui.month === '2026-10' ? 'selected' : ''}>2026年 10月</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 核心指标卡片组（区分未入住与已入住营业额、三类费用、到手金额与净利润） -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-5 rounded-2xl border border-ink-border shadow-2xs">
+                            <div class="flex items-center justify-between text-xs text-ink-gray">
+                                <span>已入住订单营业额（${ui.month}）</span>
+                                <span class="px-2 py-0.5 rounded bg-ink-celadonBg text-ink-celadon text-[10px] font-medium">已入住+已完成</span>
+                            </div>
+                            <div class="text-2xl font-bold text-ink-charcoal mt-2">¥${fmtMoney(m.checkedInOrderRevenue)}</div>
+                            <div class="text-[11px] text-ink-gray mt-2 flex justify-between">
+                                <span>今日当晚住宿收入：</span>
+                                <span class="font-semibold text-ink-wood">¥${fmtMoney(todayStayRevenue)}</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-ink-border shadow-2xs">
+                            <div class="flex items-center justify-between text-xs text-ink-gray">
+                                <span>未入住订单营业额（${ui.month}）</span>
+                                <span class="px-2 py-0.5 rounded bg-ink-woodLight text-ink-wood text-[10px] font-medium">待确认+待入住</span>
+                            </div>
+                            <div class="text-2xl font-bold text-ink-wood mt-2">¥${fmtMoney(m.unoccupiedOrderRevenue)}</div>
+                            <div class="text-[11px] text-ink-gray mt-2 flex justify-between">
+                                <span>全部有效订单总额：</span>
+                                <span class="font-semibold text-ink-charcoal">¥${fmtMoney(m.paidAmount)}</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-ink-border shadow-2xs">
+                            <div class="flex items-center justify-between text-xs text-ink-gray">
+                                <span>当月费用与达人提成汇总</span>
+                                <i data-lucide="percent" class="w-4 h-4 text-ink-wood"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-ink-cinnabar mt-2">¥${fmtMoney(m.platformFee + m.platformCommission + m.extraCommission)}</div>
+                            <div class="text-[11px] text-ink-gray mt-2 space-x-2">
+                                <span>手续费 ¥${fmtMoney(m.platformFee)}</span>
+                                <span>·</span>
+                                <span>达人总提成 ¥${fmtMoney(m.platformCommission + m.extraCommission)}</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-[#5B3218] to-[#8B4D25] text-white p-5 rounded-2xl shadow-md">
+                            <div class="flex items-center justify-between text-xs text-white/80">
+                                <span>当月经营净利润（${ui.month}）</span>
+                                <span class="px-2 py-0.5 rounded bg-white/15 text-[10px]">入住率 ${m.occupancyRate}</span>
+                            </div>
+                            <div class="text-2xl font-bold text-[#FBE6C5] mt-2">¥${fmtMoney(m.operatingProfit)}</div>
+                            <div class="text-[11px] text-white/80 mt-2 flex justify-between">
+                                <span>全部有效到手 ¥${fmtMoney(m.netAmount)}</span>
+                                <span>支出 ¥${fmtMoney(m.expenseAmount)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 今日六间房实时房态卡片矩阵 -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-charcoal">今日客房状态一览（${TODAY} · 占用 ${occupiedToday}/${ROOMS.length} 间）</h3>
+                            </div>
+                            <button onclick="switchTab('calendar')" class="text-xs text-ink-wood font-medium hover:underline flex items-center gap-1">
+                                查看完整月度房态日历 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            ${roomTodayCards.map(({ room, activeOrder, block, statusLabel, badgeCls }) => {
+                                const ch = activeOrder ? CHANNELS.find(c => c.id === activeOrder.channel_id) : null;
+                                return `
+                                    <div onclick="${activeOrder ? `openOrderDetailModal(${activeOrder.id})` : `openNewExternalOrderModal(${room.id}, '${TODAY}')`}"
+                                         class="p-4 rounded-2xl border border-ink-border bg-ink-paper/45 hover:bg-ink-paper hover:border-ink-wood/40 transition cursor-pointer flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2 py-0.5 rounded-lg bg-ink-charcoal text-white font-mono text-xs font-bold">${room.number}</span>
+                                                    <span class="font-serif font-bold text-sm text-ink-charcoal">${room.name}</span>
+                                                </div>
+                                                <span class="px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${badgeCls}">${statusLabel}</span>
+                                            </div>
+
+                                            ${activeOrder ? `
+                                                <div class="mt-3 p-3 rounded-xl bg-white border border-ink-border/70 text-xs space-y-1.5">
+                                                    <div class="flex items-center justify-between">
+                                                        <span class="font-semibold text-ink-charcoal">${activeOrder.guest_name || '未填姓名'}（${activeOrder.guest_count || 1}人）</span>
+                                                        <span class="px-2 py-0.5 rounded bg-ink-woodLight text-ink-wood text-[10px] font-medium">${ch ? ch.name : '未知来源'}</span>
+                                                    </div>
+                                                    <div class="text-ink-gray flex items-center justify-between text-[11px]">
+                                                        <span>${activeOrder.check_in} 至 ${activeOrder.check_out}（${diffDays(activeOrder.check_in, activeOrder.check_out)}晚）</span>
+                                                        <span class="font-mono font-bold text-ink-cinnabar">¥${fmtMoney(activeOrder.amount.paid_amount)}</span>
+                                                    </div>
+                                                </div>
+                                            ` : block ? `
+                                                <div class="mt-3 p-3 rounded-xl bg-white border border-ink-border/70 text-xs text-ink-gray">
+                                                    封房区间：${block.start_date} ~ ${block.end_date}<br>
+                                                    原因：${block.reason || '管理员主动封房'}
+                                                </div>
+                                            ` : `
+                                                <div class="mt-3 p-3 rounded-xl bg-white/70 border border-dashed border-ink-border text-xs text-ink-gray flex items-center justify-between">
+                                                    <span>基础房价：¥${room.price}/晚 · ${room.bed_info}</span>
+                                                    <span class="text-ink-wood font-medium">+ 点击快捷录单</span>
+                                                </div>
+                                            `}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // (2) 月度房态日历（六间房为行、日期为列，6种正式房态 + 连住占用标记 + 点击空格快捷录单）
+        function renderCalendar() {
+            const [y, m] = ui.month.split('-').map(Number);
+            const daysInMonth = new Date(y, m, 0).getDate();
+            const dateCols = Array.from({ length: daysInMonth }, (_, i) => `${ui.month}-${String(i + 1).padStart(2, '0')}`);
+
+            // 预计算每个房间的每日格子展示状态
+            function getCellRenderInfo(roomId, dateStr) {
+                // 1. 检查封房
+                const block = ROOM_BLOCKS.find(b => b.room_id === roomId && b.start_date <= dateStr && b.end_date > dateStr);
+                if (block) {
+                    return { type: 'BLOCKED', label: '不可预订', cls: 'bg-stone-200 text-stone-700 border-stone-300', block };
+                }
+
+                // 2. 检查有效订单（入住日显示完整正式状态，续住夜晚显示「占用」视觉标记）
+                const order = ORDERS.find(o => o.room_id === roomId && o.status !== 'CANCELLED' && o.check_in <= dateStr && o.check_out > dateStr);
+                if (order) {
+                    const isFirstNight = order.check_in === dateStr;
+                    if (!isFirstNight) {
+                        return { type: 'OCCUPIED_TAG', label: '占用', cls: 'bg-ink-wood/15 text-ink-woodDark border-ink-wood/25', order };
+                    }
+                    const map = {
+                        'PENDING_CONFIRM': { label: '已预订', cls: 'bg-amber-100 text-amber-900 border-amber-300 font-bold' },
+                        'PENDING_CHECKIN': { label: '待入住', cls: 'bg-orange-100 text-orange-900 border-orange-300 font-bold' },
+                        'CHECKED_IN':      { label: '已入住', cls: 'bg-ink-wood text-white border-ink-wood font-bold' },
+                        'COMPLETED':       { label: '已退房', cls: 'bg-ink-celadonBg text-ink-celadon border-ink-celadon/30 font-bold' }
+                    };
+                    const meta = map[order.status] || { label: order.status, cls: 'bg-stone-100' };
+                    return { type: order.status, label: meta.label, cls: meta.cls, order };
+                }
+
+                return { type: 'AVAILABLE', label: '空房', cls: 'bg-white text-ink-gray/60 hover:bg-ink-woodLight hover:text-ink-wood border-ink-border/60' };
+            }
+
+            return `
+                <div class="space-y-4 fade-in">
+                    <!-- 日历顶部工具与六种正式房态图例 -->
+                    <div class="bg-white p-4 rounded-2xl border border-ink-border flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                            <span class="font-bold text-ink-charcoal mr-1">正式房态：</span>
+                            <span class="px-2 py-0.5 rounded border border-ink-border bg-white text-ink-gray">空房</span>
+                            <span class="px-2 py-0.5 rounded border border-amber-300 bg-amber-100 text-amber-900 font-medium">已预订(待确认)</span>
+                            <span class="px-2 py-0.5 rounded border border-orange-300 bg-orange-100 text-orange-900 font-medium">待入住</span>
+                            <span class="px-2 py-0.5 rounded bg-ink-wood text-white font-medium">已入住</span>
+                            <span class="px-2 py-0.5 rounded border border-ink-celadon/30 bg-ink-celadonBg text-ink-celadon font-medium">已退房</span>
+                            <span class="px-2 py-0.5 rounded border border-stone-300 bg-stone-200 text-stone-700 font-medium">不可预订(封房)</span>
+                            <span class="px-2 py-0.5 rounded border border-ink-wood/25 bg-ink-wood/15 text-ink-woodDark ml-1">占用(连住续夜标记)</span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <select onchange="ui.month = this.value; renderApp()" class="px-3 py-1.5 rounded-xl bg-ink-paper border border-ink-border text-xs font-semibold">
+                                <option value="2026-11" ${ui.month === '2026-11' ? 'selected' : ''}>2026年 11月</option>
+                                <option value="2026-12" ${ui.month === '2026-12' ? 'selected' : ''}>2026年 12月</option>
+                            </select>
+                            <button onclick="openNewBlockModal()" class="px-3 py-1.5 rounded-xl border border-ink-wood text-ink-wood text-xs font-medium hover:bg-ink-woodLight transition">
+                                + 新增封房
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="text-[11px] text-ink-gray px-1">
+                        * 提示：点击任意「空房」格子可快捷录入第三方订单（自动带入房号、入住日，默认次日退房）；点击「已预订 / 待入住 / 已入住 / 已退房 / 占用」格子可查看该订单详情并操作状态流转。后台日历不展示待支付临时锁房，但提交写操作时强制校验。
+                    </div>
+
+                    <!-- 横向滚动房态矩阵表格 -->
+                    <div class="bg-white rounded-2xl border border-ink-border overflow-x-auto shadow-2xs">
+                        <table class="w-full border-collapse text-xs min-w-[1180px]">
+                            <thead>
+                                <tr class="bg-ink-paper border-b border-ink-border">
+                                    <th class="sticky left-0 z-20 bg-ink-paper px-4 py-3 text-left font-serif font-bold text-ink-charcoal border-r border-ink-border w-36">
+                                        房号 / 房型
+                                    </th>
+                                    ${dateCols.map(d => {
+                                        const dayNum = d.slice(8);
+                                        const isToday = d === TODAY;
+                                        return `
+                                            <th class="px-1 py-2 text-center border-r border-ink-border/60 min-w-[54px] ${isToday ? 'bg-ink-woodLight text-ink-wood font-bold' : 'text-ink-gray font-medium'}">
+                                                <div>${dayNum}日</div>
+                                                ${isToday ? '<div class="text-[9px] text-ink-cinnabar">今天</div>' : ''}
+                                            </th>
+                                        `;
+                                    }).join('')}
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-ink-border">
+                                ${ROOMS.map(room => `
+                                    <tr>
+                                        <td class="sticky left-0 z-10 bg-white px-4 py-3 border-r border-ink-border">
+                                            <div class="font-bold text-ink-charcoal">${room.number} · ${room.name}</div>
+                                            <div class="text-[10px] text-ink-gray mt-0.5">¥${room.price}/晚 · ${room.floor}楼</div>
+                                        </td>
+                                        ${dateCols.map(d => {
+                                            const info = getCellRenderInfo(room.id, d);
+                                            const clickAction = info.order
+                                                ? `openOrderDetailModal(${info.order.id})`
+                                                : info.block
+                                                    ? `openEditBlockModal(${info.block.id})`
+                                                    : `openNewExternalOrderModal(${room.id}, '${d}')`;
+                                            return `
+                                                <td onclick="${clickAction}" class="p-1 border-r border-ink-border/50 text-center cursor-pointer">
+                                                    <div class="h-11 rounded-lg border flex flex-col items-center justify-center px-1 text-[10px] transition ${info.cls}">
+                                                        <span>${info.label}</span>
+                                                        ${info.order && info.type !== 'OCCUPIED_TAG' ? `<span class="text-[9px] opacity-85 truncate max-w-[46px]">${info.order.guest_name || '散客'}</span>` : ''}
+                                                    </div>
+                                                </td>
+                                            `;
+                                        }).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // (3) 订单管理 Orders
+        function renderOrders() {
+            const filtered = ORDERS.filter(o => {
+                if (ui.orderFilter.channel_id && String(o.channel_id) !== ui.orderFilter.channel_id) return false;
+                if (ui.orderFilter.room_id && String(o.room_id) !== ui.orderFilter.room_id) return false;
+                if (ui.orderFilter.status && o.status !== ui.orderFilter.status) return false;
+                if (ui.orderFilter.keyword) {
+                    const kw = ui.orderFilter.keyword.toLowerCase();
+                    const hit = (o.order_no || '').toLowerCase().includes(kw) ||
+                                (o.guest_name || '').toLowerCase().includes(kw) ||
+                                (o.phone || '').includes(kw) ||
+                                (o.platform_order_no || '').toLowerCase().includes(kw);
+                    if (!hit) return false;
+                }
+                return true;
+            });
+
+            const statusBadge = {
+                'PENDING_CONFIRM': ['待确认', 'bg-amber-50 text-amber-800 border-amber-200'],
+                'PENDING_CHECKIN': ['待入住', 'bg-orange-50 text-orange-800 border-orange-200'],
+                'CHECKED_IN':      ['已入住', 'bg-ink-woodLight text-ink-wood border-ink-wood/25'],
+                'COMPLETED':       ['已完成', 'bg-ink-celadonBg text-ink-celadon border-ink-celadon/25'],
+                'CANCELLED':       ['已取消', 'bg-red-50 text-ink-cinnabar border-red-200']
+            };
+
+            return `
+                <div class="space-y-4 fade-in">
+                    <!-- 筛选栏 -->
+                    <div class="bg-white p-4 rounded-2xl border border-ink-border flex flex-wrap items-center gap-3">
+                        <select onchange="ui.orderFilter.channel_id = this.value; renderApp()" class="px-3 py-2 rounded-xl bg-ink-paper border border-ink-border text-xs">
+                            <option value="">全部来源渠道</option>
+                            ${CHANNELS.map(c => `<option value="${c.id}" ${ui.orderFilter.channel_id === String(c.id) ? 'selected' : ''}>${c.name}</option>`).join('')}
+                        </select>
+
+                        <select onchange="ui.orderFilter.room_id = this.value; renderApp()" class="px-3 py-2 rounded-xl bg-ink-paper border border-ink-border text-xs">
+                            <option value="">全部房间</option>
+                            ${ROOMS.map(r => `<option value="${r.id}" ${ui.orderFilter.room_id === String(r.id) ? 'selected' : ''}>${r.number} · ${r.name}</option>`).join('')}
+                        </select>
+
+                        <select onchange="ui.orderFilter.status = this.value; renderApp()" class="px-3 py-2 rounded-xl bg-ink-paper border border-ink-border text-xs">
+                            <option value="">全部订单状态</option>
+                            <option value="PENDING_CONFIRM" ${ui.orderFilter.status === 'PENDING_CONFIRM' ? 'selected' : ''}>待确认</option>
+                            <option value="PENDING_CHECKIN" ${ui.orderFilter.status === 'PENDING_CHECKIN' ? 'selected' : ''}>待入住</option>
+                            <option value="CHECKED_IN" ${ui.orderFilter.status === 'CHECKED_IN' ? 'selected' : ''}>已入住</option>
+                            <option value="COMPLETED" ${ui.orderFilter.status === 'COMPLETED' ? 'selected' : ''}>已完成</option>
+                            <option value="CANCELLED" ${ui.orderFilter.status === 'CANCELLED' ? 'selected' : ''}>已取消</option>
+                        </select>
+
+                        <input type="text" value="${ui.orderFilter.keyword}" oninput="ui.orderFilter.keyword = this.value; renderApp()" placeholder="搜索订单号 / 预订人 / 手机号" class="px-3.5 py-2 rounded-xl bg-ink-paper border border-ink-border text-xs w-56 focus:outline-hidden focus:border-ink-wood">
+
+                        <button onclick="ui.orderFilter = { channel_id: '', room_id: '', status: '', keyword: '' }; renderApp()" class="px-3 py-2 rounded-xl text-xs text-ink-gray hover:text-ink-charcoal">重置</button>
+                    </div>
+
+                    <!-- 订单明细表 -->
+                    <div class="bg-white rounded-2xl border border-ink-border overflow-x-auto shadow-2xs">
+                        <table class="w-full text-left border-collapse text-xs min-w-[1060px]">
+                            <thead>
+                                <tr class="bg-ink-paper border-b border-ink-border text-ink-gray">
+                                    <th class="py-3 px-4 font-semibold">订单编号 / 来源</th>
+                                    <th class="py-3 px-3 font-semibold">房间与入离日期</th>
+                                    <th class="py-3 px-3 font-semibold">预订人与手机</th>
+                                    <th class="py-3 px-3 font-semibold text-right">实付金额</th>
+                                    <th class="py-3 px-3 font-semibold text-right">手续费 / 达人提成</th>
+                                    <th class="py-3 px-3 font-semibold text-right">商家到手</th>
+                                    <th class="py-3 px-3 font-semibold text-center">状态</th>
+                                    <th class="py-3 px-4 font-semibold text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-ink-border/70">
+                                ${filtered.map(o => {
+                                    const room = ROOMS.find(r => r.id === o.room_id);
+                                    const ch = CHANNELS.find(c => c.id === o.channel_id);
+                                    const cr = o.creator_id ? CREATORS.find(x => x.id === o.creator_id) : null;
+                                    const { paid, fee, pComm, eComm, net } = calcOrderAmounts(o.amount);
+                                    const [sLabel, sCls] = statusBadge[o.status] || [o.status, ''];
+
+                                    // 逐级状态流转按钮（O08 确认 -> O09 入住 -> O10 退房）
+                                    let nextActionBtn = '';
+                                    if (o.status === 'PENDING_CONFIRM') {
+                                        nextActionBtn = `<button onclick="advanceOrderStatus(${o.id}, 'PENDING_CHECKIN')" class="px-2.5 py-1 rounded-lg bg-ink-wood text-white text-[11px] font-medium hover:bg-ink-woodDark">确认订单</button>`;
+                                    } else if (o.status === 'PENDING_CHECKIN') {
+                                        nextActionBtn = `<button onclick="advanceOrderStatus(${o.id}, 'CHECKED_IN')" class="px-2.5 py-1 rounded-lg bg-ink-celadon text-white text-[11px] font-medium hover:opacity-90">办理入住</button>`;
+                                    } else if (o.status === 'CHECKED_IN') {
+                                        nextActionBtn = `<button onclick="advanceOrderStatus(${o.id}, 'COMPLETED')" class="px-2.5 py-1 rounded-lg bg-ink-charcoal text-white text-[11px] font-medium hover:opacity-90">办理退房</button>`;
+                                    }
+
+                                    return `
+                                        <tr class="hover:bg-ink-paper/45 transition">
+                                            <td class="py-3.5 px-4">
+                                                <div class="font-mono font-bold text-ink-charcoal">${o.order_no}</div>
+                                                <div class="flex items-center gap-1.5 mt-1">
+                                                    <span class="px-2 py-0.5 rounded bg-ink-woodLight text-ink-wood text-[10px] font-semibold">${ch ? ch.name : ''}</span>
+                                                    ${cr ? `<span class="text-[10px] text-ink-gray">达人：${cr.name}</span>` : ''}
+                                                </div>
+                                            </td>
+                                            <td class="py-3.5 px-3">
+                                                <div class="font-semibold text-ink-charcoal">${room ? `${room.number} · ${room.name}` : ''}</div>
+                                                <div class="text-[11px] text-ink-gray mt-0.5">${o.check_in} ~ ${o.check_out}（${diffDays(o.check_in, o.check_out)}晚）</div>
+                                            </td>
+                                            <td class="py-3.5 px-3">
+                                                <div class="font-medium text-ink-charcoal">${o.guest_name || '—'} <span class="text-ink-gray">(${o.guest_count || 1}人)</span></div>
+                                                <div class="text-[11px] text-ink-gray mt-0.5 font-mono">${o.phone || '未填手机号'}</div>
+                                            </td>
+                                            <td class="py-3.5 px-3 text-right font-mono font-bold text-ink-cinnabar">¥${fmtMoney(paid)}</td>
+                                            <td class="py-3.5 px-3 text-right text-[11px] text-ink-gray font-mono">
+                                                <div>手：¥${fmtMoney(fee)}</div>
+                                                <div>佣：¥${fmtMoney(pComm + eComm)}</div>
+                                            </td>
+                                            <td class="py-3.5 px-3 text-right font-mono font-bold text-ink-celadon">¥${fmtMoney(net)}</td>
+                                            <td class="py-3.5 px-3 text-center">
+                                                <span class="px-2.5 py-0.5 rounded-full border text-[11px] font-semibold ${sCls}">${sLabel}</span>
+                                            </td>
+                                            <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
+                                                ${nextActionBtn}
+                                                <button onclick="openOrderDetailModal(${o.id})" class="px-2.5 py-1 rounded-lg border border-ink-border text-ink-charcoal text-[11px] hover:bg-ink-paper">详情/编辑</button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 状态逐级流转 + 退房自动发积分幂等逻辑（V3.1 O08–O10）
+        function advanceOrderStatus(orderId, targetStatus) {
+            const o = ORDERS.find(x => x.id === orderId);
+            if (!o) return;
+
+            if (targetStatus === 'CHECKED_IN' && TODAY < o.check_in) {
+                showToast(`操作拒绝：不可早于预定入住日（${o.check_in}）办理入住`);
+                return;
+            }
+            if (targetStatus === 'COMPLETED' && TODAY < o.check_out) {
+                showToast(`操作拒绝：不可早于预定退房日（${o.check_out}）办理退房`);
+                return;
+            }
+
+            o.status = targetStatus;
+            if (targetStatus === 'COMPLETED') {
+                triggerOrderCompletionReward(o);
+            } else {
+                showToast('订单状态已更新');
+            }
+            renderApp();
+        }
+
+        // 订单完成后自动奖励积分（floor(paid_amount)，小程序归属下单 member_id，第三方按有效手机号建/关联会员）
+        function triggerOrderCompletionReward(order) {
+            const rewardPts = Math.floor(Number(order.amount.paid_amount));
+            if (rewardPts <= 0) return;
+
+            // 幂等校验
+            if (POINTS_LOGS.some(l => l.order_id === order.id && l.type === 'ORDER_REWARD')) return;
+
+            let targetMember = null;
+            if (order.channel_id === 1 && order.member_id) {
+                targetMember = MEMBERS.find(m => m.id === order.member_id);
+            } else if (order.channel_id !== 1 && order.phone && /^1[3-9]\d{9}$/.test(order.phone)) {
+                targetMember = MEMBERS.find(m => m.phone === order.phone);
+                if (!targetMember) {
+                    targetMember = {
+                        id: MEMBERS.length + 1,
+                        phone: order.phone,
+                        nickname: order.phone.slice(-4),
+                        growth_points: 0,
+                        points: 0,
+                        created_at: `${TODAY} 12:00`
+                    };
+                    MEMBERS.unshift(targetMember);
+                }
+                order.member_id = targetMember.id;
+            }
+
+            if (targetMember) {
+                targetMember.growth_points += rewardPts;
+                targetMember.points += rewardPts;
+                POINTS_LOGS.unshift({
+                    id: POINTS_LOGS.length + 1,
+                    member_id: targetMember.id,
+                    order_id: order.id,
+                    type: 'ORDER_REWARD',
+                    points: rewardPts,
+                    growth_points: rewardPts,
+                    balance_after: targetMember.points,
+                    amount: Number(order.amount.paid_amount),
+                    discount_amount: null,
+                    remark: `订单 ${order.order_no} 退房完成自动奖励`,
+                    created_at: `${TODAY} 12:00`
+                });
+                showToast(`退房完成！已自动向尾号 ${targetMember.nickname} 发放 ${rewardPts} 积分`);
+            } else {
+                showToast('退房完成（无有效会员手机号，未触发积分奖励）');
+            }
+        }
+
+        // 订单详情与编辑模态框（严格执行：所有状态金额字段只读不可改；仅待确认/待入住可改房或同晚数日期；第三方待确认/待入住可取消）
+        function openOrderDetailModal(orderId) {
+            const o = ORDERS.find(x => x.id === orderId);
+            if (!o) return;
+            const ch = CHANNELS.find(c => c.id === o.channel_id);
+            const cr = o.creator_id ? CREATORS.find(c => c.id === o.creator_id) : null;
+            const { paid, fee, pComm, eComm, net } = calcOrderAmounts(o.amount);
+            const canEditRoomDate = ['PENDING_CONFIRM', 'PENDING_CHECKIN'].includes(o.status);
+            const canCancelExternal = o.channel_id !== 1 && ['PENDING_CONFIRM', 'PENDING_CHECKIN'].includes(o.status);
+            const nights = diffDays(o.check_in, o.check_out);
+
+            openModal(`
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-ink-border">
+                        <div>
+                            <h3 class="font-serif font-bold text-base text-ink-charcoal">订单详情 · ${o.order_no}</h3>
+                            <p class="text-[11px] text-ink-gray mt-0.5">来源：${ch ? ch.name : ''} ${cr ? `· 主播：${cr.name}` : ''} · 住宿 ${nights} 晚</p>
+                        </div>
+                        <button onclick="closeModal()" class="p-1.5 rounded-full hover:bg-ink-paper"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+
+                    <div class="mt-4 space-y-4 text-xs">
+                        <!-- 1. 固定显示顺序的金额与提成快照（只读，任何状态不可编辑） -->
+                        <div class="p-3.5 rounded-2xl bg-ink-paper border border-ink-border space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-ink-woodDark">订单金额与提成快照（创建后锁定不可改）</span>
+                                <span class="text-[10px] text-ink-gray">自动计算 net_amount</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 pt-1">
+                                <div class="bg-white p-2 rounded-xl border border-ink-border/60">
+                                    <div class="text-[10px] text-ink-gray">1. 顾客实付金额</div>
+                                    <div class="font-mono font-bold text-ink-cinnabar text-sm mt-0.5">¥${fmtMoney(paid)}</div>
+                                </div>
+                                <div class="bg-white p-2 rounded-xl border border-ink-border/60">
+                                    <div class="text-[10px] text-ink-gray">2. 平台手续费</div>
+                                    <div class="font-mono font-semibold mt-0.5">¥${fmtMoney(fee)}</div>
+                                </div>
+                                <div class="bg-white p-2 rounded-xl border border-ink-border/60">
+                                    <div class="text-[10px] text-ink-gray">3. 平台达人提成</div>
+                                    <div class="font-mono font-semibold mt-0.5">¥${fmtMoney(pComm)}</div>
+                                </div>
+                                <div class="bg-white p-2 rounded-xl border border-ink-border/60">
+                                    <div class="text-[10px] text-ink-gray">4. 达人额外提成</div>
+                                    <div class="font-mono font-semibold mt-0.5">¥${fmtMoney(eComm)}</div>
+                                </div>
+                                <div class="bg-white p-2 rounded-xl border border-ink-border/60">
+                                    <div class="text-[10px] text-ink-gray">5. 预期收入</div>
+                                    <div class="font-mono font-semibold mt-0.5">${o.amount.expected_amount !== null ? `¥${fmtMoney(o.amount.expected_amount)}` : '—'}</div>
+                                </div>
+                                <div class="bg-ink-celadonBg/70 p-2 rounded-xl border border-ink-celadon/25">
+                                    <div class="text-[10px] text-ink-celadon font-medium">6. 商家到手金额</div>
+                                    <div class="font-mono font-bold text-ink-celadon text-sm mt-0.5">¥${fmtMoney(net)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. 可编辑资料（O07 规则：全部状态可改联系人/备注；仅待确认/待入住可改房间/同晚数日期） -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-ink-gray mb-1">房间 ${canEditRoomDate ? '' : '(当前状态锁定)'}</label>
+                                <select id="edit-ord-room" ${canEditRoomDate ? '' : 'disabled'} class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border disabled:opacity-60">
+                                    ${ROOMS.map(r => `<option value="${r.id}" ${o.room_id === r.id ? 'selected' : ''}>${r.number} · ${r.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">入住人数</label>
+                                <input id="edit-ord-guests" type="number" min="1" max="4" value="${o.guest_count || 1}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">入住日期 ${canEditRoomDate ? `(须保持${nights}晚)` : '(锁定)'}</label>
+                                <input id="edit-ord-in" type="date" value="${o.check_in}" ${canEditRoomDate ? '' : 'disabled'} class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border disabled:opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">退房日期 ${canEditRoomDate ? `(须保持${nights}晚)` : '(锁定)'}</label>
+                                <input id="edit-ord-out" type="date" value="${o.check_out}" ${canEditRoomDate ? '' : 'disabled'} class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border disabled:opacity-60">
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">预订人姓名</label>
+                                <input id="edit-ord-name" type="text" value="${o.guest_name || ''}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">预订手机号码</label>
+                                <input id="edit-ord-phone" type="text" value="${o.phone || ''}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-ink-gray mb-1">订单备注</label>
+                                <input id="edit-ord-remark" type="text" value="${o.remark || ''}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-ink-border">
+                            <div>
+                                ${canCancelExternal ? `
+                                    <button onclick="cancelExternalOrder(${o.id})" class="px-3.5 py-2 rounded-xl border border-ink-cinnabar text-ink-cinnabar font-medium hover:bg-red-50 transition">
+                                        取消第三方订单并释放房间
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-ink-border text-ink-gray">关闭</button>
+                                <button onclick="saveOrderEdit(${o.id})" class="px-5 py-2 rounded-xl bg-ink-wood text-white font-medium hover:bg-ink-woodDark">保存修改</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `, 'max-w-2xl');
+        }
+
+        function saveOrderEdit(orderId) {
+            const o = ORDERS.find(x => x.id === orderId);
+            if (!o) return;
+            const canEditRoomDate = ['PENDING_CONFIRM', 'PENDING_CHECKIN'].includes(o.status);
+
+            if (canEditRoomDate) {
+                const newRoomId = Number(document.getElementById('edit-ord-room').value);
+                const newIn = document.getElementById('edit-ord-in').value;
+                const newOut = document.getElementById('edit-ord-out').value;
+                const oldNights = diffDays(o.check_in, o.check_out);
+                const newNights = diffDays(newIn, newOut);
+
+                if (newNights !== oldNights) {
+                    showToast(`校验失败：修改后晚数（${newNights}晚）必须与原订单（${oldNights}晚）一致`);
+                    return;
+                }
+                const conflict = checkRangeConflict(newRoomId, newIn, newOut, o.id);
+                if (conflict) {
+                    showToast(`日期冲突：${conflict}`);
+                    return;
+                }
+                o.room_id = newRoomId;
+                o.check_in = newIn;
+                o.check_out = newOut;
+            }
+
+            o.guest_count = Number(document.getElementById('edit-ord-guests').value || 1);
+            o.guest_name = document.getElementById('edit-ord-name').value.trim();
+            o.phone = document.getElementById('edit-ord-phone').value.trim();
+            o.remark = document.getElementById('edit-ord-remark').value.trim();
+
+            // 若是已完成第三方订单补录有效手机号且未发过积分，按 V3.1 规则补发一次
+            if (o.status === 'COMPLETED') {
+                triggerOrderCompletionReward(o);
+            }
+
+            closeModal();
+            showToast('订单资料已更新并重算分摊');
+            renderApp();
+        }
+
+        function cancelExternalOrder(orderId) {
+            const o = ORDERS.find(x => x.id === orderId);
+            if (!o) return;
+            o.status = 'CANCELLED';
+            closeModal();
+            showToast(`第三方订单 ${o.order_no} 已取消，对应住宿间夜已立即释放`);
+            renderApp();
+        }
+
+        // 手工录入第三方订单模态框（O06 规则：支持房态日历快捷带入 + 达人预期收入自动算额外提成 + 已完成立即发积分）
+        function openNewExternalOrderModal(presetRoomId = 1, presetCheckIn = '2026-11-23') {
+            const presetCheckOut = addDays(presetCheckIn, 1);
+            const externalChannels = CHANNELS.filter(c => !c.isMini && c.enabled);
+
+            openModal(`
+                <div>
+                    <div class="flex items-center justify-between pb-3 border-b border-ink-border">
+                        <div>
+                            <h3 class="font-serif font-bold text-base text-ink-charcoal">手工录入第三方平台订单</h3>
+                            <p class="text-[11px] text-ink-gray mt-0.5">支持抖音、美团、携程等 6 大外部渠道，支持直接录入历史已完成订单</p>
+                        </div>
+                        <button onclick="closeModal()" class="p-1.5 rounded-full hover:bg-ink-paper"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block text-ink-charcoal font-medium mb-1">订单来源 <span class="text-ink-cinnabar">*</span></label>
+                            <select id="ext-channel" onchange="onExtChannelOrCreatorChange()" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                ${externalChannels.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-ink-charcoal font-medium mb-1">房间号 <span class="text-ink-cinnabar">*</span></label>
+                            <select id="ext-room" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                ${ROOMS.map(r => `<option value="${r.id}" ${r.id === Number(presetRoomId) ? 'selected' : ''}>${r.number} · ${r.name} (¥${r.price})</option>`).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-ink-charcoal font-medium mb-1">入住日期 <span class="text-ink-cinnabar">*</span></label>
+                            <input id="ext-checkin" type="date" value="${presetCheckIn}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-charcoal font-medium mb-1">退房日期 <span class="text-ink-cinnabar">*</span></label>
+                            <input id="ext-checkout" type="date" value="${presetCheckOut}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-charcoal font-medium mb-1">订单初始状态 <span class="text-ink-cinnabar">*</span></label>
+                            <select id="ext-status" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                <option value="PENDING_CONFIRM">待确认</option>
+                                <option value="PENDING_CHECKIN" selected>待入住</option>
+                                <option value="CHECKED_IN">已入住</option>
+                                <option value="COMPLETED">已完成（历史订单）</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-ink-charcoal font-medium mb-1">关联达人/主播（选填）</label>
+                            <select id="ext-creator" onchange="onExtChannelOrCreatorChange()" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                <option value="">无主播（普通自然流量）</option>
+                                ${CREATORS.filter(c => c.enabled).map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+
+                        <!-- 金额与提成区域 -->
+                        <div class="col-span-2 p-3.5 rounded-2xl bg-ink-paper border border-ink-border grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-ink-cinnabar mb-1">顾客实付金额 *</label>
+                                <input id="ext-paid" type="number" step="0.01" value="348" oninput="recalcExtPreview()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-ink-border font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-ink-gray mb-1">平台手续费</label>
+                                <input id="ext-fee" type="number" step="0.01" value="15" oninput="recalcExtPreview()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-ink-border font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-ink-gray mb-1">平台达人提成</label>
+                                <input id="ext-pcomm" type="number" step="0.01" value="0" disabled oninput="recalcExtPreview()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-ink-border font-mono disabled:opacity-50">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-ink-gray mb-1">预期收入(有主播必填)</label>
+                                <input id="ext-expected" type="number" step="0.01" placeholder="无主播留空" disabled oninput="recalcExtPreview()" class="w-full px-2.5 py-1.5 rounded-lg bg-white border border-ink-border font-mono disabled:opacity-50">
+                            </div>
+                            <div class="col-span-2 sm:col-span-4 flex items-center justify-between pt-1.5 border-t border-ink-border/60 text-[11px]">
+                                <span>自动计算达人额外提成：<strong id="ext-ecomm-preview" class="font-mono text-ink-wood">¥0.00</strong></span>
+                                <span>自动计算商家到手金额：<strong id="ext-net-preview" class="font-mono text-ink-celadon text-sm">¥333.00</strong></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-ink-gray mb-1">预订人姓名（选填）</label>
+                            <input id="ext-name" type="text" placeholder="如：王先生" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">预订手机号（完成后自动发积分）</label>
+                            <input id="ext-phone" type="text" placeholder="11位手机号" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">外部平台订单号（防重）</label>
+                            <input id="ext-plat-no" type="text" placeholder="如：DY99281723" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">备注</label>
+                            <input id="ext-remark" type="text" placeholder="特殊需求说明" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex justify-end gap-2 text-xs">
+                        <button onclick="closeModal()" class="px-4 py-2.5 rounded-xl border border-ink-border text-ink-gray">取消</button>
+                        <button onclick="submitNewExternalOrder()" class="px-6 py-2.5 rounded-xl bg-ink-wood text-white font-medium hover:bg-ink-woodDark">确认创建订单</button>
+                    </div>
+                </div>
+            `, 'max-w-2xl');
+        }
+
+        function onExtChannelOrCreatorChange() {
+            const hasCreator = Boolean(document.getElementById('ext-creator').value);
+            const pcommInput = document.getElementById('ext-pcomm');
+            const expInput = document.getElementById('ext-expected');
+            pcommInput.disabled = !hasCreator;
+            expInput.disabled = !hasCreator;
+            if (!hasCreator) {
+                pcommInput.value = '0';
+                expInput.value = '';
+            }
+            recalcExtPreview();
+        }
+
+        function recalcExtPreview() {
+            const paid = Number(document.getElementById('ext-paid').value || 0);
+            const fee = Number(document.getElementById('ext-fee').value || 0);
+            const hasCreator = Boolean(document.getElementById('ext-creator').value);
+            const pcomm = hasCreator ? Number(document.getElementById('ext-pcomm').value || 0) : 0;
+            const expRaw = document.getElementById('ext-expected').value;
+            const ecomm = (hasCreator && expRaw !== '') ? Math.max(0, paid - fee - pcomm - Number(expRaw)) : 0;
+            const net = paid - fee - pcomm - ecomm;
+            document.getElementById('ext-ecomm-preview').textContent = `¥${fmtMoney(ecomm)}`;
+            document.getElementById('ext-net-preview').textContent = `¥${fmtMoney(net)}`;
+        }
+
+        function submitNewExternalOrder() {
+            const channelId = Number(document.getElementById('ext-channel').value);
+            const roomId = Number(document.getElementById('ext-room').value);
+            const checkIn = document.getElementById('ext-checkin').value;
+            const checkOut = document.getElementById('ext-checkout').value;
+            const status = document.getElementById('ext-status').value;
+            const creatorIdRaw = document.getElementById('ext-creator').value;
+            const creatorId = creatorIdRaw ? Number(creatorIdRaw) : null;
+            const paid = Number(document.getElementById('ext-paid').value);
+            const fee = Number(document.getElementById('ext-fee').value || 0);
+            const pcomm = creatorId ? Number(document.getElementById('ext-pcomm').value || 0) : 0;
+            const expRaw = document.getElementById('ext-expected').value;
+            const platNo = document.getElementById('ext-plat-no').value.trim() || null;
+
+            if (!checkIn || !checkOut || diffDays(checkIn, checkOut) <= 0) {
+                showToast('退房日期必须晚于入住日期');
+                return;
+            }
+            if (isNaN(paid) || paid < 0) {
+                showToast('请填写有效的顾客实付金额');
+                return;
+            }
+            if (creatorId && (expRaw === '' || isNaN(Number(expRaw)))) {
+                showToast('选择达人时必须填写「预期收入」以计算额外提成');
+                return;
+            }
+            if (platNo && ORDERS.some(o => o.channel_id === channelId && o.platform_order_no === platNo)) {
+                showToast(`防重拦截：该渠道已存在平台订单号 ${platNo}`);
+                return;
+            }
+
+            const conflict = checkRangeConflict(roomId, checkIn, checkOut);
+            if (conflict) {
+                showToast(`占房冲突：${conflict}`);
+                return;
+            }
+
+            const expectedAmount = creatorId ? Number(expRaw) : null;
+            const extraCommission = creatorId ? Math.max(0, Number((paid - fee - pcomm - expectedAmount).toFixed(2))) : 0;
+
+            const newOrder = {
+                id: ORDERS.length + 101,
+                order_no: `QX20261118${String(ORDERS.length + 1).padStart(4, '0')}`,
+                platform_order_no: platNo,
+                room_id: roomId,
+                channel_id: channelId,
+                creator_id: creatorId,
+                member_id: null,
+                guest_name: document.getElementById('ext-name').value.trim() || '外部平台宾客',
+                phone: document.getElementById('ext-phone').value.trim() || null,
+                guest_count: 2,
+                check_in: checkIn,
+                check_out: checkOut,
+                status,
+                remark: document.getElementById('ext-remark').value.trim(),
+                created_at: `${TODAY} 16:05`,
+                amount: {
+                    paid_amount: paid,
+                    platform_fee: fee,
+                    platform_commission: pcomm,
+                    extra_commission: extraCommission,
+                    expected_amount: expectedAmount
+                }
+            };
+
+            ORDERS.unshift(newOrder);
+            if (status === 'COMPLETED') {
+                triggerOrderCompletionReward(newOrder);
+            } else {
+                showToast(`外部订单 ${newOrder.order_no} 创建成功`);
+            }
+            closeModal();
+            renderApp();
+        }
+
+        // (4) 客房与封房管理（Rooms & Room Blocks）
+        function renderRooms() {
+            return `
+                <div class="space-y-6 fade-in">
+                    <!-- 6间客房资料与基础价管理 -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-charcoal">全店 6 间客房基础资料与定价（单店固定基础价）</h3>
+                            </div>
+                            <span class="text-[11px] text-ink-gray">修改基础房价仅影响新创建订单，历史订单保留原价快照</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${ROOMS.map(r => `
+                                <div class="rounded-2xl border border-ink-border overflow-hidden bg-ink-paper/40 flex flex-col">
+                                    <div class="h-36 relative bg-ink-warm">
+                                        <img src="${r.image}" class="w-full h-full object-cover">
+                                        <span class="absolute top-3 left-3 px-2.5 py-0.5 rounded-lg bg-ink-charcoal/85 text-white font-mono text-xs font-bold">${r.number}室</span>
+                                        <span class="absolute top-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-semibold ${r.enabled ? 'bg-ink-celadon text-white' : 'bg-stone-500 text-white'}">
+                                            ${r.enabled ? '已上架' : '已下架'}
+                                        </span>
+                                    </div>
+                                    <div class="p-4 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <div class="flex items-center justify-between">
+                                                <h4 class="font-serif font-bold text-sm text-ink-charcoal">${r.name}</h4>
+                                                <span class="font-mono font-bold text-base text-ink-cinnabar">¥${r.price}<span class="text-[11px] text-ink-gray font-normal">/晚</span></span>
+                                            </div>
+                                            <p class="text-[11px] text-ink-gray mt-1">${r.floor}楼 · ${r.area}m² · ${r.bed_info} · 可住${r.capacity}人</p>
+                                            <p class="text-[11px] text-ink-charcoal/80 mt-2 line-clamp-2">${r.desc}</p>
+                                        </div>
+                                        <div class="mt-4 pt-3 border-t border-ink-border flex items-center justify-between text-xs">
+                                            <button onclick="toggleRoomEnabled(${r.id})" class="text-ink-gray hover:text-ink-charcoal">${r.enabled ? '下架房间' : '上架房间'}</button>
+                                            <button onclick="openEditRoomModal(${r.id})" class="px-3 py-1 rounded-lg bg-ink-woodLight text-ink-wood font-medium hover:bg-ink-wood hover:text-white transition">编辑资料与房价</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 管理员主动封房管理（room_block） -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                    <h3 class="font-serif font-bold text-sm text-ink-charcoal">管理员主动封房记录（room_block）</h3>
+                                </div>
+                                <p class="text-[11px] text-ink-gray mt-0.5">仅记录管理员主动设置的不可订间夜（如维修、自用），不关联订单；支持随时解除封房。</p>
+                            </div>
+                            <button onclick="openNewBlockModal()" class="px-3.5 py-2 rounded-xl bg-ink-wood text-white text-xs font-medium hover:bg-ink-woodDark">+ 新增封房</button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-ink-paper border-b border-ink-border text-ink-gray">
+                                        <th class="py-2.5 px-4">房间</th>
+                                        <th class="py-2.5 px-4">首个不可订夜晚 (start_date)</th>
+                                        <th class="py-2.5 px-4">结束日期 (end_date，不含当晚)</th>
+                                        <th class="py-2.5 px-4">封房间夜</th>
+                                        <th class="py-2.5 px-4">封房原因</th>
+                                        <th class="py-2.5 px-4 text-right">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-ink-border/70">
+                                    ${ROOM_BLOCKS.map(b => {
+                                        const r = ROOMS.find(x => x.id === b.room_id);
+                                        return `
+                                            <tr>
+                                                <td class="py-3 px-4 font-bold">${r ? `${r.number} · ${r.name}` : ''}</td>
+                                                <td class="py-3 px-4 font-mono">${b.start_date}</td>
+                                                <td class="py-3 px-4 font-mono">${b.end_date}</td>
+                                                <td class="py-3 px-4">${diffDays(b.start_date, b.end_date)} 晚</td>
+                                                <td class="py-3 px-4 text-ink-gray">${b.reason || '—'}</td>
+                                                <td class="py-3 px-4 text-right space-x-2">
+                                                    <button onclick="openEditBlockModal(${b.id})" class="text-ink-wood hover:underline">调整区间</button>
+                                                    <button onclick="deleteRoomBlock(${b.id})" class="text-ink-cinnabar hover:underline">解除封房</button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleRoomEnabled(roomId) {
+            const r = ROOMS.find(x => x.id === roomId);
+            if (!r) return;
+            r.enabled = !r.enabled;
+            showToast(`${r.number}室已${r.enabled ? '上架展示' : '下架隐藏'}`);
+            renderApp();
+        }
+
+        function openEditRoomModal(roomId) {
+            const r = ROOMS.find(x => x.id === roomId);
+            if (!r) return;
+            openModal(`
+                <div>
+                    <h3 class="font-serif font-bold text-base text-ink-charcoal pb-3 border-b border-ink-border">编辑客房资料 · ${r.number}室</h3>
+                    <div class="mt-4 grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block text-ink-gray mb-1">房型名称</label>
+                            <input id="rm-name" type="text" value="${r.name}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">基础房价（元/晚）</label>
+                            <input id="rm-price" type="number" value="${r.price}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">床型信息</label>
+                            <input id="rm-bed" type="text" value="${r.bed_info}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">面积（m²）</label>
+                            <input id="rm-area" type="number" value="${r.area}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-ink-gray mb-1">房间介绍</label>
+                            <textarea id="rm-desc" rows="2" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">${r.desc}</textarea>
+                        </div>
+                    </div>
+                    <div class="mt-5 flex justify-end gap-2 text-xs">
+                        <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-ink-border">取消</button>
+                        <button onclick="saveRoomEdit(${r.id})" class="px-5 py-2 rounded-xl bg-ink-wood text-white font-medium">保存</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function saveRoomEdit(roomId) {
+            const r = ROOMS.find(x => x.id === roomId);
+            if (!r) return;
+            r.name = document.getElementById('rm-name').value.trim() || r.name;
+            r.price = Number(document.getElementById('rm-price').value) || r.price;
+            r.bed_info = document.getElementById('rm-bed').value.trim();
+            r.area = Number(document.getElementById('rm-area').value) || r.area;
+            r.desc = document.getElementById('rm-desc').value.trim();
+            closeModal();
+            showToast('客房资料与基础房价已更新');
+            renderApp();
+        }
+
+        function openNewBlockModal() {
+            openModal(`
+                <div>
+                    <h3 class="font-serif font-bold text-base text-ink-charcoal pb-3 border-b border-ink-border">新增管理员封房</h3>
+                    <div class="mt-4 space-y-3 text-xs">
+                        <div>
+                            <label class="block text-ink-gray mb-1">选择房间</label>
+                            <select id="blk-room" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                ${ROOMS.map(r => `<option value="${r.id}">${r.number} · ${r.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-ink-gray mb-1">开始日期（首个不可订晚）</label>
+                                <input id="blk-start" type="date" value="2026-11-24" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">结束日期（不含当晚）</label>
+                                <input id="blk-end" type="date" value="2026-11-26" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">封房原因（如维修、主理人自用）</label>
+                            <input id="blk-reason" type="text" value="设备检修维护" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                    </div>
+                    <div class="mt-5 flex justify-end gap-2 text-xs">
+                        <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-ink-border">取消</button>
+                        <button onclick="submitNewBlock()" class="px-5 py-2 rounded-xl bg-ink-wood text-white font-medium">确认封房</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function submitNewBlock() {
+            const roomId = Number(document.getElementById('blk-room').value);
+            const start = document.getElementById('blk-start').value;
+            const end = document.getElementById('blk-end').value;
+            const reason = document.getElementById('blk-reason').value.trim();
+
+            const conflict = checkRangeConflict(roomId, start, end);
+            if (conflict) {
+                showToast(`封房失败：${conflict}`);
+                return;
+            }
+            ROOM_BLOCKS.unshift({
+                id: ROOM_BLOCKS.length + 1,
+                room_id: roomId,
+                start_date: start,
+                end_date: end,
+                reason,
+                created_at: `${TODAY} 16:10`
+            });
+            closeModal();
+            showToast('封房记录已生效');
+            renderApp();
+        }
+
+        function openEditBlockModal(blockId) {
+            const b = ROOM_BLOCKS.find(x => x.id === blockId);
+            if (!b) return;
+            openModal(`
+                <div>
+                    <h3 class="font-serif font-bold text-base text-ink-charcoal pb-3 border-b border-ink-border">调整封房区间 / 部分解封</h3>
+                    <div class="mt-4 space-y-3 text-xs">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-ink-gray mb-1">开始日期</label>
+                                <input id="eblk-start" type="date" value="${b.start_date}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">结束日期（不含当晚）</label>
+                                <input id="eblk-end" type="date" value="${b.end_date}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">封房原因</label>
+                            <input id="eblk-reason" type="text" value="${b.reason || ''}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                    </div>
+                    <div class="mt-5 flex justify-between text-xs">
+                        <button onclick="deleteRoomBlock(${b.id}); closeModal();" class="px-3.5 py-2 rounded-xl border border-ink-cinnabar text-ink-cinnabar">整段解除封房</button>
+                        <div class="space-x-2">
+                            <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-ink-border">取消</button>
+                            <button onclick="saveBlockEdit(${b.id})" class="px-5 py-2 rounded-xl bg-ink-wood text-white font-medium">保存区间</button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+
+        function saveBlockEdit(blockId) {
+            const b = ROOM_BLOCKS.find(x => x.id === blockId);
+            if (!b) return;
+            const s = document.getElementById('eblk-start').value;
+            const e = document.getElementById('eblk-end').value;
+            if (diffDays(s, e) <= 0) {
+                showToast('结束日期必须晚于开始日期');
+                return;
+            }
+            b.start_date = s;
+            b.end_date = e;
+            b.reason = document.getElementById('eblk-reason').value.trim();
+            closeModal();
+            showToast('封房区间已调整');
+            renderApp();
+        }
+
+        function deleteRoomBlock(blockId) {
+            ROOM_BLOCKS = ROOM_BLOCKS.filter(x => x.id !== blockId);
+            showToast('已解除封房，对应间夜恢复可订');
+            renderApp();
+        }
+
+        // (5) 会员与积分管理（Members & Points）
+        function renderMembers() {
+            const filtered = MEMBERS.filter(m => !ui.memberPhoneSearch || m.phone.includes(ui.memberPhoneSearch));
+
+            return `
+                <div class="space-y-6 fade-in">
+                    <!-- 会员列表与操作栏 -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                    <h3 class="font-serif font-bold text-sm text-ink-charcoal">会员账户管理（按手机号唯一识别）</h3>
+                                </div>
+                                <p class="text-[11px] text-ink-gray mt-0.5">支持提前创建未登录小程序的会员并录入初始积分；等级阈值：银卡500 / 金卡1000 / 钻石1500。</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" value="${ui.memberPhoneSearch}" oninput="ui.memberPhoneSearch = this.value; renderApp()" placeholder="按手机号查询会员..." class="px-3 py-1.5 rounded-xl bg-ink-paper border border-ink-border text-xs">
+                                <button onclick="openNewMemberModal()" class="px-3.5 py-1.5 rounded-xl bg-ink-wood text-white text-xs font-medium hover:bg-ink-woodDark">+ 新增会员</button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-ink-paper border-b border-ink-border text-ink-gray">
+                                        <th class="py-2.5 px-4">手机号</th>
+                                        <th class="py-2.5 px-4">默认昵称（后4位）</th>
+                                        <th class="py-2.5 px-4">当前等级 / 兑换率</th>
+                                        <th class="py-2.5 px-4 text-right">累计成长积分</th>
+                                        <th class="py-2.5 px-4 text-right">当前可用积分</th>
+                                        <th class="py-2.5 px-4 text-right">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-ink-border/70">
+                                    ${filtered.map(m => {
+                                        const tier = getMemberTier(m.growth_points);
+                                        return `
+                                            <tr>
+                                                <td class="py-3 px-4 font-mono font-semibold">${m.phone}</td>
+                                                <td class="py-3 px-4">尾号 ${m.nickname}</td>
+                                                <td class="py-3 px-4">
+                                                    <span class="px-2 py-0.5 rounded-full border text-[10px] font-semibold ${tier.badge}">${tier.name}（${tier.rate}分=¥1）</span>
+                                                </td>
+                                                <td class="py-3 px-4 text-right font-mono">${m.growth_points.toLocaleString()}</td>
+                                                <td class="py-3 px-4 text-right font-mono font-bold text-ink-cinnabar">${m.points.toLocaleString()}</td>
+                                                <td class="py-3 px-4 text-right">
+                                                    <button onclick="openGrantPointsModal(${m.id})" class="px-3 py-1 rounded-lg bg-ink-woodLight text-ink-wood font-medium hover:bg-ink-wood hover:text-white transition">
+                                                        手动发放积分
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 全店积分流水（points_log，包含 balance_after，不含 admin_id/balance_before） -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h3 class="font-serif font-bold text-sm text-ink-charcoal">全店积分变动流水（points_log）</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-ink-paper border-b border-ink-border text-ink-gray">
+                                        <th class="py-2.5 px-4">时间</th>
+                                        <th class="py-2.5 px-3">会员手机号</th>
+                                        <th class="py-2.5 px-3">业务类型</th>
+                                        <th class="py-2.5 px-3 text-right">可用积分变动</th>
+                                        <th class="py-2.5 px-3 text-right">成长积分变动</th>
+                                        <th class="py-2.5 px-3 text-right">变动后余额 (balance_after)</th>
+                                        <th class="py-2.5 px-4">备注 / 关联单号</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-ink-border/70">
+                                    ${POINTS_LOGS.map(l => {
+                                        const mem = MEMBERS.find(x => x.id === l.member_id);
+                                        const typeLabel = {
+                                            'ORDER_REWARD': '订单完成奖励',
+                                            'HISTORY_REWARD': '历史消费补发',
+                                            'GIFT': '赠送/补偿积分',
+                                            'REDEEM': '订单抵扣房费',
+                                            'RETURN': '取消订单返还'
+                                        }[l.type] || l.type;
+                                        return `
+                                            <tr>
+                                                <td class="py-2.5 px-4 text-ink-gray font-mono">${l.created_at}</td>
+                                                <td class="py-2.5 px-3 font-mono">${mem ? mem.phone : '—'}</td>
+                                                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded bg-ink-paper border border-ink-border text-[11px]">${typeLabel}</span></td>
+                                                <td class="py-2.5 px-3 text-right font-mono font-bold ${l.points >= 0 ? 'text-ink-celadon' : 'text-ink-cinnabar'}">${l.points >= 0 ? `+${l.points}` : l.points}</td>
+                                                <td class="py-2.5 px-3 text-right font-mono text-ink-gray">${l.growth_points > 0 ? `+${l.growth_points}` : '0'}</td>
+                                                <td class="py-2.5 px-3 text-right font-mono font-semibold">${l.balance_after.toLocaleString()}</td>
+                                                <td class="py-2.5 px-4 text-ink-gray">${l.remark || '—'}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openNewMemberModal() {
+            openModal(`
+                <div>
+                    <h3 class="font-serif font-bold text-base text-ink-charcoal pb-3 border-b border-ink-border">新增会员（预建档案）</h3>
+                    <div class="mt-4 space-y-3 text-xs">
+                        <div>
+                            <label class="block text-ink-gray mb-1">会员手机号（唯一去重键） *</label>
+                            <input id="new-mem-phone" type="text" placeholder="请输入11位手机号" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border font-mono">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-ink-gray mb-1">初始积分类型（选填）</label>
+                                <select id="new-mem-type" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                    <option value="HISTORY_REWARD">历史消费补发（计入成长积分）</option>
+                                    <option value="GIFT">赠送/补偿（仅增可用积分）</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-ink-gray mb-1">初始积分数（0则不发）</label>
+                                <input id="new-mem-pts" type="number" min="0" value="0" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border font-mono">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">备注说明</label>
+                            <input id="new-mem-remark" type="text" placeholder="如：线下老客户建档" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                    </div>
+                    <div class="mt-5 flex justify-end gap-2 text-xs">
+                        <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-ink-border">取消</button>
+                        <button onclick="submitNewMember()" class="px-5 py-2 rounded-xl bg-ink-wood text-white font-medium">确认建档</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function submitNewMember() {
+            const phone = document.getElementById('new-mem-phone').value.trim();
+            const type = document.getElementById('new-mem-type').value;
+            const pts = Math.max(0, Math.floor(Number(document.getElementById('new-mem-pts').value || 0)));
+            const remark = document.getElementById('new-mem-remark').value.trim() || '后台建档初始发放';
+
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的 11 位手机号');
+                return;
+            }
+            if (MEMBERS.some(m => m.phone === phone)) {
+                showToast('该手机号会员已存在，请直接搜索发放积分');
+                return;
+            }
+
+            const gp = (type === 'HISTORY_REWARD') ? pts : 0;
+            const newMem = {
+                id: MEMBERS.length + 1,
+                phone,
+                nickname: phone.slice(-4),
+                growth_points: gp,
+                points: pts,
+                created_at: `${TODAY} 16:15`
+            };
+            MEMBERS.unshift(newMem);
+
+            if (pts > 0) {
+                POINTS_LOGS.unshift({
+                    id: POINTS_LOGS.length + 1,
+                    member_id: newMem.id,
+                    order_id: null,
+                    type,
+                    points: pts,
+                    growth_points: gp,
+                    balance_after: pts,
+                    amount: null,
+                    discount_amount: null,
+                    remark,
+                    created_at: `${TODAY} 16:15`
+                });
+            }
+
+            closeModal();
+            showToast(`会员尾号 ${newMem.nickname} 建档成功`);
+            renderApp();
+        }
+
+        function openGrantPointsModal(memberId) {
+            const m = MEMBERS.find(x => x.id === memberId);
+            if (!m) return;
+            openModal(`
+                <div>
+                    <h3 class="font-serif font-bold text-base text-ink-charcoal pb-3 border-b border-ink-border">手动发放积分 · ${m.phone}（尾号 ${m.nickname}）</h3>
+                    <div class="mt-4 space-y-3 text-xs">
+                        <div>
+                            <label class="block text-ink-gray mb-1">发放类型（V3.1 严格区分成长积分归属） *</label>
+                            <select id="gr-type" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                <option value="HISTORY_REWARD">历史消费补发积分（同时增加成长积分 + 可用积分）</option>
+                                <option value="GIFT">赠送 / 补偿积分（仅增加可用积分，不影响等级）</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">发放积分数量（正整数） *</label>
+                            <input id="gr-pts" type="number" min="1" value="200" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">发放原因 / 备注</label>
+                            <input id="gr-remark" type="text" placeholder="如：线下续住消费补发 / 管家致歉补偿" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                    </div>
+                    <div class="mt-5 flex justify-end gap-2 text-xs">
+                        <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-ink-border">取消</button>
+                        <button onclick="submitGrantPoints(${m.id})" class="px-5 py-2 rounded-xl bg-ink-wood text-white font-medium">确认发放</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function submitGrantPoints(memberId) {
+            const m = MEMBERS.find(x => x.id === memberId);
+            if (!m) return;
+            const type = document.getElementById('gr-type').value;
+            const pts = Math.floor(Number(document.getElementById('gr-pts').value));
+            const remark = document.getElementById('gr-remark').value.trim() || (type === 'HISTORY_REWARD' ? '历史消费补发' : '管家赠送补偿');
+            if (!pts || pts <= 0) {
+                showToast('请输入大于 0 的整数积分');
+                return;
+            }
+            const gpDelta = type === 'HISTORY_REWARD' ? pts : 0;
+            m.points += pts;
+            m.growth_points += gpDelta;
+
+            POINTS_LOGS.unshift({
+                id: POINTS_LOGS.length + 1,
+                member_id: m.id,
+                order_id: null,
+                type,
+                points: pts,
+                growth_points: gpDelta,
+                balance_after: m.points,
+                amount: null,
+                discount_amount: null,
+                remark,
+                created_at: `${TODAY} 16:20`
+            });
+
+            closeModal();
+            showToast(`已成功向尾号 ${m.nickname} 发放 ${pts} 积分`);
+            renderApp();
+        }
+
+        // (6) 平台与达人管理（Channels & Creators）
+        function renderChannels() {
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+                    <!-- 七种固定订单来源渠道 -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h3 class="font-serif font-bold text-sm text-ink-charcoal">七种订单来源渠道（channels）</h3>
+                        </div>
+                        <p class="text-[11px] text-ink-gray mb-4">停用仅影响新增外部订单选项，不影响历史订单与经营报表统计。</p>
+
+                        <div class="divide-y divide-ink-border/70 border border-ink-border rounded-xl overflow-hidden text-xs">
+                            ${CHANNELS.map(c => `
+                                <div class="p-3.5 flex items-center justify-between bg-white hover:bg-ink-paper/40">
+                                    <div class="flex items-center gap-2.5">
+                                        <span class="w-6 h-6 rounded-lg bg-ink-woodLight text-ink-wood font-mono font-bold flex items-center justify-center text-[11px]">${c.id}</span>
+                                        <span class="font-semibold text-ink-charcoal">${c.name}</span>
+                                        ${c.isMini ? '<span class="px-2 py-0.5 rounded bg-ink-celadonBg text-ink-celadon text-[10px]">系统内置自动同步</span>' : ''}
+                                    </div>
+                                    ${c.isMini ? '<span class="text-[11px] text-ink-gray">永久启用</span>' : `
+                                        <button onclick="toggleChannel(${c.id})" class="px-3 py-1 rounded-lg border text-[11px] font-medium ${c.enabled ? 'border-ink-celadon text-ink-celadon bg-ink-celadonBg/50' : 'border-ink-border text-ink-gray bg-ink-paper'}">
+                                            ${c.enabled ? '已启用' : '已停用'}
+                                        </button>
+                                    `}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 合作达人/主播管理 -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-charcoal">合作达人 / 主播配置（creators）</h3>
+                            </div>
+                            <button onclick="openNewCreatorModal()" class="px-3 py-1.5 rounded-xl bg-ink-wood text-white text-xs font-medium">+ 新增达人</button>
+                        </div>
+                        <p class="text-[11px] text-ink-gray mb-4">达人归属单一平台渠道；关联达人订单需录入预期收入，系统自动计算达人额外提成。</p>
+
+                        <div class="divide-y divide-ink-border/70 border border-ink-border rounded-xl overflow-hidden text-xs">
+                            ${CREATORS.map(cr => {
+                                const ch = CHANNELS.find(x => x.id === cr.channel_id);
+                                return `
+                                    <div class="p-3.5 flex items-center justify-between bg-white hover:bg-ink-paper/40">
+                                        <div>
+                                            <div class="font-semibold text-ink-charcoal">${cr.name}</div>
+                                            <div class="text-[11px] text-ink-gray mt-0.5">归属平台：${ch ? ch.name : ''}</div>
+                                        </div>
+                                        <button onclick="toggleCreator(${cr.id})" class="px-3 py-1 rounded-lg border text-[11px] font-medium ${cr.enabled ? 'border-ink-celadon text-ink-celadon bg-ink-celadonBg/50' : 'border-ink-border text-ink-gray bg-ink-paper'}">
+                                            ${cr.enabled ? '合作中' : '已停用'}
+                                        </button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleChannel(id) {
+            const c = CHANNELS.find(x => x.id === id);
+            if (!c || c.isMini) return;
+            c.enabled = !c.enabled;
+            showToast(`渠道「${c.name}」已${c.enabled ? '启用' : '停用'}`);
+            renderApp();
+        }
+
+        function toggleCreator(id) {
+            const cr = CREATORS.find(x => x.id === id);
+            if (!cr) return;
+            cr.enabled = !cr.enabled;
+            showToast(`达人「${cr.name}」已${cr.enabled ? '启用' : '停用'}`);
+            renderApp();
+        }
+
+        function openNewCreatorModal() {
+            const extChannels = CHANNELS.filter(c => !c.isMini);
+            openModal(`
+                <div>
+                    <h3 class="font-serif font-bold text-base text-ink-charcoal pb-3 border-b border-ink-border">新增合作达人 / 主播</h3>
+                    <div class="mt-4 space-y-3 text-xs">
+                        <div>
+                            <label class="block text-ink-gray mb-1">达人名称 *</label>
+                            <input id="cr-name" type="text" placeholder="如：湖州本地生活探店" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                        </div>
+                        <div>
+                            <label class="block text-ink-gray mb-1">所属渠道 *</label>
+                            <select id="cr-channel" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                                ${extChannels.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-5 flex justify-end gap-2 text-xs">
+                        <button onclick="closeModal()" class="px-4 py-2 rounded-xl border border-ink-border">取消</button>
+                        <button onclick="submitNewCreator()" class="px-5 py-2 rounded-xl bg-ink-wood text-white font-medium">保存</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function submitNewCreator() {
+            const name = document.getElementById('cr-name').value.trim();
+            const channelId = Number(document.getElementById('cr-channel').value);
+            if (!name) {
+                showToast('请输入达人名称');
+                return;
+            }
+            CREATORS.unshift({ id: CREATORS.length + 1, name, channel_id: channelId, enabled: true });
+            closeModal();
+            showToast('达人档案创建成功');
+            renderApp();
+        }
+
+        // (7) 经营支出管理（Expenses：严格遵守 V3.1 第 4.7 & 12 节：仅允许新增、查询、统计，创建后不可修改或删除）
+        function renderExpenses() {
+            const monthExpenses = EXPENSES.filter(e => e.date.startsWith(ui.month));
+            const totalMonth = monthExpenses.reduce((s, e) => s + Number(e.amount), 0);
+
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-in">
+                    <!-- 左侧录入卡片 -->
+                    <div class="bg-white p-5 rounded-2xl border border-ink-border h-fit">
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                            <h3 class="font-serif font-bold text-sm text-ink-charcoal">新增经营支出</h3>
+                        </div>
+                        <p class="text-[11px] text-ink-gray mb-4">按实际支出日期计入对应月份净利润。为保证账目严肃性，支出创建后不可编辑或删除。</p>
+
+                        <div class="space-y-3 text-xs">
+                            <div>
+                                <label class="block text-ink-charcoal font-medium mb-1">支出内容 *</label>
+                                <input id="exp-content" type="text" placeholder="如：采购洗漱用品 / 水电费 / 维修" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border">
+                            </div>
+                            <div>
+                                <label class="block text-ink-charcoal font-medium mb-1">支出金额（元） *</label>
+                                <input id="exp-amount" type="number" step="0.01" placeholder="0.00" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-ink-charcoal font-medium mb-1">实际支出归属日期 *</label>
+                                <input id="exp-date" type="date" value="${TODAY}" class="w-full px-3 py-2 rounded-xl bg-ink-paper border border-ink-border font-mono">
+                            </div>
+                            <button onclick="submitNewExpense()" class="w-full py-2.5 rounded-xl bg-ink-wood hover:bg-ink-woodDark text-white font-medium mt-2 transition">
+                                确认记账
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 右侧支出明细与月度汇总 -->
+                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-ink-border">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div class="flex items-center gap-2">
+                                <span class="w-1 h-4 rounded-full bg-ink-wood"></span>
+                                <h3 class="font-serif font-bold text-sm text-ink-charcoal">${ui.month} 经营支出明细</h3>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs text-ink-gray">当月累计支出：<strong class="font-mono text-base text-ink-cinnabar">¥${fmtMoney(totalMonth)}</strong></span>
+                                <select onchange="ui.month = this.value; renderApp()" class="px-3 py-1.5 rounded-xl bg-ink-paper border border-ink-border text-xs font-semibold">
+                                    <option value="2026-11" ${ui.month === '2026-11' ? 'selected' : ''}>2026-11</option>
+                                    <option value="2026-12" ${ui.month === '2026-12' ? 'selected' : ''}>2026-12</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-ink-paper border-b border-ink-border text-ink-gray">
+                                        <th class="py-2.5 px-4">实际支出日期</th>
+                                        <th class="py-2.5 px-4">支出内容</th>
+                                        <th class="py-2.5 px-4 text-right">支出金额</th>
+                                        <th class="py-2.5 px-4 text-right">录入时间</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-ink-border/70">
+                                    ${monthExpenses.length === 0 ? `
+                                        <tr><td colspan="4" class="py-8 text-center text-ink-gray">该月份暂无经营支出记录</td></tr>
+                                    ` : monthExpenses.map(e => `
+                                        <tr>
+                                            <td class="py-3 px-4 font-mono font-semibold">${e.date}</td>
+                                            <td class="py-3 px-4 text-ink-charcoal">${e.content}</td>
+                                            <td class="py-3 px-4 text-right font-mono font-bold text-ink-cinnabar">¥${fmtMoney(e.amount)}</td>
+                                            <td class="py-3 px-4 text-right text-ink-gray font-mono">${e.created_at}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function submitNewExpense() {
+            const content = document.getElementById('exp-content').value.trim();
+            const amount = Number(document.getElementById('exp-amount').value);
+            const date = document.getElementById('exp-date').value;
+            if (!content || isNaN(amount) || amount <= 0 || !date) {
+                showToast('请完整填写支出内容、正数金额及实际支出日期');
+                return;
+            }
+            EXPENSES.unshift({
+                id: EXPENSES.length + 1,
+                content,
+                amount,
+                date,
+                created_at: `${TODAY} 16:25`
+            });
+            showToast('经营支出已入账（创建后锁定不可改删）');
+            renderApp();
+        }
+
+        // (8) 四维经营报表（Reports：总览 / 按来源 / 按主播含无主播 / 按房间含单房利润与入住率）
+        function renderReports() {
+            const m = computeMonthlyMetrics(ui.month, ui.reportScope);
+
+            const validStatuses = ['PENDING_CONFIRM', 'PENDING_CHECKIN', 'CHECKED_IN', 'COMPLETED'];
+            const matchScope = (status) => {
+                if (!validStatuses.includes(status)) return false;
+                if (ui.reportScope === 'NOT_CHECKED_IN') return ['PENDING_CONFIRM', 'PENDING_CHECKIN'].includes(status);
+                if (ui.reportScope === 'CHECKED_IN') return ['CHECKED_IN', 'COMPLETED'].includes(status);
+                return true;
+            };
+
+            // 按渠道分组统计
+            const channelRows = CHANNELS.map(ch => {
+                let order_count = 0, night_count = 0, paid = 0, fee = 0, pComm = 0, eComm = 0, net = 0;
+                ORDERS.forEach(o => {
+                    if (o.channel_id !== ch.id || !matchScope(o.status)) return;
+                    if (o.check_in.startsWith(ui.month)) order_count++;
+                    const a = allocateOrderToMonth(o, ui.month);
+                    night_count += a.nights; paid += a.paid; fee += a.fee; pComm += a.pComm; eComm += a.eComm; net += a.net;
+                });
+                return { name: ch.name, order_count, night_count, paid, fee, pComm, eComm, net };
+            });
+
+            // 按达人分组统计（必须包含 creator_id=null 的「无主播订单」行）
+            const creatorList = [{ id: null, name: '无主播订单（自然流量）' }, ...CREATORS];
+            const creatorRows = creatorList.map(cr => {
+                let order_count = 0, night_count = 0, paid = 0, fee = 0, pComm = 0, eComm = 0, net = 0;
+                ORDERS.forEach(o => {
+                    if ((o.creator_id || null) !== cr.id || !matchScope(o.status)) return;
+                    if (o.check_in.startsWith(ui.month)) order_count++;
+                    const a = allocateOrderToMonth(o, ui.month);
+                    night_count += a.nights; paid += a.paid; fee += a.fee; pComm += a.pComm; eComm += a.eComm; net += a.net;
+                });
+                return { name: cr.name, order_count, night_count, paid, fee, pComm, eComm, net };
+            });
+
+            // 按房间分组统计（房间利润不扣全店支出；入住率分子只含已入住/已完成间夜）
+            const [yy, mm] = ui.month.split('-').map(Number);
+            const daysInMonth = new Date(yy, mm, 0).getDate();
+            const roomRows = ROOMS.map(rm => {
+                let order_count = 0, night_count = 0, paid = 0, fee = 0, pComm = 0, eComm = 0, net = 0;
+                let checkedInNights = 0;
+                ORDERS.forEach(o => {
+                    if (o.room_id !== rm.id || !validStatuses.includes(o.status)) return;
+                    const a = allocateOrderToMonth(o, ui.month);
+                    if (['CHECKED_IN', 'COMPLETED'].includes(o.status)) checkedInNights += a.nights;
+                    if (matchScope(o.status)) {
+                        if (o.check_in.startsWith(ui.month)) order_count++;
+                        night_count += a.nights; paid += a.paid; fee += a.fee; pComm += a.pComm; eComm += a.eComm; net += a.net;
+                    }
+                });
+                let rmBlocked = 0;
+                ROOM_BLOCKS.filter(b => b.room_id === rm.id).forEach(b => {
+                    rmBlocked += getNightsArray(b.start_date, b.end_date).filter(d => d.startsWith(ui.month)).length;
+                });
+                const denom = daysInMonth - rmBlocked;
+                const occRate = denom > 0 ? ((checkedInNights / denom) * 100).toFixed(1) + '%' : '—';
+                return { name: `${rm.number} · ${rm.name}`, order_count, night_count, paid, fee, pComm, eComm, net, occRate };
+            });
+
+            const activeRows = ui.reportDimension === 'channels' ? channelRows
+                             : ui.reportDimension === 'creators' ? creatorRows
+                             : roomRows;
+
+            return `
+                <div class="space-y-5 fade-in">
+                    <!-- 筛选与口径控制栏 -->
+                    <div class="bg-white p-4 rounded-2xl border border-ink-border flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-1.5 bg-ink-paper p-1 rounded-xl border border-ink-border text-xs">
+                            <button onclick="ui.reportDimension = 'overview'; renderApp()" class="px-3 py-1.5 rounded-lg font-medium transition ${ui.reportDimension === 'overview' ? 'bg-ink-wood text-white' : 'text-ink-gray hover:text-ink-charcoal'}">经营总览</button>
+                            <button onclick="ui.reportDimension = 'channels'; renderApp()" class="px-3 py-1.5 rounded-lg font-medium transition ${ui.reportDimension === 'channels' ? 'bg-ink-wood text-white' : 'text-ink-gray hover:text-ink-charcoal'}">按来源统计</button>
+                            <button onclick="ui.reportDimension = 'creators'; renderApp()" class="px-3 py-1.5 rounded-lg font-medium transition ${ui.reportDimension === 'creators' ? 'bg-ink-wood text-white' : 'text-ink-gray hover:text-ink-charcoal'}">按主播统计</button>
+                            <button onclick="ui.reportDimension = 'rooms'; renderApp()" class="px-3 py-1.5 rounded-lg font-medium transition ${ui.reportDimension === 'rooms' ? 'bg-ink-wood text-white' : 'text-ink-gray hover:text-ink-charcoal'}">按房间统计</button>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-2 text-xs">
+                            <span class="text-ink-gray">订单范围：</span>
+                            <select onchange="ui.reportScope = this.value; renderApp()" class="px-3 py-1.5 rounded-xl bg-ink-paper border border-ink-border font-medium">
+                                <option value="ALL" ${ui.reportScope === 'ALL' ? 'selected' : ''}>全部有效订单（默认）</option>
+                                <option value="NOT_CHECKED_IN" ${ui.reportScope === 'NOT_CHECKED_IN' ? 'selected' : ''}>未入住订单（待确认+待入住）</option>
+                                <option value="CHECKED_IN" ${ui.reportScope === 'CHECKED_IN' ? 'selected' : ''}>已入住订单（已入住+已完成）</option>
+                            </select>
+
+                            <select onchange="ui.month = this.value; renderApp()" class="px-3 py-1.5 rounded-xl bg-ink-paper border border-ink-border font-semibold">
+                                <option value="2026-11" ${ui.month === '2026-11' ? 'selected' : ''}>2026年 11月</option>
+                                <option value="2026-12" ${ui.month === '2026-12' ? 'selected' : ''}>2026年 12月</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    ${ui.reportDimension === 'overview' ? `
+                        <div class="bg-white p-6 rounded-2xl border border-ink-border space-y-5">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-serif font-bold text-base text-ink-charcoal">${ui.month} 整体经营月报（跨月订单按间夜平均分摊，尾差归最后一晚）</h3>
+                                <span class="text-xs text-ink-gray">净利润固定按已入住订单到手金额减全店支出计算</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                                <div class="p-4 rounded-2xl bg-ink-paper border border-ink-border">
+                                    <div class="text-ink-gray">归属本月订单数</div>
+                                    <div class="text-xl font-bold mt-1 font-mono">${m.orderCount} 笔</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-ink-paper border border-ink-border">
+                                    <div class="text-ink-gray">本月分摊间夜数</div>
+                                    <div class="text-xl font-bold mt-1 font-mono">${m.nightCount} 间夜</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-ink-paper border border-ink-border">
+                                    <div class="text-ink-gray">筛选口径营业额</div>
+                                    <div class="text-xl font-bold text-ink-cinnabar mt-1 font-mono">¥${fmtMoney(m.paidAmount)}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-ink-paper border border-ink-border">
+                                    <div class="text-ink-gray">筛选口径到手金额</div>
+                                    <div class="text-xl font-bold text-ink-celadon mt-1 font-mono">¥${fmtMoney(m.netAmount)}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-ink-paper border border-ink-border">
+                                    <div class="text-ink-gray">平台手续费</div>
+                                    <div class="text-lg font-bold mt-1 font-mono">¥${fmtMoney(m.platformFee)}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-ink-paper border border-ink-border">
+                                    <div class="text-ink-gray">普通达人提成 / 额外提成</div>
+                                    <div class="text-lg font-bold mt-1 font-mono">¥${fmtMoney(m.platformCommission)} / ¥${fmtMoney(m.extraCommission)}</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-ink-paper border border-ink-border">
+                                    <div class="text-ink-gray">已入住入住率</div>
+                                    <div class="text-lg font-bold text-ink-wood mt-1 font-mono">${m.occupancyRate}</div>
+                                    <div class="text-[10px] text-ink-gray mt-0.5">${m.checkedInNightsTotal} / (${m.totalCalendarNights}-${m.blockedNights}) 间夜</div>
+                                </div>
+                                <div class="p-4 rounded-2xl bg-ink-woodLight border border-ink-wood/25">
+                                    <div class="text-ink-woodDark font-semibold">当月固定净利润</div>
+                                    <div class="text-xl font-bold text-ink-wood mt-1 font-mono">¥${fmtMoney(m.operatingProfit)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="bg-white rounded-2xl border border-ink-border overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs min-w-[920px]">
+                                <thead>
+                                    <tr class="bg-ink-paper border-b border-ink-border text-ink-gray">
+                                        <th class="py-3 px-4 font-semibold">统计维度名称</th>
+                                        <th class="py-3 px-3 text-right font-semibold">订单数</th>
+                                        <th class="py-3 px-3 text-right font-semibold">间夜数</th>
+                                        <th class="py-3 px-3 text-right font-semibold">营业额(实付)</th>
+                                        <th class="py-3 px-3 text-right font-semibold">平台手续费</th>
+                                        <th class="py-3 px-3 text-right font-semibold">普通达人提成</th>
+                                        <th class="py-3 px-3 text-right font-semibold">额外达人提成</th>
+                                        <th class="py-3 px-3 text-right font-semibold">总提成</th>
+                                        <th class="py-3 px-4 text-right font-semibold">${ui.reportDimension === 'rooms' ? '房间利润 / 入住率' : '商家到手金额'}</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-ink-border/70">
+                                    ${activeRows.map(r => `
+                                        <tr class="hover:bg-ink-paper/45">
+                                            <td class="py-3 px-4 font-bold text-ink-charcoal">${r.name}</td>
+                                            <td class="py-3 px-3 text-right font-mono">${r.order_count}</td>
+                                            <td class="py-3 px-3 text-right font-mono">${r.night_count}</td>
+                                            <td class="py-3 px-3 text-right font-mono font-semibold text-ink-cinnabar">¥${fmtMoney(r.paid)}</td>
+                                            <td class="py-3 px-3 text-right font-mono">¥${fmtMoney(r.fee)}</td>
+                                            <td class="py-3 px-3 text-right font-mono">¥${fmtMoney(r.pComm)}</td>
+                                            <td class="py-3 px-3 text-right font-mono">¥${fmtMoney(r.eComm)}</td>
+                                            <td class="py-3 px-3 text-right font-mono font-medium">¥${fmtMoney(r.pComm + r.eComm)}</td>
+                                            <td class="py-3 px-4 text-right font-mono font-bold text-ink-celadon">
+                                                ¥${fmtMoney(r.net)}
+                                                ${r.occRate ? `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-ink-woodLight text-ink-wood text-[10px]">${r.occRate}</span>` : ''}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `}
+                </div>
+            `;
+        }
+
+        // =========================================================================
+        // 5. 总控渲染引擎
+        // =========================================================================
+        function renderApp() {
+            const navEl = document.getElementById('sidebar-nav');
+            navEl.innerHTML = NAV_ITEMS.map(item => {
+                const active = ui.tab === item.id;
+                return `
+                    <button onclick="switchTab('${item.id}')" class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl font-medium transition ${
+                        active
+                        ? 'bg-ink-wood text-white shadow-sm'
+                        : 'text-white/70 hover:text-white hover:bg-white/5'
+                    }">
+                        <i data-lucide="${item.icon}" class="w-4 h-4 shrink-0"></i>
+                        <span>${item.label}</span>
+                    </button>
+                `;
+            }).join('');
+
+            const curNav = NAV_ITEMS.find(n => n.id === ui.tab);
+            document.getElementById('page-heading').textContent = curNav ? curNav.label : '经营总览';
+
+            const views = {
+                dashboard: renderDashboard,
+                calendar:  renderCalendar,
+                orders:    renderOrders,
+                rooms:     renderRooms,
+                members:   renderMembers,
+                channels:  renderChannels,
+                expenses:  renderExpenses,
+                reports:   renderReports
+            };
+
+            const main = document.getElementById('main-content');
+            main.innerHTML = (views[ui.tab] || renderDashboard)();
+            lucide.createIcons();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderApp();
+        });
+    </script>
+</body>
+</html>
