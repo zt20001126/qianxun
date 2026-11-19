@@ -18,7 +18,7 @@ Page({
 
   onShow() {
     if (getValidToken()) {
-      wx.redirectTo({ url: '/pages/home/index' })
+      wx.switchTab({ url: '/pages/home/index' })
     }
   },
 
@@ -38,7 +38,7 @@ Page({
     try {
       const result = await login(phone)
       saveSession(result)
-      wx.redirectTo({ url: '/pages/home/index' })
+      wx.switchTab({ url: '/pages/home/index' })
     } catch (error) {
       this.setData({ errorMessage: error instanceof Error ? error.message : '登录失败，请稍后重试' })
     } finally {

@@ -1,0 +1,10 @@
+CREATE TABLE expenses (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '支出记录唯一标识',
+    content VARCHAR(300) NOT NULL COMMENT '支出内容',
+    amount DECIMAL(12,2) NOT NULL COMMENT '支出金额',
+    `date` DATE NOT NULL COMMENT '实际支出归属日期',
+    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) COMMENT '记录创建时间',
+    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3) COMMENT '记录更新时间',
+    PRIMARY KEY (id),
+    KEY idx_expenses_date_id (`date`, id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='民宿实际经营支出记录';

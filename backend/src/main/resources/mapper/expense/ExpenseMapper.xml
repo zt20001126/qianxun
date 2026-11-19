@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.expense.mapper.ExpenseMapper">
+    <resultMap id="expenseResultMap" type="com.qianxun.homestay.modules.expense.entity.ExpenseEntity">
+        <id property="id" column="id"/>
+        <result property="content" column="content"/>
+        <result property="amount" column="amount"/>
+        <result property="date" column="date"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <resultMap id="dailyAmountResultMap" type="com.qianxun.homestay.modules.expense.entity.ExpenseDailyAmountEntity">
+        <result property="date" column="date"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <sql id="listFilters">
+        <where>
+            <if test="startDate != null">AND `date` &gt;= #{startDate}</if>
+            <if test="endDate != null">AND `date` &lt;= #{endDate}</if>
+            <if test="keyword != null and keyword != ''">AND content LIKE CONCAT('%', #{keyword}, '%')</if>
+        </where>
+    </sql>
+
+    <select id="findPage" resultMap="expenseResultMap">
+        SELECT id, content, amount, `date`, created_at, updated_at
+        FROM expenses
+        <include refid="listFilters"/>
+        ORDER BY `date` DESC, id DESC
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="long">
+        SELECT COUNT(*) FROM expenses
+        <include refid="listFilters"/>
+    </select>
+
+    <select id="findById" resultMap="expenseResultMap">
+        SELECT id, content, amount, `date`, created_at, updated_at
+        FROM expenses WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO expenses (content, amount, `date`)
+        VALUES (#{content}, #{amount}, #{date})
+    </insert>
+
+    <select id="sumBetween" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0.00)
+        FROM expenses
+        WHERE `date` &gt;= #{startDate} AND `date` &lt;= #{endDate}
+    </select>
+
+    <select id="countBetween" resultType="long">
+        SELECT COUNT(*)
+        FROM expenses
+        WHERE `date` &gt;= #{startDate} AND `date` &lt;= #{endDate}
+    </select>
+
+    <select id="sumDailyBetween" resultMap="dailyAmountResultMap">
+        SELECT `date`, SUM(amount) AS amount
+        FROM expenses
+        WHERE `date` &gt;= #{startDate} AND `date` &lt;= #{endDate}
+        GROUP BY `date`
+        ORDER BY `date`
+    </select>
+</mapper>

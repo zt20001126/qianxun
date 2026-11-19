@@ -5,14 +5,14 @@ import { useAuthStore } from '../stores/auth'
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', redirect: '/rooms' },
+    { path: '/', redirect: '/home' },
     { path: '/login', component: () => import('../views/login/index.vue'), meta: { title: '管理员登录' } },
     {
       path: '/',
       component: () => import('../layouts/AdminLayout.vue'),
       meta: { requiresAuth: true },
       children: [
-        { path: 'home', redirect: '/rooms' },
+        { path: 'home', component: () => import('../views/home/index.vue'), meta: { title: '经营总览' } },
         { path: 'room-calendar', component: () => import('../views/calendar/index.vue'), meta: { title: '房态日历' } },
         { path: 'rooms', component: () => import('../views/rooms/index.vue'), meta: { title: '客房管理' } },
         { path: 'orders', component: () => import('../views/orders/index.vue'), meta: { title: '订单管理' } },
@@ -23,6 +23,8 @@ export const router = createRouter({
         { path: 'room-blocks', component: () => import('../views/room-blocks/index.vue'), meta: { title: '封房管理' } },
         { path: 'channels', component: () => import('../views/channels/index.vue'), meta: { title: '渠道管理' } },
         { path: 'creators', component: () => import('../views/creators/index.vue'), meta: { title: '达人管理' } },
+        { path: 'expenses', component: () => import('../views/expenses/index.vue'), meta: { title: '经营支出' } },
+        { path: 'reports', component: () => import('../views/reports/index.vue'), meta: { title: '经营报表' } },
       ],
     },
     { path: '/:pathMatch(.*)*', redirect: '/login' },
