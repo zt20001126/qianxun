@@ -1,7 +1,7 @@
 <view wx:if="{{visible}}" class="calendar-mask" catchtouchmove="noop">
   <view class="calendar-sheet">
     <view class="calendar-header">
-      <button class="calendar-close" bindtap="onCloseTap"><qx-icon name="close" size="30" /></button>
+      <button class="calendar-close" bindtap="onCloseTap"><text class="calendar-close-glyph">×</text></button>
       <view class="calendar-heading">
         <text class="calendar-title">选择入住与退房日期</text>
         <text class="calendar-subtitle">仅开放北京时间今日起未来 60 个自然日预订</text>
@@ -16,9 +16,9 @@
     </view>
 
     <view class="calendar-legend">
-      <text><view class="legend-box available"></view>可预订</text>
-      <text><view class="legend-box unavailable"></view>不可预订</text>
-      <text><view class="legend-box selected"></view>已选区间</text>
+      <view class="legend-item"><view class="legend-box available"></view><text>可预订</text></view>
+      <view class="legend-item"><view class="legend-box unavailable"></view><text>不可预订</text></view>
+      <view class="legend-item"><view class="legend-box selected"></view><text>已选区间</text></view>
     </view>
 
     <scroll-view class="calendar-months-scroll" scroll-y enhanced show-scrollbar="{{false}}">
