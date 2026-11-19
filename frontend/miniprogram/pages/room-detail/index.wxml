@@ -12,8 +12,8 @@
         </swiper-item>
       </swiper>
       <view class="gallery-gradient"></view>
-      <button class="gallery-control gallery-previous" data-delta="-1" bindtap="onGalleryStep"><qx-icon name="chevron-left" size="32" /></button>
-      <button class="gallery-control gallery-next" data-delta="1" bindtap="onGalleryStep"><qx-icon name="chevron-right" size="32" /></button>
+      <view class="gallery-control gallery-previous" data-delta="-1" bindtap="onGalleryStep"><qx-icon name="chevron-left" size="32" /></view>
+      <view class="gallery-control gallery-next" data-delta="1" bindtap="onGalleryStep"><qx-icon name="chevron-right" size="32" /></view>
       <view class="gallery-count">{{imageIndex + 1}} / {{imageCount}}</view>
     </view>
     <view wx:else class="gallery-empty"><text>暂无客房图片</text></view>
