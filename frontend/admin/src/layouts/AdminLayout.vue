@@ -16,7 +16,7 @@ function logout(): void {
   <div class="admin-layout">
     <aside class="admin-sidebar">
       <div class="sidebar-brand">
-        <span class="sidebar-mark">浔</span>
+        <img class="sidebar-mark" src="/assets/qianxun-logo.jpg" alt="芊浔民宿标志" />
         <div><strong>芊浔民宿</strong><small>经营管理后台</small></div>
       </div>
       <nav class="sidebar-nav" aria-label="主导航">
@@ -34,7 +34,11 @@ function logout(): void {
         <RouterLink to="/expenses"><span>支</span>经营支出</RouterLink>
         <RouterLink to="/reports"><span>报</span>经营报表</RouterLink>
       </nav>
-      <p class="sidebar-note">基础资料</p>
+      <div class="admin-account sidebar-account">
+        <img class="account-avatar" src="/assets/qianxun-logo.jpg" alt="芊浔民宿标志" />
+        <span class="account-name">{{ auth.admin?.username || 'admin' }}</span>
+        <button class="text-button" type="button" @click="logout">退出登录</button>
+      </div>
     </aside>
 
     <div class="admin-main">
@@ -42,11 +46,6 @@ function logout(): void {
         <div class="topbar-heading">
           <p>芊浔民宿 · 南浔</p>
           <strong>{{ $route.meta.title || '经营管理' }}</strong>
-        </div>
-        <div class="admin-account">
-          <span class="account-avatar">{{ auth.admin?.username?.slice(0, 1) || '管' }}</span>
-          <span class="account-name">{{ auth.admin?.username }}</span>
-          <button class="text-button" type="button" @click="logout">退出登录</button>
         </div>
       </header>
       <main class="admin-content"><RouterView /></main>
