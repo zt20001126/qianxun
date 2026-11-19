@@ -1,19 +1,29 @@
 <view class="page-shell">
-  <image class="plum-branch" src="../../assets/decoration-plum-branch.webp" mode="widthFix" />
+  <view class="hero-scene">
+    <image class="hero-background" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+    <view class="hero-wash"></view>
 
-  <view class="brand-block">
-    <view class="brand-seal">浔</view>
-    <text class="brand-kicker">QIANXUN HOMESTAY</text>
-    <text class="brand-title">芊浔民宿</text>
-    <text class="brand-subtitle">枕水而居 · 慢叙江南</text>
+    <view class="brand-block">
+      <view class="brand-heading">
+        <text class="brand-title">芊浔民宿</text>
+        <view class="brand-seal">
+          <text>南</text>
+          <text>浔</text>
+        </view>
+      </view>
+      <view class="brand-subtitle">
+        <view class="subtitle-rule"></view>
+        <text>南浔古镇 · 水乡民宿</text>
+        <view class="subtitle-rule"></view>
+      </view>
+    </view>
   </view>
 
   <view class="login-card">
     <text class="card-title">手机号登录</text>
-    <text class="card-caption">输入手机号，开启南浔小住时光</text>
 
     <view class="phone-field">
-      <text class="country-code">+86</text>
+      <view class="phone-icon"><view class="phone-icon-dot"></view></view>
       <input
         class="phone-input"
         type="number"
@@ -29,14 +39,29 @@
 
     <text wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</text>
     <button class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="onLoginTap">
-      {{loading ? '正在登录…' : '登录 / 注册'}}
+      {{loading ? '正在登录…' : '登录'}}
     </button>
 
-    <text class="phone-notice">本阶段不发送短信验证码，系统不会核验手机号归属。请勿输入他人手机号，避免账号及积分被他人使用。</text>
+    <view class="terms-row" bindtap="onTermsToggle">
+      <view class="terms-checkbox {{agreedTerms ? 'terms-checkbox-checked' : ''}}">
+        <text wx:if="{{agreedTerms}}" class="terms-check">✓</text>
+      </view>
+      <view class="terms-copy">
+        <text>我已阅读并同意</text>
+        <text class="terms-link">《用户协议》</text>
+        <text>和</text>
+        <text class="terms-link">《隐私协议》</text>
+      </view>
+    </view>
+
   </view>
 
   <view class="scenery">
-    <image src="../../assets/decoration-baijianlou-houses.webp" mode="widthFix" />
-    <text>浙江 · 湖州 · 南浔</text>
+    <view class="river-wave river-wave-back"></view>
+    <view class="river-wave river-wave-front"></view>
+    <view class="footer-boat">
+      <view class="boat-sail"></view>
+      <view class="boat-hull"></view>
+    </view>
   </view>
 </view>

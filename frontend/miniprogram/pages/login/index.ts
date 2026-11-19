@@ -7,6 +7,7 @@ interface LoginPageData {
   phone: string
   loading: boolean
   errorMessage: string
+  agreedTerms: boolean
 }
 
 Page({
@@ -14,6 +15,7 @@ Page({
     phone: '',
     loading: false,
     errorMessage: '',
+    agreedTerms: false,
   } as LoginPageData,
 
   onShow() {
@@ -27,7 +29,16 @@ Page({
     this.setData({ phone, errorMessage: '' })
   },
 
+  onTermsToggle() {
+    this.setData({ agreedTerms: !this.data.agreedTerms })
+  },
+
   async onLoginTap() {
+    if (!this.data.agreedTerms) {
+      wx.showToast({ title: '请先勾选同意用户协议与隐私协议', icon: 'none' })
+      return
+    }
+
     const phone = this.data.phone.trim()
     if (!isValidMainlandPhone(phone)) {
       this.setData({ errorMessage: '请输入有效的 11 位中国大陆手机号' })
