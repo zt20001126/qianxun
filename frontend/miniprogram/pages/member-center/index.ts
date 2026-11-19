@@ -1,43 +1,94 @@
-/** 独立会员中心：展示等级进度、积分规则和本人消费订单。 */
-import { DEFAULT_AVATAR_PATH } from '../../config'
-import { getMyMember, listMyMemberOrders } from '../../services/member'
+/** 会员中心：展示会员等级、积分数据、积分入口与等级规则。 */
+import { getMyMember } from '../../services/member'
 import { getPointsRules } from '../../services/points'
-import type { AppOrder } from '../../types/booking'
 import type { AppMember, PointsLevelRule, PointsRules } from '../../types/member'
-import { getOrderStatusLabel } from '../../types/booking'
-import { STORE_CONTACT_PHONE } from '../../config'
-import { callBusinessPhone } from '../../utils/business-contact'
-import { clearSession } from '../../utils/session'
 
-interface RecentOrder extends AppOrder {
-  status_label: string
+interface TierDisplay extends PointsLevelRule {
+  min_points: number
+  matrix_name: string
+  member_name: string
+  range_label: string
+  modal_range_label: string
+  is_current: boolean
 }
 
 interface MemberCenterData {
   member: AppMember | null
   rules: PointsRules | null
-  levels: PointsLevelRule[]
-  recentOrders: RecentOrder[]
+  tierRows: TierDisplay[]
   loading: boolean
   errorMessage: string
-  avatarSource: string
-  storePhone: string
+  growthPointsDisplay: string
+  availablePointsDisplay: string
+  currentTierName: string
+  currentRate: number
+  upgradeTitle: string
+  upgradeHint: string
   progressWidth: string
-  hasMoreOrders: boolean
+  maxDiscountRateLabel: string
+  showPointsRuleModal: boolean
+}
+
+function normalizeTierName(name: string): string {
+  return name.replace(/会员/g, '').replace(/卡/g, '')
+}
+
+function getTierBaseName(name: string): string {
+  const normalizedName = normalizeTierName(name)
+  const displayNames: Record<string, string> = {
+    普通: '普通',
+    银: '银卡',
+    金: '金卡',
+    钻石: '钻石',
+  }
+  return displayNames[normalizedName] || normalizedName
+}
+
+function getTierRows(levels: PointsLevelRule[], currentLevel: string): TierDisplay[] {
+  const orderedLevels = levels.slice().sort((left, right) => left.growth_points - right.growth_points)
+  return orderedLevels.map((level, index) => {
+    const nextLevel = orderedLevels[index + 1]
+    const maxPoints = nextLevel ? nextLevel.growth_points - 1 : null
+    const matrixName = getTierBaseName(level.name)
+    const rangeLabel = maxPoints === null
+      ? `≥${level.growth_points}`
+      : `${level.growth_points}-${maxPoints}`
+    const modalRangeLabel = maxPoints === null
+      ? `≥ ${level.growth_points}`
+      : `${level.growth_points} - ${maxPoints}`
+
+    return {
+      ...level,
+      min_points: level.growth_points,
+      matrix_name: matrixName,
+      member_name: `${matrixName}会员`,
+      range_label: rangeLabel,
+      modal_range_label: modalRangeLabel,
+      is_current: normalizeTierName(level.name) === normalizeTierName(currentLevel),
+    }
+  })
+}
+
+function formatPoints(value: number): string {
+  return value.toLocaleString('en-US')
 }
 
 Page({
   data: {
     member: null,
     rules: null,
-    levels: [],
-    recentOrders: [],
+    tierRows: [],
     loading: true,
     errorMessage: '',
-    avatarSource: DEFAULT_AVATAR_PATH,
-    storePhone: STORE_CONTACT_PHONE,
+    growthPointsDisplay: '0',
+    availablePointsDisplay: '0',
+    currentTierName: '',
+    currentRate: 0,
+    upgradeTitle: '',
+    upgradeHint: '',
     progressWidth: '0%',
-    hasMoreOrders: false,
+    maxDiscountRateLabel: '20%',
+    showPointsRuleModal: false,
   } as MemberCenterData,
 
   onLoad() {
@@ -56,19 +107,27 @@ Page({
   async loadCenter() {
     this.setData({ loading: true, errorMessage: '' })
     try {
-      const [member, rules, orderPage] = await Promise.all([
-        getMyMember(), getPointsRules(), listMyMemberOrders(1, 3),
-      ])
+      const [member, rules] = await Promise.all([getMyMember(), getPointsRules()])
+      const tierRows = getTierRows(rules.levels, member.level)
+      const currentIndex = tierRows.findIndex((tier) => tier.is_current)
+      const currentTier = currentIndex >= 0 ? tierRows[currentIndex] : undefined
+      const nextTier = currentIndex >= 0 ? tierRows[currentIndex + 1] : undefined
+      const hasNextTier = Boolean(nextTier && member.next_level_points > 0)
+
       this.setData({
         member,
         rules,
-        levels: rules.levels,
-        recentOrders: orderPage.list.map((order) => ({
-          ...order,
-          status_label: getOrderStatusLabel(order.status),
-        })),
-        hasMoreOrders: orderPage.total > 3,
+        tierRows,
+        growthPointsDisplay: formatPoints(member.growth_points),
+        availablePointsDisplay: formatPoints(member.points),
+        currentTierName: currentTier?.member_name || `${getTierBaseName(member.level)}会员`,
+        currentRate: currentTier?.points_per_yuan || 0,
+        upgradeTitle: hasNextTier ? `升级至${nextTier?.member_name}` : '已达最高尊享等级',
+        upgradeHint: hasNextTier
+          ? `距离升级还差 ${member.next_level_points} 成长积分`
+          : '尊享全店最高抵扣比例',
         progressWidth: `${Math.max(0, Math.min(100, member.progress_percent))}%`,
+        maxDiscountRateLabel: `${Math.round(rules.max_discount_rate * 100)}%`,
       })
     } catch (error) {
       this.setData({ errorMessage: error instanceof Error ? error.message : '会员资料读取失败' })
@@ -81,30 +140,11 @@ Page({
     wx.navigateTo({ url: '/pages/points-logs/index' })
   },
 
-  onOrdersTap() {
-    wx.switchTab({ url: '/pages/orders/index' })
+  onPointsRuleTap() {
+    this.setData({ showPointsRuleModal: true })
   },
 
-  onOrderTap(event: WechatMiniprogram.TouchEvent) {
-    const orderId = Number(event.currentTarget.dataset.orderId)
-    if (Number.isInteger(orderId) && orderId > 0) {
-      wx.navigateTo({ url: `/pages/order-detail/index?id=${orderId}` })
-    }
-  },
-
-  onBusinessPhoneTap() {
-    callBusinessPhone()
-  },
-
-  onLogoutTap() {
-    wx.showModal({
-      title: '退出登录',
-      content: '退出后需要重新输入手机号登录。',
-      success: (result) => {
-        if (!result.confirm) return
-        clearSession()
-        wx.reLaunch({ url: '/pages/login/index' })
-      },
-    })
+  onPointsRuleClose() {
+    this.setData({ showPointsRuleModal: false })
   },
 })

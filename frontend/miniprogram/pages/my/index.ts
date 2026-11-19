@@ -1,19 +1,58 @@
-/** 「我的」页面：展示登录资料并提供常用页面入口。 */
-import { DEFAULT_AVATAR_PATH } from '../../config'
+/** 「我的」页面：展示会员名片、商家电话和退出登录操作。 */
+import { getMyMember } from '../../services/member'
+import type { AppMember } from '../../types/member'
 import { callBusinessPhone } from '../../utils/business-contact'
-import { getSavedMember, getValidToken } from '../../utils/session'
+import { clearSession, getSavedMember, getValidToken } from '../../utils/session'
 
 interface MyPageData {
-  avatarSource: string
   nickname: string
-  profileHint: string
+  maskedPhone: string
+  levelLabel: string
+}
+
+function getPhoneSuffix(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  return digits.slice(-4) || '----'
+}
+
+function maskPhone(phone: string): string {
+  if (/^\d{3}\*{4}\d{4}$/.test(phone)) return phone
+  const digits = phone.replace(/\D/g, '')
+  return digits.length === 11 ? `${digits.slice(0, 3)}****${digits.slice(-4)}` : phone
+}
+
+function formatLevelLabel(level: string): string {
+  const labelMap: Record<string, string> = {
+    普通: '普通会员',
+    银: '银卡会员',
+    银卡: '银卡会员',
+    金: '金卡会员',
+    金卡: '金卡会员',
+    钻石: '钻石会员',
+  }
+  return labelMap[level] || (level.endsWith('会员') ? level : `${level}会员`)
+}
+
+function formatCachedLevel(growthPoints: number): string {
+  if (growthPoints >= 1500) return '钻石会员'
+  if (growthPoints >= 1000) return '金卡会员'
+  if (growthPoints >= 500) return '银卡会员'
+  return '普通会员'
+}
+
+function toPageData(member: Pick<AppMember, 'phone' | 'level'>): MyPageData {
+  return {
+    nickname: `尾号 ${getPhoneSuffix(member.phone)}`,
+    maskedPhone: maskPhone(member.phone),
+    levelLabel: formatLevelLabel(member.level),
+  }
 }
 
 Page({
   data: {
-    avatarSource: DEFAULT_AVATAR_PATH,
-    nickname: '芊浔游客',
-    profileHint: '欢迎来到芊浔民宿',
+    nickname: '',
+    maskedPhone: '',
+    levelLabel: '',
   } as MyPageData,
 
   onLoad() {
@@ -21,25 +60,42 @@ Page({
   },
 
   onShow() {
-    const isLoggedIn = Boolean(getValidToken())
-    const member = isLoggedIn ? getSavedMember() : null
-    this.setData({
-      avatarSource: member?.avatar || DEFAULT_AVATAR_PATH,
-      nickname: member?.nickname || '芊浔游客',
-      profileHint: member ? '欢迎回来' : '欢迎来到芊浔民宿',
-    })
+    if (!getValidToken()) {
+      wx.reLaunch({ url: '/pages/login/index' })
+      return
+    }
+    void this.loadMemberProfile()
   },
 
-  onOrdersTap() {
-    wx.switchTab({ url: '/pages/orders/index' })
+  async loadMemberProfile() {
+    try {
+      const member = await getMyMember()
+      this.setData(toPageData(member))
+    } catch {
+      const savedMember = getSavedMember()
+      if (!savedMember) {
+        clearSession()
+        wx.reLaunch({ url: '/pages/login/index' })
+        return
+      }
+      this.setData({
+        nickname: `尾号 ${getPhoneSuffix(savedMember.phone)}`,
+        maskedPhone: maskPhone(savedMember.phone),
+        levelLabel: formatCachedLevel(savedMember.growth_points),
+      })
+    }
   },
 
-  onMemberCenterTap() {
+  onProfileTap() {
     wx.switchTab({ url: '/pages/member-center/index' })
   },
 
   onContactTap() {
-    // 复用现有的商家联系电话能力；当前小程序没有独立的联系我们页面。
     callBusinessPhone()
+  },
+
+  onLogoutTap() {
+    clearSession()
+    wx.reLaunch({ url: '/pages/login/index' })
   },
 })

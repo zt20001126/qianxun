@@ -1,27 +1,37 @@
 <view class="my-page">
-  <view class="profile-card">
-    <image class="profile-avatar" src="{{avatarSource}}" mode="aspectFill" />
-    <view class="profile-copy">
-      <text class="profile-name">{{nickname}}</text>
-      <text class="profile-hint">{{profileHint}}</text>
+  <view class="my-modules">
+    <view class="profile-card" bindtap="onProfileTap">
+      <image class="profile-background" src="/assets/login-baijianlou-hero.webp" mode="aspectFill" />
+      <view class="profile-gradient" />
+      <view class="profile-main">
+        <image class="profile-avatar" src="/assets/my-default-avatar.svg" mode="aspectFill" />
+        <view class="profile-copy">
+          <view class="profile-identity">
+            <text class="profile-name">{{nickname}}</text>
+            <text class="profile-phone">{{maskedPhone}}</text>
+          </view>
+          <view class="profile-level">
+            <image class="crown-icon" src="/assets/my-crown.svg" mode="aspectFit" />
+            <text class="profile-level-name">{{levelLabel}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="profile-arrow" />
     </view>
-  </view>
 
-  <view class="entry-card">
-    <view class="entry-row" bindtap="onOrdersTap">
-      <view class="entry-icon"><image src="/assets/tab-orders-active.png" mode="aspectFit" /></view>
-      <text class="entry-label">我的订单</text>
-      <text class="entry-arrow">›</text>
+    <view class="contact-card" bindtap="onContactTap">
+      <view class="contact-main">
+        <view class="contact-icon-box">
+          <image class="contact-icon" src="/assets/my-headphones.svg" mode="aspectFit" />
+        </view>
+        <view class="contact-copy">
+          <text class="contact-title">联系我们</text>
+          <text class="contact-phone">0572-1234 5678</text>
+        </view>
+      </view>
+      <view class="contact-arrow" />
     </view>
-    <view class="entry-row" bindtap="onMemberCenterTap">
-      <view class="entry-icon"><image src="/assets/tab-member-active.png" mode="aspectFit" /></view>
-      <text class="entry-label">会员中心</text>
-      <text class="entry-arrow">›</text>
-    </view>
-    <view class="entry-row entry-row-last" bindtap="onContactTap">
-      <view class="entry-icon"><image src="/assets/entry-contact.png" mode="aspectFit" /></view>
-      <text class="entry-label">联系我们</text>
-      <text class="entry-arrow">›</text>
-    </view>
+
+    <button class="logout-button" bindtap="onLogoutTap">退出登录</button>
   </view>
 </view>
