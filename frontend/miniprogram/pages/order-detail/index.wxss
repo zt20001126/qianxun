@@ -1,24 +1,457 @@
-.order-detail-page { min-height: 100vh; padding: 24rpx 26rpx 38rpx; box-sizing: border-box; background: #fbf5ef; }
-.detail-state { display: flex; min-height: 55vh; flex-direction: column; align-items: center; justify-content: center; gap: 15rpx; color: #918276; font-size: 22rpx; text-align: center; }
-.detail-error { color: #a94438; }
-.detail-card { margin-bottom: 16rpx; padding: 22rpx 20rpx; border: 1rpx solid #eee3d8; border-radius: 15rpx; background: #fffcf9; box-shadow: 0 8rpx 23rpx rgba(78, 54, 34, .04); }
-.summary-card { padding: 27rpx 21rpx; }
-.summary-heading { display: flex; align-items: center; justify-content: space-between; }
-.room-title { color: #512a18; font-family: serif; font-size: 29rpx; font-weight: 600; }
-.status-tag { padding: 7rpx 14rpx; border-radius: 999rpx; color: #8c643e; background: #f6eadb; font-size: 18rpx; }
-.order-no { display: block; margin-top: 13rpx; color: #887868; font-size: 18rpx; }
-.stay-period { display: flex; gap: 12rpx; margin-top: 22rpx; color: #512a18; font-family: Georgia, serif; font-size: 25rpx; }
-.stay-nights { display: block; margin-top: 9rpx; color: #9b8b7d; font-size: 18rpx; }
-.section-heading { display: block; margin-bottom: 10rpx; color: #512a18; font-family: serif; font-size: 23rpx; font-weight: 600; }
-.detail-row { display: flex; min-height: 58rpx; align-items: center; justify-content: space-between; gap: 15rpx; border-bottom: 1rpx solid #f1e9e0; color: #8c7c6d; font-size: 19rpx; }
-.detail-row:last-child { border-bottom: 0; }
-.detail-row text:last-child { max-width: 70%; color: #5b4c40; text-align: right; overflow-wrap: anywhere; }
-.paid-amount { color: #d74332 !important; font-size: 24rpx; font-weight: 600; }
-.amount-note { display: block; margin-top: 7rpx; color: #a29488; font-size: 16rpx; }
-.detail-button, .home-button { width: 100%; height: 74rpx; margin-top: 11rpx; border: 1rpx solid #decdbc; border-radius: 10rpx; color: #795b43; background: #fffdfa; font-size: 21rpx; line-height: 72rpx; }
-.detail-button::after, .home-button::after { border: 0; }
-.cancel-button { width: 100%; height: 74rpx; margin-top: 18rpx; border: 1rpx solid #c66b5e; border-radius: 10rpx; color: #a94438; background: #fff8f6; font-size: 21rpx; line-height: 72rpx; }
-.cancel-button::after { border: 0; }
-.cancel-unavailable { border-color: #e7dfd7; color: #a39a91; background: #f2efeb; }
-.cancelled-note { margin-top: 18rpx; padding: 22rpx; border-radius: 10rpx; color: #8f8175; background: #f2efeb; font-size: 20rpx; text-align: center; }
-.home-button { border-color: #98501f; color: #fffaf4; background: #98501f; }
+.order-detail-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 16rpx 32rpx calc(240rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(240rpx + env(safe-area-inset-bottom));
+  color: #231f1d;
+  background: #faf7f2;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+
+.detail-state {
+  display: flex;
+  min-height: 55vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  color: #7a726b;
+  font-size: 24rpx;
+  text-align: center;
+}
+
+.detail-error {
+  color: #b83b2a;
+}
+
+.status-banner {
+  box-sizing: border-box;
+  padding: 32rpx;
+  border: 2rpx solid transparent;
+  border-radius: 32rpx;
+}
+
+.status-banner-active {
+  border-color: rgba(139, 77, 37, 0.2);
+  color: #6f3b1a;
+  background: rgba(247, 239, 232, 0.9);
+}
+
+.status-banner-cancelled {
+  border-color: #fecaca;
+  color: #b83b2a;
+  background: rgba(254, 242, 242, 0.8);
+}
+
+.status-heading {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  font-family: serif;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.status-icon {
+  width: 40rpx;
+  height: 40rpx;
+  flex-shrink: 0;
+}
+
+.status-hint {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.detail-card {
+  box-sizing: border-box;
+  padding: 32rpx;
+  border: 2rpx solid rgba(232, 224, 212, 0.7);
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 40rpx -4rpx rgba(35, 31, 29, 0.05);
+}
+
+.info-card,
+.amount-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid rgba(232, 224, 212, 0.5);
+  color: #6f3b1a;
+  font-family: serif;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.section-mark {
+  width: 8rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+  border-radius: 8rpx;
+  background: #8b4d25;
+}
+
+.detail-row {
+  display: flex;
+  min-height: 36rpx;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  font-size: 24rpx;
+}
+
+.detail-label {
+  flex-shrink: 0;
+  color: #7a726b;
+}
+
+.detail-value {
+  max-width: 72%;
+  color: #231f1d;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.detail-value-mono {
+  font-family: monospace;
+}
+
+.detail-value-strong {
+  font-weight: 600;
+}
+
+.fee-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rpx;
+  color: #231f1d;
+  font-size: 24rpx;
+}
+
+.fee-label {
+  flex: 1;
+  color: #7a726b;
+}
+
+.fee-summary {
+  flex: 1.6;
+  text-align: center;
+}
+
+.fee-total {
+  flex: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.discount-row {
+  color: #b83b2a;
+}
+
+.discount-row .fee-label {
+  color: #b83b2a;
+}
+
+.discount-row .fee-total {
+  font-weight: 600;
+}
+
+.paid-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 4rpx;
+  padding-top: 20rpx;
+  border-top: 2rpx solid rgba(232, 224, 212, 0.6);
+  color: #231f1d;
+  font-family: serif;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.paid-amount {
+  color: #b83b2a;
+  font-family: sans-serif;
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+.sticky-footer {
+  position: fixed;
+  z-index: 20;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  padding: 24rpx 32rpx calc(20rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  border-top: 2rpx solid rgba(232, 224, 212, 0.65);
+  background: rgba(255, 252, 249, 0.98);
+  box-shadow: 0 -8rpx 32rpx rgba(35, 31, 29, 0.06);
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.cancel-button,
+.contact-button {
+  box-sizing: border-box;
+  width: auto;
+  height: 72rpx;
+  flex: 1;
+  margin: 0;
+  padding: 0 20rpx;
+  border: 2rpx solid transparent;
+  border-radius: 32rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+  line-height: 68rpx;
+}
+
+.cancel-button::after,
+.contact-button::after,
+.detail-button::after,
+.dialog-card button::after {
+  border: 0;
+}
+
+.cancel-available {
+  border-color: #b83b2a;
+  color: #b83b2a;
+  background: #ffffff;
+}
+
+.cancel-unavailable {
+  border-color: #e8e0d4;
+  color: rgba(122, 114, 107, 0.6);
+  background: #faf7f2;
+}
+
+.contact-button {
+  border-color: #8b4d25;
+  color: #ffffff;
+  background: #8b4d25;
+  box-shadow: 0 8rpx 24rpx rgba(139, 77, 37, 0.2);
+}
+
+.home-indicator {
+  width: 256rpx;
+  height: 8rpx;
+  margin: 20rpx auto 0;
+  border-radius: 999rpx;
+  background: rgba(35, 31, 29, 0.2);
+}
+
+.detail-button {
+  min-height: 72rpx;
+  padding: 0 24rpx;
+  border: 2rpx solid #e8e0d4;
+  border-radius: 20rpx;
+  color: #6f3b1a;
+  background: #ffffff;
+  font-size: 24rpx;
+  line-height: 68rpx;
+}
+
+.dialog-mask {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 40rpx;
+  background: rgba(35, 31, 29, 0.48);
+}
+
+.dialog-card {
+  display: flex;
+  width: 100%;
+  max-width: 640rpx;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 40rpx;
+  border: 2rpx solid rgba(232, 224, 212, 0.8);
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 32rpx 80rpx rgba(35, 31, 29, 0.2);
+  text-align: center;
+}
+
+.dialog-icon-wrap {
+  display: flex;
+  width: 96rpx;
+  height: 96rpx;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+  border-radius: 50%;
+}
+
+.alert-icon-wrap {
+  width: 112rpx;
+  height: 112rpx;
+  margin-bottom: 24rpx;
+  background: #fef3c7;
+}
+
+.refund-icon-wrap {
+  background: #f7efe8;
+}
+
+.contact-icon-wrap {
+  background: #ebf2ee;
+}
+
+.dialog-icon {
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.alert-icon-wrap .dialog-icon {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.dialog-title {
+  color: #231f1d;
+  font-family: serif;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.dialog-copy {
+  display: block;
+  margin-top: 16rpx;
+  color: #7a726b;
+  font-size: 24rpx;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.dialog-emphasis {
+  color: #b83b2a;
+  font-weight: 700;
+}
+
+.dialog-points {
+  color: #8b4d25;
+  font-weight: 700;
+}
+
+.dialog-phone-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+  margin-top: 32rpx;
+  padding: 24rpx;
+  border: 2rpx solid #e8e0d4;
+  border-radius: 32rpx;
+  background: #faf7f2;
+}
+
+.dialog-phone-label {
+  color: #7a726b;
+  font-size: 24rpx;
+}
+
+.dialog-phone-value {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  color: #8b4d25;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.phone-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.dialog-service-hours {
+  margin-top: 12rpx;
+  color: #7a726b;
+  font-size: 24rpx;
+}
+
+.dialog-contact-number {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 32rpx;
+  padding: 24rpx;
+  border: 2rpx solid #e8e0d4;
+  border-radius: 24rpx;
+  color: #8b4d25;
+  background: #faf7f2;
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.dialog-actions {
+  display: flex;
+  width: 100%;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+
+.dialog-card button {
+  box-sizing: border-box;
+  min-width: 0;
+  height: 72rpx;
+  flex: 1;
+  margin: 0;
+  padding: 0 12rpx;
+  border: 2rpx solid #e8e0d4;
+  border-radius: 24rpx;
+  font-size: 24rpx;
+  line-height: 68rpx;
+}
+
+.dialog-secondary {
+  color: #231f1d;
+  background: #faf7f2;
+}
+
+.dialog-primary {
+  border-color: #8b4d25 !important;
+  color: #ffffff;
+  background: #8b4d25;
+}
+
+.dialog-danger {
+  border-color: #b83b2a !important;
+  color: #ffffff;
+  background: #b83b2a;
+}
+
+.dialog-call-button {
+  font-weight: 600;
+}

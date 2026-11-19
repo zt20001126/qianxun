@@ -1,0 +1,51 @@
+<view wx:if="{{visible}}" class="calendar-mask" catchtouchmove="noop">
+  <view class="calendar-sheet">
+    <view class="calendar-header">
+      <button class="calendar-close" bindtap="onCloseTap"><qx-icon name="close" size="30" /></button>
+      <view class="calendar-heading">
+        <text class="calendar-title">选择入住与退房日期</text>
+        <text class="calendar-subtitle">仅开放北京时间今日起未来 60 个自然日预订</text>
+      </view>
+      <view class="nights-badge"><qx-icon name="moon" size="24" /><text>共 {{nights}} 晚</text></view>
+    </view>
+
+    <view class="calendar-preview">
+      <view><text>入住：</text><text class="preview-value">{{checkInPreview}}</text></view>
+      <qx-icon name="arrow-right" size="28" />
+      <view><text>退房：</text><text class="preview-value">{{checkOutPreview}}</text></view>
+    </view>
+
+    <view class="calendar-legend">
+      <text><view class="legend-box available"></view>可预订</text>
+      <text><view class="legend-box unavailable"></view>不可预订</text>
+      <text><view class="legend-box selected"></view>已选区间</text>
+    </view>
+
+    <scroll-view class="calendar-months-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+      <view wx:for="{{months}}" wx:key="key" class="calendar-month-card">
+        <text class="month-title">{{item.title}}</text>
+        <view class="calendar-grid">
+          <text wx:for="{{weekdays}}" wx:for-item="weekday" wx:key="*this" class="calendar-weekday">{{weekday}}</text>
+          <button
+            wx:for="{{item.days}}"
+            wx:for-item="day"
+            wx:key="key"
+            class="calendar-day {{day.empty ? 'is-empty' : ''}} {{day.unavailable ? 'is-unavailable' : ''}} {{day.disabled ? 'is-disabled' : ''}} {{day.selected ? 'is-selected' : ''}} {{day.inRange ? 'is-in-range' : ''}}"
+            disabled="{{day.disabled || item.loading}}"
+            data-date="{{day.date}}"
+            data-month="{{item.month}}"
+            bindtap="onDayTap">
+            <text>{{day.label}}</text>
+            <text wx:if="{{day.isCheckIn}}" class="day-caption">入住</text>
+            <text wx:elif="{{day.isCheckOut}}" class="day-caption">退房</text>
+            <text wx:elif="{{day.unavailable}}" class="day-caption day-full-caption">已满</text>
+          </button>
+        </view>
+        <text wx:if="{{item.loading}}" class="month-state">正在读取房态…</text>
+        <text wx:elif="{{item.error}}" class="month-state month-error">{{item.error}}</text>
+      </view>
+    </scroll-view>
+
+    <button class="calendar-confirm" bindtap="onConfirmTap">确认日期（共 {{nights}} 晚）</button>
+  </view>
+</view>

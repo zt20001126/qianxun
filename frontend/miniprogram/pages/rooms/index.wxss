@@ -1,0 +1,36 @@
+.rooms-page { min-height: 100vh; padding-bottom: 80rpx; box-sizing: border-box; background: #faf7f2; }
+.rooms-hero { position: relative; height: 224rpx; overflow: hidden; }
+.rooms-hero-image { width: 100%; height: 100%; }
+.rooms-hero-shade { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(180deg, rgba(250, 247, 242, .4), rgba(250, 247, 242, .68) 62%, #faf7f2 100%); }
+.rooms-content { position: relative; z-index: 1; margin: -96rpx 32rpx 0; }
+.stay-summary { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; padding: 28rpx; border: 1rpx solid rgba(232, 224, 212, .8); border-radius: 32rpx; background: #fff; box-shadow: 0 16rpx 48rpx rgba(139, 77, 37, .08); }
+.stay-summary-dates { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 8rpx; color: #231f1d; font-size: 26rpx; font-weight: 700; white-space: nowrap; }
+.weekday { color: #7a726b; font-size: 24rpx; font-weight: 400; }
+.stay-arrow { color: #8b4d25; font-weight: 400; }
+.stay-nights { flex: none; padding: 8rpx 20rpx; border-radius: 999rpx; color: #8b4d25; background: #f7efe8; font-size: 21rpx; font-weight: 600; }
+.rooms-title-row { display: flex; align-items: center; justify-content: space-between; margin: 40rpx 0 24rpx; }
+.rooms-title-left { display: flex; align-items: center; gap: 16rpx; }
+.title-rail { width: 8rpx; height: 34rpx; border-radius: 6rpx; background: #8b4d25; }
+.rooms-title { color: #6f3b1a; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 32rpx; font-weight: 700; }
+.rooms-subtitle { color: #7a726b; font-size: 22rpx; }
+.room-list { display: flex; flex-direction: column; gap: 28rpx; }
+.room-card { display: flex; align-items: stretch; gap: 28rpx; min-height: 206rpx; padding: 24rpx; border: 1rpx solid rgba(232, 224, 212, .7); border-radius: 32rpx; background: #fff; box-shadow: 0 8rpx 40rpx rgba(35, 31, 29, .05); }
+.room-cover { flex: none; width: 216rpx; height: 188rpx; border-radius: 24rpx; background: #f3ede2; }
+.room-cover-empty { display: flex; align-items: center; justify-content: center; color: #8b4d25; font-family: "Songti SC", serif; font-size: 22rpx; }
+.room-info { display: flex; flex: 1; flex-direction: column; justify-content: space-between; min-width: 0; padding: 4rpx 0; }
+.room-name { overflow: hidden; color: #231f1d; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 30rpx; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.room-facts { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-top: 14rpx; color: #7a726b; font-size: 22rpx; }
+.room-facts view { display: flex; align-items: center; gap: 4rpx; min-width: 0; }
+.room-facts text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8rpx; margin-top: 20rpx; }
+.price { display: flex; align-items: baseline; white-space: nowrap; }
+.price text:first-child { color: #b83b2a; font-size: 34rpx; font-weight: 700; }
+.price text:last-child { margin-left: 5rpx; color: #7a726b; font-size: 22rpx; }
+.detail-button { flex: none; height: 60rpx; margin: 0; padding: 0 28rpx; border-radius: 24rpx; color: #fff; background: #8b4d25; box-shadow: 0 4rpx 12rpx rgba(35, 31, 29, .08); font-size: 24rpx; line-height: 60rpx; }
+.detail-button::after, .retry-button::after, .change-date-button::after { border: 0; }
+.rooms-state, .rooms-empty { display: flex; min-height: 260rpx; flex-direction: column; align-items: center; justify-content: center; gap: 24rpx; padding: 40rpx; border: 1rpx solid #e8e0d4; border-radius: 32rpx; color: #7a726b; background: #fff; font-size: 22rpx; text-align: center; }
+.rooms-error { color: #b83b2a; }
+.rooms-empty { min-height: 300rpx; }
+.retry-button, .change-date-button { min-height: 68rpx; margin: 0; padding: 0 36rpx; border: 1rpx solid #e8e0d4; border-radius: 999rpx; color: #8b4d25; background: #fff; font-size: 21rpx; line-height: 66rpx; }
+.change-date-button { border: 0; color: #fff; background: #8b4d25; }
+

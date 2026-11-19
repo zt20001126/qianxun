@@ -1,0 +1,1 @@
+<image wx:if="{{source}}" class="qx-icon" src="{{source}}" mode="aspectFit" style="width: {{size}}rpx; height: {{size}}rpx;" />

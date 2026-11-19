@@ -1,165 +1,193 @@
-/** 小程序首页：展示会员简要资料和可浏览客房。 */
-import { DEFAULT_AVATAR_PATH } from '../../config'
-import { getCurrentMember } from '../../services/auth'
+/** 小程序首页：展示水乡品牌视觉、行程选择和导览入口。 */
 import { listRooms } from '../../services/rooms'
-import type { MemberProfile } from '../../types/auth'
 import type { AppRoomSummary } from '../../types/room'
-import { clearSession, saveCurrentMember } from '../../utils/session'
 import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
 
+interface GuideContent {
+  tag: string
+  title: string
+  body: string
+  extra: string
+}
+
 interface HomePageData {
-  member: MemberProfile | null
-  rooms: AppRoomSummary[]
-  avatarSource: string
-  memberLoading: boolean
-  roomsLoading: boolean
-  memberError: string
-  roomsError: string
   today: string
   maxDate: string
-  checkInMax: string
+  lastCheckInDate: string
   checkIn: string
   checkOut: string
-  checkOutMin: string
   checkInLabel: string
   checkOutLabel: string
+  checkInWeek: string
+  checkOutWeek: string
   nights: number
+  roomCount: number
+  searchButtonLabel: string
+  roomsLoading: boolean
+  roomsError: string
+  calendarVisible: boolean
+  guideVisible: boolean
+  guide: GuideContent
+}
+
+const GUIDE_CONTENT: Record<string, GuideContent> = {
+  intro: {
+    tag: '关于芊浔',
+    title: '芊浔民宿 · 枕水而居',
+    body: '坐落于浙江省湖州市南浔区南浔古镇88号，全店精设 6 间水乡雅居（一楼 101/102/103、二楼 201/202/203），保留徽派马头墙与雕花木窗，推窗即见摇橹船影。',
+    extra: '地址：浙江省湖州市南浔区南浔古镇88号',
+  },
+  around: {
+    tag: '水乡漫游',
+    title: '周边必打卡景点',
+    body: '• 百间楼古民居群（步行 1 分钟，晨雾与灯笼夜色绝美）\n• 小莲庄 & 嘉业堂藏书楼（步行 6 分钟）\n• 张石铭旧宅（步行 8 分钟，中西合璧建筑瑰宝）',
+    extra: '每日 19:30 庭院免费奉上南浔三道茶',
+  },
+  traffic: {
+    tag: '出行指南',
+    title: '如何抵达芊浔民宿',
+    body: '• 高铁出行：乘至「湖州南浔站」，打车约 15 分钟即达古镇东门停车场。\n• 自驾导航：搜索「南浔古镇东门地面停车场」，管家将提前至入口迎候接行李。',
+    extra: '24小时管家热线：0572-1234 5678',
+  },
+  rooms: {
+    tag: '雅居一览',
+    title: '寻一间临水雅室',
+    body: '芊浔民宿设有六间水乡客房。选择入住与退房日期后，系统会自动筛选整段行程可订的房间；每间房的床型、面积与设施可在房间详情中查看。',
+    extra: '点击“查询房间”查看当前日期可订房型',
+  },
+  nanxun: {
+    tag: '文化底蕴',
+    title: '百间楼夜色 · 江南水乡韵',
+    body: '南浔古镇素有“文化之邦”与“诗书之乡”美誉，相比喧闹商业古镇，这里仍保留着原住民临河浣洗、茶馆听评弹的烟火气。入住芊浔，私享整片静谧水乡。',
+    extra: '营业时间：全年无休 · 14:00 入住 / 次日 12:00 退房',
+  },
 }
 
 Page({
   data: {
-    member: null,
-    rooms: [],
-    avatarSource: '../../assets/avatar-default.webp',
-    memberLoading: true,
-    roomsLoading: true,
-    memberError: '',
-    roomsError: '',
     today: '',
     maxDate: '',
-    checkInMax: '',
+    lastCheckInDate: '',
     checkIn: '',
     checkOut: '',
-    checkOutMin: '',
-    checkInLabel: '选择入住日期',
-    checkOutLabel: '选择退房日期',
+    checkInLabel: '',
+    checkOutLabel: '',
+    checkInWeek: '',
+    checkOutWeek: '',
     nights: 0,
+    roomCount: 0,
+    searchButtonLabel: '查询房间（0间可订）',
+    roomsLoading: false,
+    roomsError: '',
+    calendarVisible: false,
+    guideVisible: false,
+    guide: { tag: '', title: '', body: '', extra: '' },
   } as HomePageData,
 
   async onLoad() {
     const { today, lastSelectableDate, lastCheckInDate } = getBookingDateWindow()
+    const checkOut = addDays(today, 1)
     this.setData({
       today,
       maxDate: lastSelectableDate,
-      checkInMax: lastCheckInDate,
-      checkOutMin: addDays(today, 1),
+      lastCheckInDate,
+      checkIn: today,
+      checkOut,
+      checkInLabel: formatMonthDay(today),
+      checkOutLabel: formatMonthDay(checkOut),
+      checkInWeek: formatWeek(today),
+      checkOutWeek: formatWeek(checkOut),
+      nights: 1,
     })
-    await Promise.all([this.loadMember(), this.loadRooms('', '')])
+    await this.loadAvailableRooms(today, checkOut)
   },
 
-  onShow() {
-    const selection = wx.getStorageSync('qx_stay_selection') as { check_in?: string; check_out?: string } | undefined
-    if (!selection?.check_in || !selection.check_out) return
-    wx.removeStorageSync('qx_stay_selection')
-    if (selection.check_in < this.data.today || selection.check_out > this.data.maxDate) return
-    this.setData({
-      checkIn: selection.check_in,
-      checkOut: selection.check_out,
-      checkOutMin: addDays(selection.check_in, 1),
-      checkInLabel: selection.check_in,
-      checkOutLabel: selection.check_out,
-      nights: daysBetween(selection.check_in, selection.check_out),
-    })
-    void this.loadRooms(selection.check_in, selection.check_out)
+  onPullDownRefresh() {
+    void this.loadAvailableRooms(this.data.checkIn, this.data.checkOut)
+      .finally(() => wx.stopPullDownRefresh())
   },
 
-  async loadMember() {
-    this.setData({ memberLoading: true, memberError: '' })
-    try {
-      const member = await getCurrentMember()
-      saveCurrentMember(member)
-      this.setData({
-        member,
-        avatarSource: member.avatar === DEFAULT_AVATAR_PATH ? '../../assets/avatar-default.webp' : member.avatar,
-      })
-    } catch (error) {
-      this.setData({ memberError: error instanceof Error ? error.message : '会员信息读取失败' })
-    } finally {
-      this.setData({ memberLoading: false })
-    }
-  },
-
-  async loadRooms(checkIn?: string, checkOut?: string) {
-    const selectedCheckIn = checkIn ?? this.data.checkIn
-    const selectedCheckOut = checkOut ?? this.data.checkOut
+  async loadAvailableRooms(checkIn: string, checkOut: string) {
     this.setData({ roomsLoading: true, roomsError: '' })
     try {
-      const rooms = await listRooms(selectedCheckIn || undefined, selectedCheckOut || undefined)
-      this.setData({ rooms })
+      const rooms: AppRoomSummary[] = await listRooms(checkIn, checkOut)
+      this.setData({
+        roomCount: rooms.length,
+        searchButtonLabel: '查询房间（' + rooms.length + '间可订）',
+      })
     } catch (error) {
-      this.setData({ roomsError: error instanceof Error ? error.message : '客房资料读取失败' })
+      this.setData({
+        roomCount: 0,
+        searchButtonLabel: '查询房间（0间可订）',
+        roomsError: error instanceof Error ? error.message : '房态读取失败',
+      })
     } finally {
       this.setData({ roomsLoading: false })
     }
   },
 
-  onPullDownRefresh() {
-    void Promise.all([this.loadMember(), this.loadRooms()]).finally(() => wx.stopPullDownRefresh())
+  onCalendarOpen() {
+    this.setData({ calendarVisible: true })
   },
 
-  onCheckInChange(event: WechatMiniprogram.PickerChange) {
-    const checkIn = String(event.detail.value)
-    const checkOut = this.data.checkOut > checkIn ? this.data.checkOut : ''
+  onCalendarClose() {
+    this.setData({ calendarVisible: false })
+  },
+
+  async onCalendarConfirm(event: WechatMiniprogram.CustomEvent<{ checkIn: string; checkOut: string }>) {
+    const { checkIn, checkOut } = event.detail
     this.setData({
+      calendarVisible: false,
       checkIn,
       checkOut,
-      checkOutMin: addDays(checkIn, 1),
-      checkInLabel: checkIn,
-      checkOutLabel: checkOut || '选择退房日期',
-      nights: checkOut ? daysBetween(checkIn, checkOut) : 0,
+      checkInLabel: formatMonthDay(checkIn),
+      checkOutLabel: formatMonthDay(checkOut),
+      checkInWeek: formatWeek(checkIn),
+      checkOutWeek: formatWeek(checkOut),
+      nights: daysBetween(checkIn, checkOut),
     })
+    await this.loadAvailableRooms(checkIn, checkOut)
   },
 
-  onCheckOutChange(event: WechatMiniprogram.PickerChange) {
-    const checkOut = String(event.detail.value)
-    this.setData({ checkOut, checkOutLabel: checkOut, nights: daysBetween(this.data.checkIn, checkOut) })
-  },
-
-  async onSearchTap() {
-    if (!this.data.checkIn || !this.data.checkOut) {
-      wx.showToast({ title: '请先选择入住和退房日期', icon: 'none' })
+  onSearchTap() {
+    if (!this.data.checkIn || !this.data.checkOut || this.data.checkOut <= this.data.checkIn) {
+      wx.showToast({ title: '请选择有效的入住和退房日期', icon: 'none' })
       return
     }
-    if (this.data.checkOut <= this.data.checkIn) {
-      wx.showToast({ title: '退房日期须晚于入住日期', icon: 'none' })
-      return
-    }
-    await this.loadRooms()
+    const query = '?check_in=' + encodeURIComponent(this.data.checkIn)
+      + '&check_out=' + encodeURIComponent(this.data.checkOut)
+    wx.navigateTo({ url: '/pages/rooms/index' + query })
   },
 
-  async onClearDatesTap() {
-    this.setData({
-      checkIn: '', checkOut: '', checkOutMin: addDays(this.data.today, 1),
-      checkInLabel: '选择入住日期', checkOutLabel: '选择退房日期', nights: 0,
-    })
-    await this.loadRooms('', '')
+  onGuideTap(event: WechatMiniprogram.TouchEvent) {
+    const type = String(event.currentTarget.dataset.type)
+    const guide = GUIDE_CONTENT[type]
+    if (guide) this.setData({ guide, guideVisible: true })
   },
 
-  onRoomTap(event: WechatMiniprogram.TouchEvent) {
-    const roomId = Number(event.currentTarget.dataset.roomId)
-    if (!Number.isInteger(roomId) || roomId <= 0) return
-    const stay = this.data.checkIn && this.data.checkOut
-      ? `&check_in=${encodeURIComponent(this.data.checkIn)}&check_out=${encodeURIComponent(this.data.checkOut)}`
-      : ''
-    wx.navigateTo({ url: `/pages/room-detail/index?id=${roomId}${stay}` })
+  onGuideClose() {
+    this.setData({ guideVisible: false })
   },
+
+  noop() {},
 
   onMyOrdersTap() {
     wx.switchTab({ url: '/pages/orders/index' })
   },
 
   onLogoutTap() {
-    clearSession()
     wx.reLaunch({ url: '/pages/login/index' })
   },
 })
+
+function formatMonthDay(date: string): string {
+  const [, month, day] = date.split('-')
+  return Number(month) + '月' + Number(day) + '日'
+}
+
+function formatWeek(date: string): string {
+  const [year, month, day] = date.split('-').map(Number)
+  return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][
+    new Date(Date.UTC(year, month - 1, day)).getUTCDay()
+  ]
+}

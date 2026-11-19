@@ -1,1 +1,9 @@
-{"navigationBarTitleText":"预订完成","navigationBarBackgroundColor":"#FBF5EF","navigationBarTextStyle":"black","backgroundColor":"#FBF5EF"}
+{
+  "navigationBarTitleText": "预订完成",
+  "navigationBarBackgroundColor": "#FAF7F2",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAF7F2",
+  "usingComponents": {
+    "qx-icon": "../../components/icon/index"
+  }
+}

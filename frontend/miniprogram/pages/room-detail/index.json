@@ -1,6 +1,11 @@
 {
   "navigationBarTitleText": "房间详情",
-  "navigationBarBackgroundColor": "#FBF5EF",
+  "navigationBarBackgroundColor": "#FAF7F2",
   "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAF7F2",
+  "usingComponents": {
+    "qx-icon": "../../components/icon/index",
+    "booking-calendar": "../../components/booking-calendar/index"
+  },
   "enablePullDownRefresh": true
 }

@@ -37,6 +37,9 @@
         <result property="status" column="status"/>
         <result property="remark" column="remark"/>
         <result property="paidAmount" column="paid_amount"/>
+        <result property="roomAmount" column="room_amount"/>
+        <result property="pointsUsed" column="points_used"/>
+        <result property="discountAmount" column="discount_amount"/>
         <result property="platformFee" column="platform_fee"/>
         <result property="platformCommission" column="platform_commission"/>
         <result property="extraCommission" column="extra_commission"/>
@@ -140,11 +143,18 @@
     </select>
 
     <select id="findAppViewById" resultMap="orderViewResultMap">
-        SELECT <include refid="viewColumns"/>
+        SELECT <include refid="viewColumns"/>,
+               a.paid_amount + COALESCE(redeem.discount_amount, 0.00) AS room_amount,
+               COALESCE(ABS(redeem.points), 0) AS points_used,
+               COALESCE(redeem.discount_amount, 0.00) AS discount_amount
         FROM orders o
         INNER JOIN room r ON r.id = o.room_id
         INNER JOIN channels c ON c.id = o.channel_id
         INNER JOIN order_amount a ON a.order_id = o.id
+        LEFT JOIN points_log redeem
+            ON redeem.ref_no = CONCAT('REDEEM:ORDER:', o.id)
+           AND redeem.member_id = o.member_id
+           AND redeem.type = 'REDEEM'
         WHERE o.id = #{id} AND o.member_id = #{memberId}
     </select>
 

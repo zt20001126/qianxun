@@ -1,65 +1,50 @@
-/** R02/R03/R04 小程序房间详情和 60 天房态复核。 */
-import { checkRoomAvailability, getRoomAvailability, getRoomDetail } from '../../services/rooms'
+/** R02 房间详情、R03 日历入口与 R04 整段行程复核。 */
+import { checkRoomAvailability, getRoomDetail } from '../../services/rooms'
 import type { AppAvailabilityCheck, AppRoomDetail } from '../../types/room'
-import { addDays, getBookingDateWindow } from '../../utils/stay-date'
-
-interface CalendarDay {
-  key: string
-  date: string
-  label: string
-  empty: boolean
-  unavailable: boolean
-  disabled: boolean
-  selected: boolean
-  inRange: boolean
-}
+import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
 
 interface RoomDetailPageData {
   room: AppRoomDetail | null
+  facilities: Array<{ label: string; icon: string }>
   loading: boolean
   errorMessage: string
-  today: string
-  maxDate: string
-  currentMonth: string
-  monthLabel: string
-  canGoPrevious: boolean
-  canGoNext: boolean
-  weekdays: string[]
-  calendarDays: CalendarDay[]
-  calendarLoading: boolean
-  calendarError: string
+  imageIndex: number
+  imageCount: number
   checkIn: string
   checkOut: string
   checkInLabel: string
   checkOutLabel: string
-  checkResult: AppAvailabilityCheck | null
-  checkLoading: boolean
-  selectedStay: boolean
+  nights: number
+  priceLabel: string
+  calendarVisible: boolean
+  availability: AppAvailabilityCheck | null
+  checkingAvailability: boolean
+  availabilityError: string
+  bookingLoading: boolean
 }
 
 Page({
   data: {
     room: null,
+    facilities: [],
     loading: true,
     errorMessage: '',
-    today: '',
-    maxDate: '',
-    currentMonth: '',
-    monthLabel: '',
-    canGoPrevious: false,
-    canGoNext: false,
-    weekdays: ['日', '一', '二', '三', '四', '五', '六'],
-    calendarDays: [],
-    calendarLoading: true,
-    calendarError: '',
+    imageIndex: 0,
+    imageCount: 0,
     checkIn: '',
     checkOut: '',
-    checkInLabel: '请选择入住日期',
-    checkOutLabel: '请选择退房日期',
-    checkResult: null,
-    checkLoading: false,
-    selectedStay: false,
+    checkInLabel: '',
+    checkOutLabel: '',
+    nights: 0,
+    priceLabel: '',
+    calendarVisible: false,
+    availability: null,
+    checkingAvailability: false,
+    availabilityError: '',
+    bookingLoading: false,
   } as RoomDetailPageData,
+
+  roomId: 0,
 
   async onLoad(options: Record<string, string | undefined>) {
     const roomId = Number(options.id)
@@ -67,40 +52,44 @@ Page({
       this.setData({ loading: false, errorMessage: '房间编号无效' })
       return
     }
-    const { today, lastSelectableDate } = getBookingDateWindow()
-    const currentMonth = today.slice(0, 7)
+    this.roomId = roomId
+    const dateWindow = getBookingDateWindow()
+    const requestedIn = options.check_in || dateWindow.today
+    const requestedOut = options.check_out || addDays(requestedIn, 1)
+    const validRange = requestedIn >= dateWindow.today
+      && requestedIn <= dateWindow.lastCheckInDate
+      && requestedOut > requestedIn
+      && requestedOut <= dateWindow.lastSelectableDate
+    const checkIn = validRange ? requestedIn : dateWindow.today
+    const checkOut = validRange ? requestedOut : addDays(checkIn, 1)
     this.setData({
-      today,
-      maxDate: lastSelectableDate,
-      currentMonth,
-      monthLabel: formatMonth(currentMonth),
-      canGoPrevious: false,
-      canGoNext: currentMonth < lastSelectableDate.slice(0, 7),
-      checkIn: options.check_in || '',
-      checkOut: options.check_out || '',
-      checkInLabel: options.check_in || '请选择入住日期',
-      checkOutLabel: options.check_out || '请选择退房日期',
-      selectedStay: !!options.check_in && !!options.check_out,
+      checkIn,
+      checkOut,
+      checkInLabel: formatMonthDay(checkIn),
+      checkOutLabel: formatMonthDay(checkOut),
+      nights: daysBetween(checkIn, checkOut),
     })
-    await Promise.all([this.loadRoom(roomId), this.loadCalendar(roomId, currentMonth)])
-    if (options.check_in && options.check_out) {
-      await this.checkSelectedStay(roomId, options.check_in, options.check_out)
-    }
+    await this.loadRoom()
+    if (this.data.room) await this.checkSelectedStay()
   },
 
   async onPullDownRefresh() {
-    const roomId = this.data.room?.id
-    if (roomId) {
-      await Promise.all([this.loadRoom(roomId), this.loadCalendar(roomId, this.data.currentMonth)])
-    }
+    await this.loadRoom()
+    if (this.data.room) await this.checkSelectedStay()
     wx.stopPullDownRefresh()
   },
 
-  async loadRoom(roomId: number) {
+  async loadRoom() {
     this.setData({ loading: true, errorMessage: '' })
     try {
-      const room = await getRoomDetail(roomId)
-      this.setData({ room })
+      const room = await getRoomDetail(this.roomId)
+      this.setData({
+        room,
+        facilities: room.facilities.slice(0, 4).map((label) => ({ label, icon: getFacilityIcon(label) })),
+        imageIndex: 0,
+        imageCount: room.images.length,
+        priceLabel: formatPrice(room.price),
+      })
       wx.setNavigationBarTitle({ title: room.name })
     } catch (error) {
       this.setData({ errorMessage: error instanceof Error ? error.message : '房间详情读取失败' })
@@ -109,184 +98,99 @@ Page({
     }
   },
 
-  async loadCalendar(roomId: number, month: string) {
-    this.setData({ calendarLoading: true, calendarError: '' })
-    try {
-      const availability = await getRoomAvailability(roomId, month)
-      this.setData({
-        currentMonth: month,
-        monthLabel: formatMonth(month),
-        calendarDays: buildCalendarDays(
-          month,
-          this.data.today,
-          this.data.maxDate,
-          availability.unavailable_dates,
-          this.data.checkIn,
-          this.data.checkOut,
-        ),
-      })
-    } catch (error) {
-      this.setData({ calendarError: error instanceof Error ? error.message : '房态日历读取失败' })
-    } finally {
-      this.setData({ calendarLoading: false })
-    }
+  onGalleryChange(event: WechatMiniprogram.SwiperChange) {
+    this.setData({ imageIndex: event.detail.current })
   },
 
-  async onMonthStep(event: WechatMiniprogram.TouchEvent) {
-    if (this.data.checkLoading || this.data.calendarLoading) return
+  onGalleryStep(event: WechatMiniprogram.TouchEvent) {
+    const room = this.data.room
+    if (!room || room.images.length <= 1) return
     const delta = Number(event.currentTarget.dataset.delta)
-    const nextMonth = shiftMonth(this.data.currentMonth, delta)
-    const firstMonth = this.data.today.slice(0, 7)
-    const lastMonth = this.data.maxDate.slice(0, 7)
-    if (nextMonth < firstMonth || nextMonth > lastMonth || !this.data.room) return
-    this.setData({ canGoPrevious: nextMonth > firstMonth, canGoNext: nextMonth < lastMonth })
-    await this.loadCalendar(this.data.room.id, nextMonth)
+    const imageIndex = (this.data.imageIndex + delta + room.images.length) % room.images.length
+    this.setData({ imageIndex })
   },
 
-  async onDayTap(event: WechatMiniprogram.TouchEvent) {
-    if (this.data.checkLoading || this.data.calendarLoading) return
-    const date = String(event.currentTarget.dataset.date)
-    const day = this.data.calendarDays.find((item) => item.date === date)
-    if (!day || day.empty || day.disabled) return
+  onCalendarOpen() {
+    this.setData({ calendarVisible: true })
+  },
 
-    if (!this.data.checkIn || this.data.checkOut) {
-      this.setData({
-        checkIn: date,
-        checkOut: '',
-        checkInLabel: date,
-        checkOutLabel: '请选择退房日期',
-        checkResult: null,
-      })
-      await this.refreshCalendar()
-      return
-    }
+  onCalendarClose() {
+    this.setData({ calendarVisible: false })
+  },
 
-    if (date <= this.data.checkIn) {
-      this.setData({
-        checkIn: date,
-        checkOut: '',
-        checkInLabel: date,
-        checkOutLabel: '请选择退房日期',
-        checkResult: null,
-      })
-      await this.refreshCalendar()
-      return
-    }
+  async onCalendarConfirm(event: WechatMiniprogram.CustomEvent<{ checkIn: string; checkOut: string }>) {
+    const { checkIn, checkOut } = event.detail
+    this.setData({
+      calendarVisible: false,
+      checkIn,
+      checkOut,
+      checkInLabel: formatMonthDay(checkIn),
+      checkOutLabel: formatMonthDay(checkOut),
+      nights: daysBetween(checkIn, checkOut),
+      availability: null,
+      availabilityError: '',
+    })
+    await this.checkSelectedStay()
+  },
 
-    const checkIn = this.data.checkIn
-    const checkOut = date
-    this.setData({ checkOut, checkOutLabel: checkOut, checkLoading: true, checkResult: null, calendarError: '' })
-    await this.refreshCalendar(checkIn, checkOut)
+  async checkSelectedStay() {
+    this.setData({ checkingAvailability: true, availabilityError: '', availability: null })
     try {
-      const result = await checkRoomAvailability(this.data.room!.id, checkIn, checkOut)
-      this.setData({ checkResult: result })
+      const availability = await checkRoomAvailability(this.roomId, this.data.checkIn, this.data.checkOut)
+      this.setData({ availability })
     } catch (error) {
-      this.setData({ calendarError: error instanceof Error ? error.message : '日期复核失败' })
+      this.setData({
+        availabilityError: error instanceof Error ? error.message : '日期复核失败',
+      })
     } finally {
-      this.setData({ checkLoading: false })
+      this.setData({ checkingAvailability: false })
     }
-  },
-
-  async refreshCalendar(checkIn?: string, checkOut?: string) {
-    if (!this.data.room) return
-    const selectedCheckIn = checkIn ?? this.data.checkIn
-    const selectedCheckOut = checkOut ?? this.data.checkOut
-    try {
-      const availability = await getRoomAvailability(this.data.room.id, this.data.currentMonth)
-      this.setData({
-        calendarDays: buildCalendarDays(
-          this.data.currentMonth,
-          this.data.today,
-          this.data.maxDate,
-          availability.unavailable_dates,
-          selectedCheckIn,
-          selectedCheckOut,
-        ),
-      })
-    } catch (error) {
-      this.setData({ calendarError: error instanceof Error ? error.message : '房态日历读取失败' })
-    }
-  },
-
-  onSearchStayRooms() {
-    if (!this.data.checkResult?.available || !this.data.checkIn || !this.data.checkOut) return
-    wx.setStorageSync('qx_stay_selection', { check_in: this.data.checkIn, check_out: this.data.checkOut })
-    wx.navigateBack({ delta: 1 })
   },
 
   async onBookTap() {
-    if (!this.data.room || !this.data.checkResult?.available || !this.data.checkIn || !this.data.checkOut) return
-    wx.navigateTo({
-      url: `/pages/booking/index?room_id=${this.data.room.id}&check_in=${encodeURIComponent(this.data.checkIn)}&check_out=${encodeURIComponent(this.data.checkOut)}`,
-    })
-  },
-
-  async checkSelectedStay(roomId: number, checkIn: string, checkOut: string) {
+    if (!this.data.room || this.data.bookingLoading || this.data.checkingAvailability) return
+    this.setData({ bookingLoading: true, availabilityError: '' })
     try {
-      const result = await checkRoomAvailability(roomId, checkIn, checkOut)
-      this.setData({ checkResult: result })
+      const availability = await checkRoomAvailability(this.roomId, this.data.checkIn, this.data.checkOut)
+      this.setData({ availability })
+      if (!availability.available) {
+        wx.showToast({ title: '所选日期该房型暂不可订', icon: 'none' })
+        this.setData({ calendarVisible: true })
+        return
+      }
+      const query = '?room_id=' + this.roomId
+        + '&check_in=' + encodeURIComponent(this.data.checkIn)
+        + '&check_out=' + encodeURIComponent(this.data.checkOut)
+      wx.navigateTo({ url: '/pages/booking/index' + query })
     } catch (error) {
-      this.setData({ calendarError: error instanceof Error ? error.message : '日期复核失败' })
+      this.setData({ availabilityError: error instanceof Error ? error.message : '日期复核失败' })
+      wx.showToast({ title: '暂时无法确认房态，请稍后重试', icon: 'none' })
+    } finally {
+      this.setData({ bookingLoading: false })
     }
   },
+
+  noop() {},
 
   onBackTap() {
     wx.navigateBack({ delta: 1 })
   },
 })
 
-function buildCalendarDays(
-  month: string,
-  today: string,
-  maxDate: string,
-  unavailableDates: string[],
-  checkIn: string,
-  checkOut: string,
-): CalendarDay[] {
-  const [year, monthNumber] = month.split('-').map(Number)
-  const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate()
-  const firstWeekday = new Date(Date.UTC(year, monthNumber - 1, 1)).getUTCDay()
-  const unavailable = new Set(unavailableDates)
-  const selectingCheckout = !!checkIn && !checkOut
-  const days: CalendarDay[] = Array.from({ length: firstWeekday }, (_, index) => ({
-    key: `empty-${index}`,
-    date: '',
-    label: '',
-    empty: true,
-    unavailable: false,
-    disabled: true,
-    selected: false,
-    inRange: false,
-  }))
-
-  for (let number = 1; number <= daysInMonth; number += 1) {
-    const date = `${month}-${String(number).padStart(2, '0')}`
-    const isUnavailable = unavailable.has(date)
-    const withinWindow = date >= today && date <= maxDate
-    const canChooseAsCheckout = selectingCheckout && date > checkIn && withinWindow
-    const canChooseAsCheckIn = withinWindow && date < maxDate
-    const disabled = !withinWindow || (selectingCheckout ? !canChooseAsCheckout : (!canChooseAsCheckIn || isUnavailable))
-    days.push({
-      key: date,
-      date,
-      label: String(number),
-      empty: false,
-      unavailable: isUnavailable,
-      disabled,
-      selected: date === checkIn || date === checkOut,
-      inRange: !!checkIn && !!checkOut && date >= checkIn && date <= checkOut,
-    })
-  }
-  return days
+function formatMonthDay(date: string): string {
+  const [, month, day] = date.split('-')
+  return Number(month) + '月' + Number(day) + '日'
 }
 
-function formatMonth(month: string): string {
-  const [year, monthNumber] = month.split('-')
-  return `${year} 年 ${Number(monthNumber)} 月`
+function formatPrice(price: string): string {
+  return price.replace(/\.00$/, '')
 }
 
-function shiftMonth(month: string, amount: number): string {
-  const [year, monthNumber] = month.split('-').map(Number)
-  const shifted = new Date(Date.UTC(year, monthNumber - 1 + amount, 1))
-  return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}`
+function getFacilityIcon(label: string): string {
+  const normalized = label.toLowerCase()
+  if (normalized.includes('wifi') || normalized.includes('wi-fi')) return 'wifi'
+  if (label.includes('卫浴') || label.includes('浴室') || label.includes('卫生间')) return 'bath'
+  if (label.includes('电视') || normalized.includes('tv')) return 'tv'
+  if (label.includes('空调') || normalized.includes('air')) return 'wind'
+  return 'info'
 }

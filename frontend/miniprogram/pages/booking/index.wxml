@@ -2,34 +2,113 @@
   <view wx:if="{{loading}}" class="booking-state">正在准备预订信息…</view>
   <view wx:elif="{{errorMessage && !room}}" class="booking-state booking-error">{{errorMessage}}</view>
   <view wx:else>
-    <view class="booking-card stay-card">
-      <text class="card-title">入住安排</text>
-      <view class="stay-line"><text>{{room.number}} 房 · {{room.name}}</text><text>{{nights}} 晚</text></view>
-      <view class="stay-dates"><text>{{checkIn}}</text><text>至</text><text>{{checkOut}}</text></view>
-      <text class="stay-price">基础房费 ¥{{preview.room_amount || '计算中'}}</text>
+    <view class="booking-card room-summary-card">
+      <view class="room-summary-top">
+        <image wx:if="{{room.images.length}}" class="summary-image" src="{{room.images[0]}}" mode="aspectFill" />
+        <view wx:else class="summary-image summary-image-empty">芊浔雅居</view>
+        <view class="summary-room-info">
+          <text class="summary-room-name">{{room.name}}</text>
+        <text class="summary-room-meta">{{room.bed_info || '雅致客房'}} · 可住{{room.capacity}}人 · {{room.area || '—'}}㎡</text>
+        </view>
+      </view>
+      <view class="summary-stay-row" bindtap="onCalendarOpen">
+        <view class="summary-stay-dates">
+          <view><text class="summary-date-label">入住：</text><text class="summary-date-value">{{checkInLabel}}</text></view>
+          <qx-icon name="arrow-right" size="26" />
+          <view><text class="summary-date-label">退房：</text><text class="summary-date-value">{{checkOutLabel}}</text></view>
+        </view>
+        <text class="summary-nights">共{{nights}}晚</text>
+      </view>
     </view>
 
-    <view class="booking-card">
-      <text class="card-title">预订联系人</text>
-      <view class="form-row"><text>联系人</text><input maxlength="80" placeholder="填写姓名" value="{{guestName}}" bindinput="onGuestNameInput" /></view>
-      <view class="form-row"><text>手机号</text><input type="number" maxlength="11" placeholder="接收入住联系" value="{{phone}}" bindinput="onPhoneInput" /></view>
-      <view class="form-row"><text>入住人数</text><picker range="{{guestCountOptions}}" value="0" bindchange="onGuestCountChange"><view class="form-value">{{guestCount}} 人 ›</view></picker></view>
-      <view class="form-column"><text>备注</text><textarea maxlength="500" placeholder="选填" value="{{remark}}" bindinput="onRemarkInput" /></view>
+    <view class="booking-card form-card">
+      <view class="section-heading"><view class="section-rail"></view><text>预订信息</text></view>
+      <view class="form-fields">
+        <view class="form-row">
+          <label><qx-icon name="user" size="28" />预订人 <text class="required">*</text></label>
+          <input maxlength="80" placeholder="请输入预订人姓名" value="{{guestName}}" bindinput="onGuestNameInput" />
+        </view>
+        <view class="form-row">
+          <label><qx-icon name="phone" size="28" />手机号码 <text class="required">*</text></label>
+          <input type="number" maxlength="11" placeholder="请输入手机号码" value="{{phone}}" bindinput="onPhoneInput" />
+        </view>
+        <view class="form-row">
+          <label><qx-icon name="users" size="28" />入住人数 <text class="required">*</text></label>
+          <view class="guest-counter">
+            <button data-delta="-1" disabled="{{guestCount <= 1}}" bindtap="onGuestCountStep">—</button>
+            <text>{{guestCount}}</text>
+            <button data-delta="1" disabled="{{guestCount >= room.capacity}}" bindtap="onGuestCountStep">+</button>
+          </view>
+        </view>
+        <view class="form-row">
+          <label><qx-icon name="file-text" size="28" />备注</label>
+          <input maxlength="500" placeholder="请输入备注（如有特殊需求）" value="{{remark}}" bindinput="onRemarkInput" />
+        </view>
+      </view>
     </view>
 
-    <view class="booking-card points-card">
-      <view class="points-heading"><text class="card-title">积分抵扣</text><text>余额 {{preview.available_points || 0}} 分</text></view>
-      <view class="points-input-row"><input type="number" maxlength="8" value="{{pointsUsedInput}}" bindinput="onPointsInput" placeholder="输入抵扣积分" /><text>分</text><button bindtap="onPreviewTap">重新试算</button></view>
-      <view wx:if="{{preview}}" class="amount-lines">
-        <view><text>每元所需积分</text><text>{{preview.points_per_yuan}} 分</text></view>
-        <view><text>最多可用积分</text><text>{{preview.max_points_usable}} 分</text></view>
-        <view><text>积分抵扣</text><text>− ¥{{preview.discount_amount}}</text></view>
-        <view class="pay-total"><text>预计应付</text><text>¥{{preview.pay_amount}}</text></view>
+    <view class="booking-card fee-card">
+      <view class="fee-title-row">
+        <view class="section-heading"><view class="section-rail"></view><text>费用明细</text></view>
+        <text wx:if="{{preview}}" class="tier-pill">{{preview.points_per_yuan}}积分=¥1</text>
+      </view>
+      <view wx:if="{{preview}}" class="fee-line">
+        <text>房费</text>
+        <text class="fee-equation">¥{{roomPriceLabel}} × {{nights}}晚</text>
+        <text class="fee-value">¥{{roomAmountLabel}}</text>
+      </view>
+      <view wx:else class="fee-loading">{{previewLoading ? '正在试算费用…' : '费用暂不可用'}}</view>
+
+      <view class="points-row">
+        <view class="points-description">
+          <view class="points-title-row">
+            <text>积分抵扣</text>
+            <button class="points-help" bindtap="onPointsRuleOpen"><qx-icon name="info" size="27" /></button>
+          </view>
+          <text class="points-available">当前可用积分：{{availablePointsLabel}}</text>
+        </view>
+        <view class="points-controls">
+          <view wx:if="{{usePoints && preview.points_used > 0}}" class="points-used">－ {{pointsUsedLabel}} 积分</view>
+          <text wx:if="{{usePoints && preview.discount_amount !== '0.00'}}" class="discount-amount">−¥{{discountAmountLabel}}</text>
+          <text wx:else class="no-points">不使用积分</text>
+          <button class="points-toggle {{usePoints ? 'is-on' : ''}}" disabled="{{!preview || preview.max_points_usable === 0 || previewLoading}}" bindtap="onPointsToggle">
+            <view class="toggle-thumb"></view>
+          </button>
+        </view>
+      </view>
+
+      <view class="pay-total">
+        <text>实付金额</text>
+        <text>¥{{payAmountLabel || '0'}}</text>
       </view>
       <text wx:if="{{errorMessage}}" class="form-error">{{errorMessage}}</text>
+      <text wx:if="{{availabilityError}}" class="form-error">{{availabilityError}}</text>
+      <text wx:elif="{{availabilityVerified && availability && !availability.available}}" class="form-error">该房间在所选日期内不可订</text>
     </view>
 
-    <text class="booking-notice">创建预支付后房间将为你保留 10 分钟；积分在模拟支付成功时才扣减。</text>
-    <button class="submit-button" disabled="{{submitting || loading}}" bindtap="onSubmitTap">{{submitting ? '正在锁定客房…' : '确认并前往支付'}}</button>
+  </view>
+
+  <view wx:if="{{room}}" class="booking-footer">
+    <button class="pay-button" disabled="{{submitting || loading || previewLoading || !preview || !availabilityVerified || !availability || !availability.available}}" bindtap="onPayTap">
+      <qx-icon name="message-circle-white" size="40" />
+      <text>{{submitting ? '正在锁定客房…' : payButtonLabel}}</text>
+    </button>
+    <view class="home-indicator"></view>
+  </view>
+
+  <booking-calendar
+    visible="{{calendarVisible}}"
+    room-id="{{roomId}}"
+    check-in="{{checkIn}}"
+    check-out="{{checkOut}}"
+    bind:close="onCalendarClose"
+    bind:confirm="onCalendarConfirm" />
+
+  <view wx:if="{{ruleVisible}}" class="rule-mask" catchtap="onPointsRuleClose">
+    <view class="rule-dialog" catchtap="noop">
+      <view class="rule-title-row"><text class="rule-title">会员积分抵扣规则</text><button bindtap="onPointsRuleClose">×</button></view>
+      <text class="rule-body">积分兑换率按当前会员等级计算：普通会员 30 分抵 ¥1，银卡 25 分抵 ¥1，金卡 20 分抵 ¥1，钻石 15 分抵 ¥1。单笔积分抵扣不超过房费的 20%，最终抵扣金额及可用积分由服务端复核。</text>
+      <button class="rule-close" bindtap="onPointsRuleClose">我知道了</button>
+    </view>
   </view>
 </view>

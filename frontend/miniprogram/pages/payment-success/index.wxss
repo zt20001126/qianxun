@@ -1,12 +1,20 @@
-.success-page { display: flex; min-height: 100vh; align-items: flex-start; justify-content: center; padding: 60rpx 28rpx; box-sizing: border-box; background: #fbf5ef; }
-.success-card { width: 100%; padding: 38rpx 27rpx; box-sizing: border-box; border: 1rpx solid #eee3d8; border-radius: 18rpx; background: #fffcf9; box-shadow: 0 12rpx 34rpx rgba(78, 54, 34, .06); text-align: center; }
-.success-mark { display: grid; width: 82rpx; height: 82rpx; place-items: center; margin: 0 auto; border-radius: 50%; color: #fffaf4; background: #718663; font-size: 43rpx; }
-.success-title { display: block; margin-top: 21rpx; color: #512a18; font-family: serif; font-size: 31rpx; font-weight: 600; }
-.success-copy { display: block; margin-top: 9rpx; color: #9b8b7d; font-size: 19rpx; }
-.success-order { display: flex; min-height: 67rpx; align-items: center; justify-content: space-between; margin-top: 12rpx; padding: 0 13rpx; border-bottom: 1rpx solid #f0e8df; color: #897969; font-size: 19rpx; text-align: left; }
-.success-order text:last-child { color: #4e4035; }
-.success-price { color: #d74332 !important; font-size: 24rpx; font-weight: 600; }
-.primary-button, .secondary-button { width: 100%; height: 76rpx; margin-top: 24rpx; border: 0; border-radius: 10rpx; color: #fffaf4; background: #98501f; font-size: 22rpx; line-height: 76rpx; }
-.primary-button::after, .secondary-button::after, .text-button::after { border: 0; }
-.secondary-button { margin-top: 13rpx; border: 1rpx solid #decdbc; color: #795b43; background: #fffdfa; }
-.text-button { height: 64rpx; margin-top: 9rpx; color: #9a8978; background: transparent; font-size: 20rpx; line-height: 64rpx; }
+.success-page { min-height: 100vh; padding-bottom: calc(80rpx + env(safe-area-inset-bottom)); box-sizing: border-box; background: #faf7f2; }
+.success-loading { display: flex; min-height: 65vh; align-items: center; justify-content: center; color: #7a726b; font-size: 23rpx; }
+.success-hero { position: relative; height: 384rpx; overflow: hidden; }
+.success-hero-image { width: 100%; height: 100%; }
+.success-hero-shade { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: linear-gradient(180deg, rgba(250, 247, 242, .1), rgba(250, 247, 242, .3) 50%, #faf7f2 100%); }
+.success-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; margin: -192rpx 40rpx 0; }
+.success-card { position: relative; width: 100%; padding: 96rpx 48rpx 56rpx; box-sizing: border-box; border: 1rpx solid #e8e0d4; border-radius: 56rpx; background: rgba(255, 255, 255, .98); box-shadow: 0 16rpx 48rpx rgba(139, 77, 37, .08); text-align: center; }
+.success-seal { position: absolute; top: -72rpx; left: 50%; display: grid; width: 144rpx; height: 144rpx; place-items: center; padding: 12rpx; transform: translateX(-50%); border-radius: 50%; background: #fff; box-shadow: 0 12rpx 28rpx rgba(35, 31, 29, .16); }
+.success-seal-inner { display: grid; width: 100%; height: 100%; place-items: center; border-radius: 50%; background: #38a169; animation: success-seal-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+.success-title { display: block; color: #6f3b1a; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 52rpx; font-weight: 700; letter-spacing: 2rpx; }
+.success-copy { display: block; margin-top: 16rpx; color: #7a726b; font-size: 24rpx; line-height: 1.625; }
+.success-order-pill { display: flex; align-items: center; justify-content: center; gap: 16rpx; margin-top: 40rpx; padding: 24rpx 32rpx; border: 1rpx solid rgba(139, 77, 37, .15); border-radius: 32rpx; color: #6f3b1a; background: rgba(247, 239, 232, .85); font-size: 24rpx; font-weight: 500; }
+.order-no { color: #231f1d; font-family: monospace; font-size: 28rpx; font-weight: 700; }
+.success-actions { display: flex; width: 100%; flex-direction: column; gap: 24rpx; margin-top: 48rpx; }
+.order-button, .home-button { display: flex; width: 100%; height: 98rpx; align-items: center; justify-content: center; gap: 16rpx; margin: 0; border-radius: 999rpx; font-size: 28rpx; font-weight: 500; }
+.order-button { color: #fff; background: #8b4d25; box-shadow: 0 14rpx 36rpx rgba(139, 77, 37, .22); }
+.home-button { border: 1rpx solid rgba(139, 77, 37, .4); color: #6f3b1a; background: #fff; }
+.order-button::after, .home-button::after { border: 0; }
+.home-indicator { width: 256rpx; height: 8rpx; margin-top: 40rpx; border-radius: 999rpx; background: rgba(35, 31, 29, .2); }
+@keyframes success-seal-in { from { opacity: 0; transform: scale(.72); } to { opacity: 1; transform: scale(1); } }

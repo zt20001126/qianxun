@@ -13,6 +13,7 @@ import com.qianxun.homestay.modules.order.vo.AppOrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.AppOrderListItemVO;
 import com.qianxun.homestay.modules.order.vo.AppOrderPageVO;
 import com.qianxun.homestay.modules.order.vo.OrderCancellationEligibilityVO;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.time.LocalDateTime;
@@ -56,7 +57,8 @@ public class AppOrderServiceImpl implements AppOrderService {
         return new AppOrderDetailVO(
                 order.getId(), order.getOrderNo(), order.getRoomId(), order.getRoomNumber(), order.getGuestName(),
                 order.getPhone(), order.getGuestCount(), order.getCheckIn(), order.getCheckOut(), order.getNights(),
-                order.getStatus(), order.getRemark(), money(order), ApiTime.fromShanghai(order.getCreatedAt()),
+                order.getStatus(), order.getRemark(), money(order.getPaidAmount()), money(order.getRoomAmount()),
+                order.getPointsUsed(), money(order.getDiscountAmount()), ApiTime.fromShanghai(order.getCreatedAt()),
                 ApiTime.fromShanghai(order.getUpdatedAt()));
     }
 
@@ -80,6 +82,10 @@ public class AppOrderServiceImpl implements AppOrderService {
     }
 
     private String money(OrderViewEntity order) {
-        return order.getPaidAmount().setScale(2, RoundingMode.UNNECESSARY).toPlainString();
+        return money(order.getPaidAmount());
+    }
+
+    private String money(BigDecimal amount) {
+        return amount.setScale(2, RoundingMode.UNNECESSARY).toPlainString();
     }
 }

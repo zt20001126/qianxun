@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "可订房间",
+  "navigationBarBackgroundColor": "#FAF7F2",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAF7F2",
+  "usingComponents": {
+    "qx-icon": "../../components/icon/index",
+    "booking-calendar": "../../components/booking-calendar/index"
+  }
+}

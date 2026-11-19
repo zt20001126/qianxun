@@ -1,1 +1,10 @@
-{"navigationBarTitleText":"填写预订","navigationBarBackgroundColor":"#FBF5EF","navigationBarTextStyle":"black","backgroundColor":"#FBF5EF"}
+{
+  "navigationBarTitleText": "填写预订",
+  "navigationBarBackgroundColor": "#FAF7F2",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAF7F2",
+  "usingComponents": {
+    "qx-icon": "../../components/icon/index",
+    "booking-calendar": "../../components/booking-calendar/index"
+  }
+}

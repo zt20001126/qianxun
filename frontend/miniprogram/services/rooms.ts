@@ -20,6 +20,18 @@ export function getRoomAvailability(id: number, month: string): Promise<AppRoomA
   })
 }
 
+/** 返回指定月份全店房间都不可订的住宿日，供日历标记满房提示。 */
+export async function getFullyUnavailableDates(month: string): Promise<string[]> {
+  const rooms = await listRooms()
+  if (!rooms.length) return []
+
+  const availability = await Promise.all(rooms.map((room) => getRoomAvailability(room.id, month)))
+  const unavailableByRoom = availability.map((item) => new Set(item.unavailable_dates))
+  return availability[0].unavailable_dates.filter((date) =>
+    unavailableByRoom.every((dates) => dates.has(date)),
+  )
+}
+
 export function checkRoomAvailability(
   roomId: number,
   checkIn: string,

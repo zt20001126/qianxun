@@ -32,6 +32,12 @@ public record AppOrderDetailVO(
         String remark,
         /** 实付金额快照，单位为元的十进制字符串。 */
         String paidAmount,
+        /** 积分抵扣前的房费总额，单位为元的十进制字符串。 */
+        String roomAmount,
+        /** 本订单实际抵扣的积分数量。 */
+        Integer pointsUsed,
+        /** 积分抵扣金额，单位为元的十进制字符串。 */
+        String discountAmount,
         /** 订单创建时间，包含北京时间偏移。 */
         OffsetDateTime createdAt,
         /** 订单更新时间，包含北京时间偏移。 */

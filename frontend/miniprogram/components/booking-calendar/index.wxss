@@ -1,0 +1,37 @@
+.calendar-mask { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 1000; display: flex; align-items: flex-end; background: rgba(35, 31, 29, .45); }
+.calendar-sheet { display: flex; width: 100%; max-height: 88vh; flex-direction: column; padding: 40rpx 40rpx calc(48rpx + env(safe-area-inset-bottom)); box-sizing: border-box; border-radius: 48rpx 48rpx 0 0; background: #faf7f2; box-shadow: 0 -16rpx 48rpx rgba(35, 31, 29, .18); animation: calendar-sheet-up .3s cubic-bezier(.22, 1, .36, 1) both; }
+.calendar-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 24rpx; border-bottom: 1rpx solid #e8e0d4; }
+.calendar-close { display: flex; width: 56rpx; height: 56rpx; align-items: center; justify-content: center; margin: 0; padding: 0; border-radius: 50%; background: #f3ede2; }
+.calendar-close::after, .calendar-day::after, .calendar-confirm::after { border: 0; }
+.calendar-heading { display: flex; flex: 1; flex-direction: column; align-items: center; min-width: 0; padding: 0 8rpx; text-align: center; }
+.calendar-title { color: #231f1d; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 32rpx; font-weight: 700; }
+.calendar-subtitle { margin-top: 7rpx; color: #7a726b; font-size: 20rpx; }
+.nights-badge { display: flex; align-items: center; gap: 7rpx; padding: 4rpx 20rpx; border-radius: 999rpx; color: #8b4d25; background: #f7efe8; font-size: 24rpx; font-weight: 600; white-space: nowrap; }
+.calendar-preview { display: flex; align-items: center; justify-content: space-between; margin-top: 24rpx; padding: 24rpx; border: 1rpx solid rgba(232, 224, 212, .7); border-radius: 32rpx; background: #fff; color: #7a726b; font-size: 24rpx; }
+.calendar-preview view { display: flex; flex-direction: row; align-items: baseline; gap: 0; white-space: nowrap; }
+.preview-value { color: #231f1d; font-size: 24rpx; font-weight: 700; }
+.calendar-legend { display: flex; justify-content: flex-end; gap: 32rpx; margin: 20rpx 8rpx 16rpx; color: #7a726b; font-size: 22rpx; }
+.calendar-legend text { display: flex; align-items: center; gap: 8rpx; }
+.legend-box { width: 20rpx; height: 20rpx; border: 1rpx solid #e8e0d4; border-radius: 4rpx; background: #fff; }
+.legend-box.unavailable { background: #f3ede2; }
+.legend-box.selected { border-color: #8b4d25; background: #8b4d25; }
+.calendar-months-scroll { flex: 1; min-height: 0; max-height: 680rpx; margin-top: 20rpx; }
+.calendar-month-card { margin-bottom: 24rpx; padding: 28rpx; border: 1rpx solid rgba(232, 224, 212, .7); border-radius: 32rpx; background: #fff; }
+.month-title { display: block; margin-bottom: 20rpx; color: #231f1d; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 24rpx; font-weight: 700; text-align: center; }
+.calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8rpx 0; text-align: center; }
+.calendar-weekday { display: grid; height: 34rpx; place-items: center; color: #7a726b; font-size: 20rpx; }
+.calendar-day { display: flex; min-width: 0; height: 80rpx; flex-direction: column; align-items: center; justify-content: center; gap: 1rpx; margin: 0; padding: 0; border: 0; border-radius: 24rpx; color: #231f1d; background: transparent; font-size: 24rpx; line-height: 1.1; }
+.calendar-day::after { border: 0; }
+.calendar-day.is-empty { visibility: hidden; }
+.calendar-day.is-unavailable { color: #7a726b; background: #f3ede2; }
+.calendar-day.is-disabled { opacity: .35; }
+.calendar-day.is-in-range { border-radius: 10rpx; color: #6f3b1a; background: #f7efe8; opacity: 1; }
+.calendar-day.is-selected { border-radius: 24rpx; color: #fff; background: #8b4d25; font-weight: 700; opacity: 1; }
+.calendar-day .day-caption { font-size: 18rpx; }
+.calendar-day .day-full-caption { font-size: 16rpx; }
+.calendar-day.is-selected .day-caption { color: rgba(255, 255, 255, .9); }
+.month-state { display: block; margin-top: 12rpx; color: #7a726b; font-size: 18rpx; text-align: center; }
+.month-error { color: #b83b2a; }
+.calendar-confirm { flex: none; height: 98rpx; margin: 32rpx 0 0; border-radius: 32rpx; color: #fff; background: #8b4d25; font-size: 28rpx; font-weight: 500; line-height: 98rpx; }
+.calendar-confirm::after { border: 0; }
+@keyframes calendar-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }

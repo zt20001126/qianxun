@@ -1,31 +1,70 @@
-/** 支付完成页；仅在服务端确认 SUCCESS 且存在正式订单编号后进入。 */
+/** 预订成功页：再次向服务端确认支付和正式订单状态。 */
+import { getPaymentState } from '../../services/booking'
+
+interface SuccessPageData {
+  orderId: number
+  orderNo: string
+  paymentNo: string
+  loading: boolean
+  confirmed: boolean
+}
+
 Page({
   data: {
     orderId: 0,
     orderNo: '',
-    paidAmount: '0.00',
-  },
+    paymentNo: '',
+    loading: true,
+    confirmed: false,
+  } as SuccessPageData,
 
-  onLoad(options: Record<string, string | undefined>) {
+  async onLoad(options: Record<string, string | undefined>) {
     const orderId = Number(options.order_id)
     const orderNo = options.order_no || ''
-    if (!Number.isInteger(orderId) || orderId <= 0 || !orderNo) {
-      wx.reLaunch({ url: '/pages/home/index' })
+    const paymentNo = options.payment_no || ''
+    if (!Number.isInteger(orderId) || orderId <= 0 || !orderNo || !paymentNo) {
+      this.returnHome()
       return
     }
-    this.setData({ orderId, orderNo, paidAmount: options.paid_amount || '0.00' })
-    wx.setNavigationBarTitle({ title: '预订完成' })
+
+    try {
+      const payment = await getPaymentState(paymentNo)
+      if (payment.status !== 'SUCCESS'
+        || payment.order_id !== orderId
+        || payment.order_no !== orderNo) {
+        this.returnHome()
+        return
+      }
+      this.setData({ orderId, orderNo, paymentNo, confirmed: true })
+      wx.setNavigationBarTitle({ title: '预订完成' })
+    } catch {
+      wx.showToast({ title: '暂时无法确认支付结果', icon: 'none' })
+      this.returnHome()
+    } finally {
+      this.setData({ loading: false })
+    }
+  },
+
+  onCopyTap() {
+    if (!this.data.confirmed || !this.data.orderNo) return
+    wx.setClipboardData({
+      data: this.data.orderNo,
+      success: () => wx.showToast({ title: '已复制订单号', icon: 'success' }),
+      fail: () => wx.showToast({ title: '复制失败，请长按订单号', icon: 'none' }),
+    })
   },
 
   onDetailTap() {
-    if (this.data.orderId) wx.redirectTo({ url: `/pages/order-detail/index?id=${this.data.orderId}` })
-  },
-
-  onOrdersTap() {
-    wx.redirectTo({ url: '/pages/orders/index' })
+    if (this.data.confirmed && this.data.orderId) {
+      wx.redirectTo({ url: '/pages/order-detail/index?id=' + this.data.orderId })
+    }
   },
 
   onHomeTap() {
-    wx.reLaunch({ url: '/pages/home/index' })
+    wx.switchTab({ url: '/pages/home/index' })
+  },
+
+  returnHome() {
+    wx.switchTab({ url: '/pages/home/index' })
   },
 })

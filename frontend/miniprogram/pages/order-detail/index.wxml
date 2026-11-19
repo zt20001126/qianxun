@@ -1,31 +1,112 @@
 <view class="order-detail-page">
   <view wx:if="{{loading}}" class="detail-state">正在读取订单详情…</view>
-  <view wx:elif="{{errorMessage}}" class="detail-state detail-error"><text>{{errorMessage}}</text><button class="detail-button" bindtap="onOrdersTap">返回订单列表</button></view>
-  <view wx:elif="{{order}}">
-    <view class="detail-card summary-card">
-      <view class="summary-heading"><text class="room-title">{{order.room_number}} 房</text><text class="status-tag">{{statusLabel}}</text></view>
-      <text class="order-no">{{order.order_no}}</text>
-      <view class="stay-period"><text>{{order.check_in}}</text><text>至</text><text>{{order.check_out}}</text></view>
-      <text class="stay-nights">{{order.nights}} 晚 · {{order.guest_count}} 位入住</text>
-    </view>
-    <view class="detail-card">
-      <text class="section-heading">联系人信息</text>
-      <view class="detail-row"><text>联系人</text><text>{{order.guest_name || '—'}}</text></view>
-      <view class="detail-row"><text>手机号</text><text>{{order.phone || '—'}}</text></view>
-      <view class="detail-row"><text>订单备注</text><text>{{order.remark || '—'}}</text></view>
-    </view>
-    <view class="detail-card amount-card">
-      <text class="section-heading">费用信息</text>
-      <view class="detail-row"><text>模拟实付</text><text class="paid-amount">¥{{order.paid_amount}}</text></view>
-      <text class="amount-note">第一期为模拟支付记录，不代表真实资金到账</text>
-    </view>
-    <view class="detail-card time-card">
-      <view class="detail-row"><text>创建时间</text><text>{{order.created_at}}</text></view>
-      <view class="detail-row"><text>更新时间</text><text>{{order.updated_at}}</text></view>
-    </view>
-    <button wx:if="{{order.status !== 'CANCELLED'}}" class="cancel-button {{cancellation && !cancellation.eligible ? 'cancel-unavailable' : ''}}" loading="{{refundSubmitting}}" disabled="{{cancelConfirming || refundSubmitting}}" bindtap="onCancelTap">取消订单</button>
-    <view wx:else class="cancelled-note">此订单已取消</view>
+  <view wx:elif="{{errorMessage}}" class="detail-state detail-error">
+    <text>{{errorMessage}}</text>
     <button class="detail-button" bindtap="onOrdersTap">返回订单列表</button>
-    <button class="home-button" bindtap="onHomeTap">返回首页</button>
   </view>
+  <block wx:elif="{{order}}">
+    <view class="detail-content">
+      <view class="status-banner {{order.status === 'CANCELLED' ? 'status-banner-cancelled' : 'status-banner-active'}}">
+        <view class="status-heading">
+          <image wx:if="{{order.status === 'CANCELLED'}}" class="status-icon" src="/assets/orders-x-circle.svg" mode="aspectFit" />
+          <image wx:else class="status-icon" src="/assets/orders-clock.svg" mode="aspectFit" />
+          <text>{{statusLabel}}</text>
+        </view>
+        <text class="status-hint">{{statusHint}}</text>
+      </view>
+
+      <view class="detail-card info-card">
+        <view class="section-heading">
+          <view class="section-mark"></view>
+          <text>订单信息</text>
+        </view>
+        <view wx:for="{{detailRows}}" wx:key="label" class="detail-row">
+          <text class="detail-label">{{item.label}}</text>
+          <text class="detail-value {{item.isMono ? 'detail-value-mono' : ''}} {{item.isStrong ? 'detail-value-strong' : ''}}">{{item.value}}</text>
+        </view>
+      </view>
+
+      <view class="detail-card amount-card">
+        <view class="section-heading">
+          <view class="section-mark"></view>
+          <text>费用明细</text>
+        </view>
+        <view class="fee-row">
+          <text class="fee-label">房费</text>
+          <text class="fee-summary">¥{{unitPrice}} × {{order.nights}}晚</text>
+          <text class="fee-total">¥{{roomAmountLabel}}</text>
+        </view>
+        <view wx:if="{{order.points_used > 0}}" class="fee-row discount-row">
+          <text class="fee-label">积分抵扣</text>
+          <text class="fee-summary">使用 {{order.points_used}} 积分</text>
+          <text class="fee-total">－¥{{discountAmountLabel}}</text>
+        </view>
+        <view class="paid-row">
+          <text>实付金额</text>
+          <text class="paid-amount">¥{{paidAmountLabel}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="sticky-footer">
+      <view class="footer-actions">
+        <button
+          wx:if="{{order.status !== 'CANCELLED'}}"
+          class="cancel-button {{cancellation && cancellation.eligible ? 'cancel-available' : 'cancel-unavailable'}}"
+          bindtap="onCancelTap"
+        >取消订单</button>
+        <button class="contact-button" bindtap="onContactTap">联系商家</button>
+      </view>
+      <view class="home-indicator"></view>
+    </view>
+
+    <view wx:if="{{dialogType !== 'none'}}" class="dialog-mask" bindtap="onDialogClose">
+      <view class="dialog-card" catchtap="onDialogNoop">
+        <block wx:if="{{dialogType === 'unavailable'}}">
+          <view class="dialog-icon-wrap alert-icon-wrap">
+            <image class="dialog-icon" src="/assets/orders-alert-circle.svg" mode="aspectFit" />
+          </view>
+          <text class="dialog-title">不支持自助退款</text>
+          <text class="dialog-copy">{{cancelDialogMessage}}</text>
+          <view class="dialog-phone-row" bindtap="onDialogPhoneTap">
+            <text class="dialog-phone-label">商家电话</text>
+            <view class="dialog-phone-value">
+              <text>{{contactPhone}}</text>
+              <image class="phone-icon" src="/assets/orders-phone-call.svg" mode="aspectFit" />
+            </view>
+          </view>
+          <button class="dialog-primary" bindtap="onDialogClose">我知道了</button>
+        </block>
+
+        <block wx:elif="{{dialogType === 'refund'}}">
+          <view class="dialog-icon-wrap refund-icon-wrap">
+            <image class="dialog-icon" src="/assets/orders-rotate-ccw.svg" mode="aspectFit" />
+          </view>
+          <text class="dialog-title">确认取消订单并退款？</text>
+          <view class="dialog-copy">
+            <text>退款金额 </text><text class="dialog-emphasis">¥{{paidAmountLabel}}</text><text> 将同步模拟退回</text>
+            <text wx:if="{{order.points_used > 0}}">，已抵扣的 <text class="dialog-points">{{order.points_used}} 积分</text> 将原路返还</text>
+            <text>。</text>
+          </view>
+          <view class="dialog-actions">
+            <button class="dialog-secondary" bindtap="onDialogClose">再想想</button>
+            <button class="dialog-danger" loading="{{refundSubmitting}}" disabled="{{refundSubmitting}}" bindtap="onRefundConfirm">确认退款</button>
+          </view>
+        </block>
+
+        <block wx:elif="{{dialogType === 'contact'}}">
+          <view class="dialog-icon-wrap contact-icon-wrap">
+            <image class="dialog-icon" src="/assets/my-headphones.svg" mode="aspectFit" />
+          </view>
+          <text class="dialog-title">联系芊浔驻店管家</text>
+          <text class="dialog-service-hours">服务时间：07:30 - 23:30</text>
+          <view class="dialog-contact-number">{{contactPhone}}</view>
+          <view class="dialog-actions">
+            <button class="dialog-secondary" bindtap="onDialogClose">取消</button>
+            <button class="dialog-primary dialog-call-button" bindtap="onDialogPhoneTap">立即拨打</button>
+          </view>
+        </block>
+      </view>
+    </view>
+  </block>
 </view>

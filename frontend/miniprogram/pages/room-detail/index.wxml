@@ -5,66 +5,80 @@
     <button class="back-button" bindtap="onBackTap">返回客房列表</button>
   </view>
   <view wx:elif="{{room}}" class="detail-content">
-    <swiper wx:if="{{room.images.length}}" class="room-gallery" indicator-dots="{{room.images.length > 1}}" indicator-color="rgba(255,255,255,.55)" indicator-active-color="#98501F" circular>
-      <swiper-item wx:for="{{room.images}}" wx:key="*this"><image class="gallery-image" src="{{item}}" mode="aspectFill" /></swiper-item>
-    </swiper>
-    <view wx:else class="room-gallery gallery-empty"><text>暂无客房图片</text></view>
+    <view wx:if="{{room.images.length}}" class="gallery-wrap">
+      <swiper class="room-gallery" circular current="{{imageIndex}}" duration="280" bindchange="onGalleryChange">
+        <swiper-item wx:for="{{room.images}}" wx:key="*this">
+          <image class="gallery-image" src="{{item}}" mode="aspectFill" />
+        </swiper-item>
+      </swiper>
+      <view class="gallery-gradient"></view>
+      <button class="gallery-control gallery-previous" data-delta="-1" bindtap="onGalleryStep"><qx-icon name="chevron-left" size="32" /></button>
+      <button class="gallery-control gallery-next" data-delta="1" bindtap="onGalleryStep"><qx-icon name="chevron-right" size="32" /></button>
+      <view class="gallery-count">{{imageIndex + 1}} / {{imageCount}}</view>
+    </view>
+    <view wx:else class="gallery-empty"><text>暂无客房图片</text></view>
 
     <view class="detail-card">
-      <view class="detail-title-row">
-        <view><text class="detail-room-number">{{room.number}} 房 · {{room.floor}} 楼</text><text class="detail-room-name">{{room.name}}</text></view>
-        <view class="detail-price"><text>¥{{room.price}}</text><text>/ 晚</text></view>
+      <view class="detail-heading">
+        <text class="room-title">{{room.name}}</text>
+        <text class="floor-label">{{room.floor}}F</text>
       </view>
-      <view class="room-quick-facts">
-        <view><text class="fact-label">入住人数</text><text class="fact-value">{{room.capacity}} 人</text></view>
-        <view><text class="fact-label">床型</text><text class="fact-value">{{room.bed_info || '以房间配置为准'}}</text></view>
-        <view wx:if="{{room.area}}"><text class="fact-label">房间面积</text><text class="fact-value">{{room.area}} ㎡</text></view>
-      </view>
-      <view wx:if="{{room.description}}" class="detail-section">
-        <text class="section-title">房间介绍</text>
-        <text class="description-text">{{room.description}}</text>
-      </view>
-      <view wx:if="{{room.facilities.length}}" class="detail-section">
-        <text class="section-title">房间设施</text>
-        <view class="facility-list"><text wx:for="{{room.facilities}}" wx:key="*this" class="facility-tag">{{item}}</text></view>
-      </view>
-    </view>
 
-    <view class="availability-card">
-      <view class="availability-heading">
-        <view><text class="section-title">60 天房态</text><text class="availability-subtitle">选择入住和退房日期，退房日不占房</text></view>
+      <view class="room-facts">
+        <view class="room-fact">
+          <qx-icon name="user" size="28" />
+          <text>可住{{room.capacity}}人</text>
+        </view>
+        <view class="room-fact">
+          <qx-icon name="bed-double" size="28" />
+          <text>{{room.bed_info || '床型详见房间配置'}}</text>
+        </view>
+        <view wx:if="{{room.area}}" class="room-fact">
+          <qx-icon name="maximize-2" size="28" />
+          <text>{{room.area}}㎡</text>
+        </view>
+        <view wx:else class="room-fact">
+          <qx-icon name="maximize-2" size="28" />
+          <text>面积详询</text>
+        </view>
       </view>
-      <view class="calendar-month-row">
-        <button class="month-step" data-delta="-1" disabled="{{!canGoPrevious || calendarLoading || checkLoading}}" bindtap="onMonthStep">‹</button>
-        <text class="month-title">{{monthLabel}}</text>
-        <button class="month-step" data-delta="1" disabled="{{!canGoNext || calendarLoading || checkLoading}}" bindtap="onMonthStep">›</button>
+
+      <view wx:if="{{room.description}}" class="detail-section">
+        <view class="section-heading"><view class="section-rail"></view><text>房间介绍</text></view>
+        <text class="room-description">{{room.description}}</text>
       </view>
-      <view class="calendar-legend"><text><view class="legend-dot is-open"></view>可预订</text><text><view class="legend-dot is-closed"></view>不可预订</text></view>
-      <view wx:if="{{calendarLoading}}" class="calendar-message">正在读取日期…</view>
-      <view wx:elif="{{calendarError}}" class="calendar-message calendar-message-error">{{calendarError}}</view>
-      <view wx:else class="calendar-grid">
-        <text wx:for="{{weekdays}}" wx:key="*this" class="calendar-weekday">{{item}}</text>
-        <button
-          wx:for="{{calendarDays}}"
-          wx:key="key"
-          class="calendar-day {{item.empty ? 'is-empty' : ''}} {{item.unavailable ? 'is-unavailable' : ''}} {{item.disabled ? 'is-disabled' : ''}} {{item.selected ? 'is-selected' : ''}} {{item.inRange ? 'is-in-range' : ''}}"
-          disabled="{{item.disabled || checkLoading || calendarLoading}}"
-          data-date="{{item.date}}"
-          bindtap="onDayTap">{{item.label}}</button>
+
+      <view wx:if="{{room.facilities.length}}" class="detail-section facilities-section">
+        <view class="section-heading"><view class="section-rail"></view><text>设施配置</text></view>
+        <view class="facility-grid">
+        <view wx:for="{{facilities}}" wx:key="label" class="facility-item">
+            <qx-icon name="{{item.icon}}" size="40" />
+            <text>{{item.label || item}}</text>
+          </view>
+        </view>
       </view>
-      <view class="stay-summary">
-        <view><text>入住</text><text>{{checkInLabel}}</text></view>
-        <view><text>退房</text><text>{{checkOutLabel}}</text></view>
+
+      <view class="selected-stay" bindtap="onCalendarOpen">
+        <view><text class="stay-hint">已选行程：</text><text class="stay-value">{{checkInLabel}} - {{checkOutLabel}}</text></view>
+        <text class="change-dates">修改日期 <qx-icon name="chevron-right" size="24" /></text>
       </view>
-      <view wx:if="{{checkLoading}}" class="availability-result">正在复核整段日期…</view>
-      <view wx:elif="{{checkResult}}" class="availability-result {{checkResult.available ? 'result-available' : 'result-unavailable'}}">
-        <text wx:if="{{checkResult.available}}">可订 · {{checkResult.nights}} 晚 · 房费 ¥{{checkResult.room_amount}}</text>
-        <text wx:else>所选区间暂不可订，请调整日期</text>
-      </view>
-      <button wx:if="{{checkResult && checkResult.available}}" class="search-stay-button" bindtap="onSearchStayRooms">查询同期可订客房</button>
-      <button wx:if="{{checkResult && checkResult.available}}" class="book-stay-button" bindtap="onBookTap">预订此房</button>
-      <text class="calendar-footnote">可订状态仅作查询参考，提交预订时服务端会再次锁定并校验。</text>
+      <view wx:if="{{checkingAvailability}}" class="availability-state">正在复核整段日期…</view>
+      <view wx:elif="{{availabilityError}}" class="availability-state availability-error">{{availabilityError}}</view>
+      <view wx:elif="{{availability && !availability.available}}" class="availability-state availability-error">所选日期区间暂不可订</view>
     </view>
-    <button class="back-button detail-back" bindtap="onBackTap">返回客房列表</button>
   </view>
+
+  <view wx:if="{{room && !loading && !errorMessage}}" class="detail-footer">
+    <view class="footer-price"><text class="currency">¥</text><text class="price-number">{{priceLabel}}</text><text class="per-night">/晚</text></view>
+    <button class="book-button" loading="{{bookingLoading}}" disabled="{{bookingLoading}}" bindtap="onBookTap">立即预订</button>
+    <view class="home-indicator"></view>
+  </view>
+
+  <booking-calendar
+    visible="{{calendarVisible}}"
+    room-id="{{room.id}}"
+    check-in="{{checkIn}}"
+    check-out="{{checkOut}}"
+    bind:close="onCalendarClose"
+    bind:confirm="onCalendarConfirm" />
 </view>

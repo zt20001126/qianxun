@@ -1,0 +1,59 @@
+<view class="rooms-page">
+  <view class="rooms-hero">
+    <image class="rooms-hero-image" src="../../assets/decoration-baijianlou-houses.webp" mode="aspectFill" />
+    <view class="rooms-hero-shade"></view>
+  </view>
+
+  <view class="rooms-content">
+    <view class="stay-summary" bindtap="onCalendarOpen">
+      <qx-icon name="calendar" size="32" />
+      <view class="stay-summary-dates">
+        <text>{{checkInLabel}} <text class="weekday">{{checkInWeek}}</text></text>
+        <text class="stay-arrow">→</text>
+        <text>{{checkOutLabel}} <text class="weekday">{{checkOutWeek}}</text></text>
+      </view>
+      <text class="stay-nights">共{{nights}}晚</text>
+    </view>
+
+    <view class="rooms-title-row">
+      <view class="rooms-title-left"><view class="title-rail"></view><text class="rooms-title">可订房间（{{rooms.length}}/6间）</text></view>
+      <text class="rooms-subtitle">已自动过滤占用房源</text>
+    </view>
+
+    <view wx:if="{{loading}}" class="rooms-state">正在为你寻一间雅室…</view>
+    <view wx:elif="{{errorMessage}}" class="rooms-state rooms-error">
+      <text>{{errorMessage}}</text>
+      <button class="retry-button" bindtap="loadRooms">重新加载</button>
+    </view>
+    <view wx:elif="{{rooms.length === 0}}" class="rooms-empty">
+      <text>所选日期区间内全部 6 间客房均已满房</text>
+      <button class="change-date-button" bindtap="onCalendarOpen">更换入住日期</button>
+    </view>
+
+    <view wx:else class="room-list">
+      <view wx:for="{{rooms}}" wx:key="id" class="room-card" data-room-id="{{item.id}}" bindtap="onRoomTap">
+        <image wx:if="{{item.images.length}}" class="room-cover" src="{{item.images[0]}}" mode="aspectFill" />
+        <view wx:else class="room-cover room-cover-empty">芊浔雅居</view>
+        <view class="room-info">
+          <text class="room-name">{{item.name}}</text>
+          <view class="room-facts">
+            <view><qx-icon name="user" size="24" /><text>可住{{item.capacity}}人</text></view>
+            <view><qx-icon name="bed-double" size="24" /><text>{{item.bed_info || '床型详见详情'}}</text></view>
+            <view><qx-icon name="maximize-2" size="24" /><text>{{item.areaLabel}}</text></view>
+          </view>
+          <view class="room-card-bottom">
+            <view class="price"><text>¥{{item.priceLabel}}</text><text>/晚</text></view>
+            <button class="detail-button" data-room-id="{{item.id}}" catchtap="onRoomTap">查看详情</button>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <booking-calendar
+    visible="{{calendarVisible}}"
+    check-in="{{checkIn}}"
+    check-out="{{checkOut}}"
+    bind:close="onCalendarClose"
+    bind:confirm="onCalendarConfirm" />
+</view>

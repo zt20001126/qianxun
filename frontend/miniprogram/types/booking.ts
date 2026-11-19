@@ -53,6 +53,9 @@ export interface AppOrder {
 export interface AppOrderDetail extends Omit<AppOrder, 'channel_id' | 'creator_id'> {
   guest_count: number | null
   remark: string | null
+  room_amount: string
+  points_used: number
+  discount_amount: string
   created_at: string
   updated_at: string
 }

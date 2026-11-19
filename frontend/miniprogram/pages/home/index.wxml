@@ -1,85 +1,88 @@
 <view class="home-page">
-  <view class="home-topline">
-    <view class="brand-lockup">
-      <view class="brand-seal">浔</view>
-      <view class="brand-copy">
-        <text class="brand-name">芊浔民宿</text>
-        <text class="brand-place">浙江 · 湖州 · 南浔</text>
+  <view class="home-hero">
+    <image class="home-hero-image" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+    <view class="home-hero-shade"></view>
+    <view class="home-brand">
+      <view class="brand-title-row">
+        <text class="brand-title">芊浔民宿</text>
+        <text class="brand-seal">南浔</text>
       </view>
-    </view>
-    <view class="home-top-actions">
-      <button class="orders-link" bindtap="onMyOrdersTap">我的订单</button>
-      <button class="logout-link" bindtap="onLogoutTap">退出</button>
+      <text class="brand-subtitle">—— 枕水而居 · 诗意南浔 ——</text>
     </view>
   </view>
 
-  <view wx:if="{{memberLoading}}" class="member-strip member-strip-loading">正在读取会员资料…</view>
-  <view wx:elif="{{member}}" class="member-strip">
-    <image class="member-avatar" src="{{avatarSource}}" mode="aspectFill" />
-    <view class="member-copy">
-      <text class="member-name">{{member.nickname}}，欢迎回来</text>
-      <text class="member-phone">{{member.phone}}</text>
-    </view>
-    <view class="member-points"><text>{{member.points}}</text><text>积分</text></view>
-  </view>
-  <view wx:elif="{{memberError}}" class="member-strip member-strip-error">{{memberError}}</view>
-
-  <view class="intro-block">
-    <text class="intro-kicker">A QUIET STAY IN NANXUN</text>
-    <text class="intro-title">枕水而居，慢叙江南</text>
-    <text class="intro-copy">择一间雅室，在水巷烟雨间住下。</text>
-  </view>
-
-  <view class="date-search-card">
-    <view class="date-search-heading"><text>择日入住</text><text wx:if="{{nights}}">共 {{nights}} 晚</text></view>
-    <view class="date-pickers">
-      <picker mode="date" value="{{checkIn || today}}" start="{{today}}" end="{{checkInMax}}" bindchange="onCheckInChange">
-        <view class="date-choice"><text>入住</text><text class="date-value">{{checkInLabel}}</text></view>
-      </picker>
-      <view class="date-arrow">至</view>
-      <picker mode="date" value="{{checkOut || checkOutMin}}" start="{{checkOutMin}}" end="{{maxDate}}" bindchange="onCheckOutChange">
-        <view class="date-choice"><text>退房</text><text class="date-value">{{checkOutLabel}}</text></view>
-      </picker>
-    </view>
-    <view class="date-search-actions">
-      <button class="search-rooms-button" bindtap="onSearchTap" disabled="{{roomsLoading}}">查询可订客房</button>
-      <button wx:if="{{checkIn || checkOut}}" class="clear-dates-button" bindtap="onClearDatesTap">清除日期</button>
-    </view>
-    <text class="date-search-note">入住与退房日期均限未来 60 天，最终可订情况以后端复核为准</text>
-  </view>
-
-  <view class="section-heading">
-    <view><text class="section-title">{{checkIn && checkOut ? '可订客房' : '客房一览'}}</text><text class="section-caption">共 {{rooms.length}} 间客房</text></view>
-    <text class="section-note">基础夜价</text>
-  </view>
-
-  <view wx:if="{{roomsLoading}}" class="page-state">正在为你寻一间雅室…</view>
-  <view wx:elif="{{roomsError}}" class="page-state page-state-error">
-    <text>{{roomsError}}</text>
-    <button class="retry-button" bindtap="loadRooms">重新加载</button>
-  </view>
-  <view wx:elif="{{rooms.length === 0}}" class="page-state">
-    <text class="empty-mark">浔</text>
-    <text>{{checkIn && checkOut ? '所选日期暂无可订客房' : '客房资料正在准备中'}}</text>
-  </view>
-
-  <view wx:else class="room-list">
-    <view wx:for="{{rooms}}" wx:key="id" class="room-card" data-room-id="{{item.id}}" bindtap="onRoomTap">
-      <image wx:if="{{item.images.length}}" class="room-cover" src="{{item.images[0]}}" mode="aspectFill" />
-      <view wx:else class="room-cover room-cover-empty"><text>客房实景</text></view>
-      <view class="room-card-content">
-        <view class="room-card-heading">
-          <view><text class="room-name">{{item.name}}</text><text class="room-meta">{{item.number}} 房 · 可住 {{item.capacity}} 人</text></view>
-          <view class="room-price"><text>¥{{item.price}}</text><text>/ 晚</text></view>
+  <view class="booking-card">
+    <view class="date-selector" bindtap="onCalendarOpen">
+      <view class="date-side">
+        <text class="date-caption">入住日期</text>
+        <view class="date-value-row">
+          <text class="date-main">{{checkInLabel}}</text>
+          <text class="date-week">{{checkInWeek}}</text>
         </view>
-        <view class="room-card-footer">
-          <text class="room-bed">{{item.bed_info || '房型信息详见房间详情'}}</text>
-          <text class="room-detail-link">查看详情 ›</text>
+      </view>
+      <qx-icon name="arrow-right" size="32" />
+      <view class="date-side date-side-out">
+        <text class="date-caption">退房日期</text>
+        <view class="date-value-row date-value-row-out">
+          <text class="date-main">{{checkOutLabel}}</text>
+          <text class="date-week">{{checkOutWeek}}</text>
         </view>
       </view>
     </view>
+
+    <view class="nights-row" bindtap="onCalendarOpen">
+      <view class="nights-pill"><qx-icon name="moon" size="27" /><text>共 {{nights}} 晚</text></view>
+    </view>
+
+    <button class="search-button" loading="{{roomsLoading}}" bindtap="onSearchTap">
+      {{roomsLoading ? '正在查询房态…' : searchButtonLabel}}
+    </button>
+    <text wx:if="{{roomsError}}" class="room-count-error">房态读取失败，进入列表可重试</text>
   </view>
 
-  <image class="bottom-decoration" src="../../assets/decoration-baijianlou-houses.webp" mode="widthFix" />
-  <text class="home-footer">芊浔民宿 · 南浔水乡</text>
+  <view class="quick-entries">
+    <button class="quick-entry" data-type="intro" bindtap="onGuideTap">
+      <view class="quick-icon"><qx-icon name="landmark" size="40" /></view>
+      <text>民宿介绍</text>
+    </button>
+    <button class="quick-entry" data-type="rooms" bindtap="onGuideTap">
+      <view class="quick-icon"><qx-icon name="bed-double" size="40" /></view>
+      <text>房型一览</text>
+    </button>
+    <button class="quick-entry" data-type="around" bindtap="onGuideTap">
+      <view class="quick-icon"><qx-icon name="sprout" size="40" /></view>
+      <text>周边游玩</text>
+    </button>
+    <button class="quick-entry" data-type="traffic" bindtap="onGuideTap">
+      <view class="quick-icon"><qx-icon name="map-pin" size="40" /></view>
+      <text>交通指引</text>
+    </button>
+  </view>
+
+  <view class="nanxun-banner" data-type="nanxun" bindtap="onGuideTap">
+    <image class="banner-image" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+    <view class="banner-shade"></view>
+    <view class="banner-copy">
+      <text class="banner-title">走进南浔古镇</text>
+      <text class="banner-subtitle">百间楼夜色 · 江南水乡韵</text>
+      <view class="banner-action">了解南浔 <qx-icon name="chevron-right" size="24" /></view>
+    </view>
+  </view>
+
+  <booking-calendar
+    visible="{{calendarVisible}}"
+    check-in="{{checkIn}}"
+    check-out="{{checkOut}}"
+    bind:close="onCalendarClose"
+    bind:confirm="onCalendarConfirm" />
+
+  <view wx:if="{{guideVisible}}" class="guide-mask" catchtap="onGuideClose">
+    <view class="guide-dialog" catchtap="noop">
+      <text class="guide-tag">{{guide.tag}}</text>
+      <text class="guide-title">{{guide.title}}</text>
+      <text class="guide-body">{{guide.body}}</text>
+      <view class="guide-extra">{{guide.extra}}</view>
+      <button class="guide-close" bindtap="onGuideClose">我知道了</button>
+    </view>
+  </view>
 </view>

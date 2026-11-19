@@ -119,7 +119,7 @@ Page({
 
   goToSuccess(orderId: number, orderNo: string, paidAmount: string) {
     wx.redirectTo({
-      url: `/pages/payment-success/index?order_id=${orderId}&order_no=${encodeURIComponent(orderNo)}&paid_amount=${encodeURIComponent(paidAmount)}`,
+      url: `/pages/payment-success/index?payment_no=${encodeURIComponent(this.data.paymentNo)}&order_id=${orderId}&order_no=${encodeURIComponent(orderNo)}&paid_amount=${encodeURIComponent(paidAmount)}`,
     })
   },
 })

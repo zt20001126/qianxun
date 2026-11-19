@@ -44,6 +44,12 @@ public class OrderViewEntity {
     private String remark;
     /** 订单实付金额快照，单位为元。 */
     private BigDecimal paidAmount;
+    /** 积分抵扣前房费总额，由实付金额与抵扣流水还原。 */
+    private BigDecimal roomAmount;
+    /** 该订单抵扣的积分数量。 */
+    private Integer pointsUsed;
+    /** 订单使用积分抵扣的金额，单位为元。 */
+    private BigDecimal discountAmount;
     /** 平台手续费快照，单位为元。 */
     private BigDecimal platformFee;
     /** 平台或渠道提成快照，单位为元。 */
@@ -95,6 +101,12 @@ public class OrderViewEntity {
     public void setRemark(String remark) { this.remark = remark; }
     public BigDecimal getPaidAmount() { return paidAmount; }
     public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
+    public BigDecimal getRoomAmount() { return roomAmount; }
+    public void setRoomAmount(BigDecimal roomAmount) { this.roomAmount = roomAmount; }
+    public Integer getPointsUsed() { return pointsUsed; }
+    public void setPointsUsed(Integer pointsUsed) { this.pointsUsed = pointsUsed; }
+    public BigDecimal getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
     public BigDecimal getPlatformFee() { return platformFee; }
     public void setPlatformFee(BigDecimal platformFee) { this.platformFee = platformFee; }
     public BigDecimal getPlatformCommission() { return platformCommission; }

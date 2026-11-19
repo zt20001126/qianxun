@@ -1,7 +1,11 @@
 {
   "navigationBarTitleText": "芊浔民宿",
-  "navigationBarBackgroundColor": "#FBF5EF",
+  "navigationBarBackgroundColor": "#FAF7F2",
   "navigationBarTextStyle": "black",
-  "backgroundColor": "#FBF5EF",
+  "backgroundColor": "#FAF7F2",
+  "usingComponents": {
+    "qx-icon": "../../components/icon/index",
+    "booking-calendar": "../../components/booking-calendar/index"
+  },
   "enablePullDownRefresh": true
 }

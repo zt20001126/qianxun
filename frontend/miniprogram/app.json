@@ -2,6 +2,7 @@
   "pages": [
     "pages/login/index",
     "pages/home/index",
+    "pages/rooms/index",
     "pages/room-detail/index",
     "pages/booking/index",
     "pages/payment/index",
