@@ -62,8 +62,8 @@
       <view class="points-row">
         <view class="points-description">
           <view class="points-title-row">
-            <text>积分抵扣</text>
-            <button class="points-help" bindtap="onPointsRuleOpen"><qx-icon name="info" size="27" /></button>
+            <text class="points-title">积分抵扣</text>
+            <view class="points-help" bindtap="onPointsRuleOpen"><qx-icon name="info" size="27" /></view>
           </view>
           <text class="points-available">当前可用积分：{{availablePointsLabel}}</text>
         </view>
@@ -71,9 +71,9 @@
           <view wx:if="{{usePoints && preview.points_used > 0}}" class="points-used">－ {{pointsUsedLabel}} 积分</view>
           <text wx:if="{{usePoints && preview.discount_amount !== '0.00'}}" class="discount-amount">−¥{{discountAmountLabel}}</text>
           <text wx:else class="no-points">不使用积分</text>
-          <button class="points-toggle {{usePoints ? 'is-on' : ''}}" disabled="{{!preview || preview.max_points_usable === 0 || previewLoading}}" bindtap="onPointsToggle">
+          <view class="points-toggle {{usePoints ? 'is-on' : ''}} {{!preview || preview.max_points_usable === 0 || previewLoading ? 'is-disabled' : ''}}" bindtap="onPointsToggle">
             <view class="toggle-thumb"></view>
-          </button>
+          </view>
         </view>
       </view>
 
@@ -90,7 +90,6 @@
 
   <view wx:if="{{room}}" class="booking-footer">
     <button class="pay-button" disabled="{{submitting || loading || previewLoading || !preview || !availabilityVerified || !availability || !availability.available}}" bindtap="onPayTap">
-      <qx-icon name="message-circle-white" size="40" />
       <text>{{submitting ? '正在锁定客房…' : payButtonLabel}}</text>
     </button>
     <view class="home-indicator"></view>

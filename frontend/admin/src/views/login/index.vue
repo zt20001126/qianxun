@@ -32,22 +32,46 @@ async function submit(): Promise<void> {
 
 <template>
   <main class="login-shell">
-    <section class="login-card">
-      <div class="brand-mark" aria-hidden="true">浔</div>
-      <p class="eyebrow">QIANXUN HOMESTAY</p>
-      <h1>芊浔民宿</h1>
-      <p class="subtitle">管理后台</p>
+    <img class="login-backdrop" src="/assets/nanxun-water-town-login.webp" alt="" aria-hidden="true" />
+    <div class="login-backdrop-overlay" aria-hidden="true"></div>
+    <section class="login-card" aria-labelledby="login-title">
+      <header class="login-brand-header">
+        <div class="login-logo-frame">
+          <img class="login-logo" src="/assets/qianxun-logo.jpg" alt="芊浔民宿标志" />
+        </div>
+        <div class="login-brand-name">
+          <h1 id="login-title" class="login-title">芊浔民宿</h1>
+          <span class="login-location">南浔</span>
+        </div>
+        <p class="login-subtitle">管理后台</p>
+      </header>
       <form class="login-form" @submit.prevent="submit">
-        <label for="username">用户名</label>
-        <input id="username" v-model="username" autocomplete="username" maxlength="60" placeholder="请输入管理员用户名" />
-        <label for="password">密码</label>
-        <input id="password" v-model="password" type="password" autocomplete="current-password" maxlength="128" placeholder="请输入密码" />
-        <p v-if="errorMessage" class="error-message" role="alert">{{ errorMessage }}</p>
+        <label class="login-visually-hidden" for="username">管理员账号</label>
+        <input
+          id="username"
+          v-model="username"
+          autocomplete="username"
+          maxlength="60"
+          placeholder="管理员账号"
+          :aria-invalid="Boolean(errorMessage)"
+          :aria-describedby="errorMessage ? 'login-error' : undefined"
+        />
+        <label class="login-visually-hidden" for="password">登录密码</label>
+        <input
+          id="password"
+          v-model="password"
+          type="password"
+          autocomplete="current-password"
+          maxlength="128"
+          placeholder="登录密码"
+          :aria-invalid="Boolean(errorMessage)"
+          :aria-describedby="errorMessage ? 'login-error' : undefined"
+        />
+        <p v-if="errorMessage" id="login-error" class="error-message" role="alert">{{ errorMessage }}</p>
         <button class="primary-button" type="submit" :disabled="loading">
-          {{ loading ? '正在登录…' : '登录管理后台' }}
+          {{ loading ? '正在登录…' : '登录' }}
         </button>
       </form>
-      <p class="footer-note">仅限授权管理员使用</p>
     </section>
   </main>
 </template>

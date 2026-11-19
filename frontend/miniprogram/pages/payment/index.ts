@@ -16,6 +16,17 @@ interface PaymentPageData {
   message: string
 }
 
+function normalizeExpiresAt(value: string): string {
+  let decoded = value
+  try {
+    decoded = decodeURIComponent(value)
+  } catch {
+    // 保留原值，后续倒计时会用占位符处理无法解析的时间。
+  }
+  // 某些路由解析会把偏移量中的 + 解成空格，恢复为 ISO 8601 正偏移。
+  return decoded.replace(/(T\d{2}:\d{2}:\d{2}(?:\.\d+)?)[ ](\d{2}:\d{2})$/, '$1+$2')
+}
+
 Page({
   data: {
     paymentNo: '',
@@ -46,7 +57,7 @@ Page({
       pointsUsed: Number(options.points_used || 0),
       discountAmount: options.discount_amount || '0.00',
       payAmount: options.pay_amount || '0.00',
-      expiresAt: options.expires_at,
+      expiresAt: normalizeExpiresAt(options.expires_at),
     })
     wx.setNavigationBarTitle({ title: '模拟支付' })
     this.updateCountdown()
@@ -59,7 +70,16 @@ Page({
   },
 
   async updateCountdown() {
-    const remaining = Math.max(0, Date.parse(this.data.expiresAt) - Date.now())
+    const expiresAt = Date.parse(this.data.expiresAt)
+    if (!Number.isFinite(expiresAt)) {
+      this.setData({ countdown: '--:--' })
+      if (!this.expirationQueried) {
+        this.expirationQueried = true
+        await this.refreshPaymentState()
+      }
+      return
+    }
+    const remaining = Math.max(0, expiresAt - Date.now())
     const totalSeconds = Math.ceil(remaining / 1000)
     const minutes = Math.floor(totalSeconds / 60)
     const seconds = totalSeconds % 60
@@ -91,7 +111,8 @@ Page({
 
   async onPayTap() {
     if (this.data.paying || this.data.status === 'CLOSED' || this.data.status === 'FAILED') return
-    if (Date.parse(this.data.expiresAt) <= Date.now()) {
+    const expiresAt = Date.parse(this.data.expiresAt)
+    if (Number.isFinite(expiresAt) && expiresAt <= Date.now()) {
       await this.refreshPaymentState()
       wx.showToast({ title: '支付时间已结束，请重新预订', icon: 'none' })
       return

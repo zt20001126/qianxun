@@ -21,7 +21,7 @@
 .form-row { display: flex; align-items: center; gap: 24rpx; }
 .form-row label { display: flex; flex: none; align-items: center; gap: 12rpx; width: 160rpx; color: #231f1d; font-size: 24rpx; }
 .required { color: #b83b2a; }
-.form-row input { flex: 1; min-width: 0; padding: 20rpx 24rpx; box-sizing: border-box; border: 1rpx solid #e8e0d4; border-radius: 24rpx; color: #231f1d; background: rgba(250, 247, 242, .7); font-size: 24rpx; line-height: 1.5; }
+.form-row input { display: block; flex: 1; width: 0; min-width: 0; height: 72rpx; padding: 0 24rpx; box-sizing: border-box; border: 1rpx solid #e8e0d4; border-radius: 24rpx; color: #231f1d; background: rgba(250, 247, 242, .7); font-size: 24rpx; line-height: 72rpx; }
 .form-row input::placeholder { color: #aaa19a; }
 .guest-counter { display: flex; height: 64rpx; align-items: center; overflow: hidden; border: 1rpx solid #e8e0d4; border-radius: 22rpx; background: #fff; }
 .guest-counter button { width: 72rpx; height: 64rpx; margin: 0; padding: 0; color: #7a726b; background: #fff; font-size: 30rpx; line-height: 64rpx; }
@@ -36,27 +36,26 @@
 .fee-value { min-width: 108rpx; color: #231f1d; font-weight: 700; text-align: right; }
 .fee-loading { margin-top: 22rpx; color: #7a726b; font-size: 24rpx; }
 .points-row { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; padding: 20rpx 0 0; border-top: 1rpx solid rgba(232, 224, 212, .6); }
-.points-description { display: flex; flex-direction: column; gap: 6rpx; }
-.points-title-row { display: flex; align-items: center; gap: 7rpx; color: #231f1d; font-size: 24rpx; }
-.points-help { display: grid; width: 34rpx; height: 34rpx; place-items: center; margin: 0; padding: 0; background: transparent; }
-.points-help::after { border: 0; }
-.points-available { color: #7a726b; font-size: 22rpx; }
-.points-controls { display: flex; align-items: center; gap: 10rpx; }
+.points-description { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 6rpx; }
+.points-title-row { display: flex; align-items: center; gap: 7rpx; color: #231f1d; font-size: 24rpx; white-space: nowrap; }
+.points-title { flex: none; white-space: nowrap; }
+.points-help { display: flex; flex: 0 0 40rpx; width: 40rpx; min-width: 40rpx; max-width: 40rpx; height: 40rpx; align-items: center; justify-content: center; box-sizing: border-box; }
+.points-available { color: #7a726b; font-size: 22rpx; white-space: nowrap; }
+.points-controls { display: flex; flex: none; align-items: center; gap: 10rpx; }
 .points-used { padding: 8rpx 20rpx; border-radius: 16rpx; color: #8b4d25; background: #f7efe8; font-size: 22rpx; font-weight: 600; white-space: nowrap; }
 .discount-amount { color: #b83b2a; font-size: 24rpx; font-weight: 700; white-space: nowrap; }
 .no-points { color: #7a726b; font-size: 22rpx; white-space: nowrap; }
-.points-toggle { position: relative; width: 80rpx; height: 44rpx; margin: 0; padding: 0; border-radius: 999rpx; background: #e8e0d4; transition: background .18s ease; }
-.points-toggle::after { border: 0; }
+.points-toggle { position: relative; display: block; flex: 0 0 80rpx; width: 80rpx; min-width: 80rpx; max-width: 80rpx; height: 44rpx; box-sizing: border-box; border-radius: 999rpx; background: #e8e0d4; transition: background .18s ease; }
 .points-toggle.is-on { background: #8b4d25; }
 .toggle-thumb { position: absolute; top: 4rpx; left: 4rpx; width: 36rpx; height: 36rpx; border-radius: 50%; background: #fff; box-shadow: 0 2rpx 7rpx rgba(35, 31, 29, .18); transition: transform .18s ease; }
 .points-toggle.is-on .toggle-thumb { transform: translateX(36rpx); }
-.points-toggle[disabled] { opacity: .45; }
+.points-toggle.is-disabled { opacity: .45; }
 .pay-total { display: flex; align-items: center; justify-content: space-between; padding: 28rpx 24rpx; border-radius: 24rpx; background: #f7efe8; color: #6f3b1a; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 28rpx; font-weight: 700; }
 .pay-total text:last-child { color: #b83b2a; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 40rpx; }
 .form-error { display: block; margin-top: 16rpx; font-size: 19rpx; line-height: 1.5; }
 .booking-note { display: block; margin: 4rpx 8rpx 18rpx; color: #7a726b; font-size: 18rpx; line-height: 1.5; }
 .booking-footer { position: fixed; z-index: 10; right: 0; bottom: 0; left: 0; padding: 24rpx 40rpx calc(24rpx + env(safe-area-inset-bottom)); border-top: 1rpx solid #e8e0d4; background: rgba(255, 255, 255, .96); box-shadow: 0 -12rpx 40rpx rgba(35, 31, 29, .05); }
-.pay-button { display: flex; width: 100%; height: 104rpx; align-items: center; justify-content: center; gap: 16rpx; margin: 0; border-radius: 999rpx; color: #fff; background: #8b4d25; box-shadow: 0 14rpx 36rpx rgba(139, 77, 37, .22); font-size: 32rpx; font-weight: 500; line-height: 104rpx; }
+.pay-button { display: flex; width: 100%; height: 104rpx; align-items: center; justify-content: center; margin: 0; border-radius: 999rpx; color: #fff; background: #8b4d25; box-shadow: 0 14rpx 36rpx rgba(139, 77, 37, .22); font-size: 32rpx; font-weight: 500; line-height: 104rpx; }
 .pay-button::after { border: 0; }
 .pay-button[disabled] { opacity: .58; }
 .home-indicator { width: 256rpx; height: 8rpx; margin: 20rpx auto 0; border-radius: 999rpx; background: rgba(35, 31, 29, .2); }

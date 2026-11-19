@@ -137,9 +137,10 @@ Page({
   },
 
   async onPointsToggle() {
-    if (this.data.previewLoading || !this.data.preview) return
+    const currentPreview = this.data.preview
+    if (this.data.previewLoading || !currentPreview || currentPreview.max_points_usable <= 0) return
     const usePoints = !this.data.usePoints
-    const pointsUsed = usePoints ? this.data.preview.max_points_usable : 0
+    const pointsUsed = usePoints ? currentPreview.max_points_usable : 0
     this.setData({ usePoints })
     const preview = await this.loadPreview(pointsUsed)
     if (!preview) this.setData({ usePoints: !usePoints })
