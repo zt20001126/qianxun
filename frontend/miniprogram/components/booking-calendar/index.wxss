@@ -34,5 +34,6 @@
 .month-state { display: block; margin-top: 12rpx; color: #7a726b; font-size: 18rpx; text-align: center; }
 .month-error { color: #b83b2a; }
 .calendar-confirm { flex: none; height: 98rpx; margin: 32rpx 0 0; border-radius: 32rpx; color: #fff; background: #8b4d25; font-size: 28rpx; font-weight: 500; line-height: 98rpx; }
+.calendar-confirm.is-disabled { opacity: .55; }
 .calendar-confirm::after { border: 0; }
 @keyframes calendar-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }

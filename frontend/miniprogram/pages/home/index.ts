@@ -1,6 +1,7 @@
 /** 小程序首页：展示水乡品牌视觉、行程选择和导览入口。 */
 import { listRooms } from '../../services/rooms'
 import type { AppRoomSummary } from '../../types/room'
+import { STORE_CONTACT_PHONE_LABEL } from '../../config'
 import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
 
 interface GuideContent {
@@ -47,7 +48,7 @@ const GUIDE_CONTENT: Record<string, GuideContent> = {
     tag: '出行指南',
     title: '如何抵达芊浔民宿',
     body: '• 高铁出行：乘至「湖州南浔站」，打车约 15 分钟即达古镇东门停车场。\n• 自驾导航：搜索「南浔古镇东门地面停车场」，管家将提前至入口迎候接行李。',
-    extra: '24小时管家热线：0572-1234 5678',
+    extra: `24小时管家热线：${STORE_CONTACT_PHONE_LABEL}`,
   },
   rooms: {
     tag: '雅居一览',

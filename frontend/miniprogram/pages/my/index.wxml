@@ -26,7 +26,7 @@
         </view>
         <view class="contact-copy">
           <text class="contact-title">联系我们</text>
-          <text class="contact-phone">0572-1234 5678</text>
+          <text class="contact-phone">{{contactPhone}}</text>
         </view>
       </view>
       <view class="contact-arrow" />

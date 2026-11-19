@@ -6,7 +6,7 @@
         <text class="calendar-title">选择入住与退房日期</text>
         <text class="calendar-subtitle">仅开放北京时间今日起未来 60 个自然日预订</text>
       </view>
-      <view class="nights-badge"><qx-icon name="moon" size="24" /><text>共 {{nights}} 晚</text></view>
+      <view class="nights-badge"><qx-icon name="moon" size="24" /><text wx:if="{{nights > 0}}">共 {{nights}} 晚</text><text wx:else>待选退房</text></view>
     </view>
 
     <view class="calendar-preview">
@@ -46,6 +46,9 @@
       </view>
     </scroll-view>
 
-    <button class="calendar-confirm" bindtap="onConfirmTap">确认日期（共 {{nights}} 晚）</button>
+    <button class="calendar-confirm {{nights > 0 ? '' : 'is-disabled'}}" disabled="{{nights < 1}}" bindtap="onConfirmTap">
+      <text wx:if="{{nights > 0}}">确认日期（共 {{nights}} 晚）</text>
+      <text wx:else>请选择退房日期</text>
+    </button>
   </view>
 </view>

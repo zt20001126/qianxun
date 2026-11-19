@@ -3,7 +3,7 @@ import { getRoomDetail } from '../../services/rooms'
 import { getCancellationEligibility, getMyOrder, refundMyOrder } from '../../services/orders'
 import type { AppOrderDetail, OrderCancellationEligibility } from '../../types/booking'
 import { getOrderStatusLabel } from '../../types/booking'
-import { STORE_CONTACT_PHONE } from '../../config'
+import { STORE_CONTACT_PHONE_LABEL } from '../../config'
 import { callBusinessPhone } from '../../utils/business-contact'
 
 type DialogType = 'none' | 'unavailable' | 'refund' | 'contact'
@@ -119,10 +119,6 @@ function getStatusHint(
   return '当前订单不支持自助退款，如需退改请联系商家协商。'
 }
 
-function formatContactPhone(phone: string): string {
-  return `${phone.slice(0, 4)}-${phone.slice(4, 8)} ${phone.slice(8)}`
-}
-
 Page({
   data: {
     order: null,
@@ -134,7 +130,7 @@ Page({
     errorMessage: '',
     dialogType: 'none',
     refundSubmitting: false,
-    contactPhone: formatContactPhone(STORE_CONTACT_PHONE),
+    contactPhone: STORE_CONTACT_PHONE_LABEL,
     cancelDialogMessage:
       '当前订单不支持自助退款（仅待确认/待入住且早于入住当日 18:00 可自助取消），如需退改请联系商家协商。',
     unitPrice: '0.00',

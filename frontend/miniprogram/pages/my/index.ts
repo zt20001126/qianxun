@@ -1,6 +1,7 @@
 /** 「我的」页面：展示会员名片、商家电话和退出登录操作。 */
 import { getMyMember } from '../../services/member'
 import type { AppMember } from '../../types/member'
+import { STORE_CONTACT_PHONE_LABEL } from '../../config'
 import { callBusinessPhone } from '../../utils/business-contact'
 import { clearSession, getSavedMember, getValidToken } from '../../utils/session'
 
@@ -8,6 +9,7 @@ interface MyPageData {
   nickname: string
   maskedPhone: string
   levelLabel: string
+  contactPhone: string
 }
 
 function getPhoneSuffix(phone: string): string {
@@ -45,6 +47,7 @@ function toPageData(member: Pick<AppMember, 'phone' | 'level'>): MyPageData {
     nickname: `尾号 ${getPhoneSuffix(member.phone)}`,
     maskedPhone: maskPhone(member.phone),
     levelLabel: formatLevelLabel(member.level),
+    contactPhone: STORE_CONTACT_PHONE_LABEL,
   }
 }
 
@@ -53,6 +56,7 @@ Page({
     nickname: '',
     maskedPhone: '',
     levelLabel: '',
+    contactPhone: STORE_CONTACT_PHONE_LABEL,
   } as MyPageData,
 
   onLoad() {

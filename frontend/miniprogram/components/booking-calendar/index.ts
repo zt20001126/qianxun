@@ -170,7 +170,7 @@ Component({
       if (selectingStep === 'checkin' || date <= checkIn) {
         if (date > this.data.lastCheckInDate || day.unavailable) return
         checkIn = date
-        checkOut = addDays(date, 1)
+        checkOut = ''
         selectingStep = 'checkout'
       } else {
         checkOut = date
@@ -188,9 +188,9 @@ Component({
         tempCheckIn: checkIn,
         tempCheckOut: checkOut,
         selectingStep,
-        nights: daysBetween(checkIn, checkOut),
+        nights: checkOut ? daysBetween(checkIn, checkOut) : 0,
         checkInPreview: formatDayLabel(checkIn),
-        checkOutPreview: formatDayLabel(checkOut),
+        checkOutPreview: checkOut ? formatDayLabel(checkOut) : '请选择退房日期',
       })
       const unavailableByMonth: Record<string, string[]> = {}
       this.data.months.forEach((month) => {
@@ -228,7 +228,8 @@ Component({
 
     onConfirmTap() {
       const { tempCheckIn, tempCheckOut, today, maxDate, lastCheckInDate } = this.data
-      if (tempCheckIn < today || tempCheckIn > lastCheckInDate || tempCheckOut <= tempCheckIn || tempCheckOut > maxDate) return
+      if (!tempCheckOut || tempCheckIn < today || tempCheckIn > lastCheckInDate
+        || tempCheckOut <= tempCheckIn || tempCheckOut > maxDate) return
       this.triggerEvent('confirm', { checkIn: tempCheckIn, checkOut: tempCheckOut })
     },
 
@@ -268,8 +269,9 @@ function buildCalendarDays(
     const date = month + '-' + String(number).padStart(2, '0')
     const isUnavailable = unavailable.has(date)
     const withinWindow = date >= today && date <= maxDate
+    // 选择退房时保留入住日的选中样式；点击入住日会重新开始选择入住日期。
     const disabled = !withinWindow || (selectingStep === 'checkout'
-      ? date <= checkIn
+      ? date < checkIn
       : (date > lastCheckInDate || isUnavailable))
     days.push({
       key: date,
@@ -278,7 +280,7 @@ function buildCalendarDays(
       empty: false,
       unavailable: isUnavailable,
       disabled,
-      selected: date === checkIn || date === checkOut,
+      selected: date === checkIn || (!!checkOut && date === checkOut),
       inRange: !!checkIn && !!checkOut && date > checkIn && date < checkOut,
       isToday: date === today,
       isCheckIn: date === checkIn,
