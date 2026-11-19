@@ -11,7 +11,7 @@ services:
       MYSQL_ROOT_PASSWORD: qianxun
       TZ: Asia/Shanghai
     ports:
-      - "127.0.0.1:3307:3306"
+      - "127.0.0.1:${MYSQL_HOST_PORT:-3307}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
@@ -32,7 +32,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL:?请在 deploy/.env 中设置 DATABASE_URL}
+      DATABASE_URL: ${DATABASE_URL:-jdbc:mysql://mysql:3306/qianxun?user=qianxun&password=qianxun&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectionTimeZone=Asia/Shanghai}
       JWT_SECRET: ${JWT_SECRET:?请在 deploy/.env 中设置 JWT_SECRET}
       OSS_ENDPOINT: ${OSS_ENDPOINT:-}
       OSS_BUCKET: ${OSS_BUCKET:-}
@@ -40,7 +40,28 @@ services:
       OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
       TZ: Asia/Shanghai
     ports:
-      - "8080:8080"
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    stop_grace_period: 30s
+
+  admin:
+    build:
+      context: ../frontend/admin
+      dockerfile: Dockerfile
+      args:
+        DOCKER_REGISTRY_PREFIX: ${DOCKER_REGISTRY_PREFIX:-docker.m.daocloud.io}
+        VITE_API_BASE_URL: /api
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${ADMIN_HTTP_PORT:-8081}:80"
 
 volumes:
   mysql_data:

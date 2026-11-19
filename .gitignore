@@ -9,6 +9,7 @@ deploy/.env
 **/dist/
 **/.vite/
 *.log
+/backups/
 
 # IntelliJ IDEA project files
 .idea/
