@@ -17,7 +17,7 @@
 3. 管理后台默认在 `http://localhost:8081`，API 通过同源 `/api` 访问。开发者工具打开 `frontend/miniprogram`；真机访问须把 `frontend/miniprogram/config.ts` 指向 HTTPS API 域名并配置微信合法 request 域名。
 4. 第一次数据库迁移只初始化结构、固定渠道和管理员记录。部署前应按环境准备六间客房资料，确认管理员凭据已由受控流程设置；不要把口令或 JWT 密钥写进仓库。旧系统迁移时使用仓库提供的只读源库导入脚本。
 
-默认端口：管理后台 `8081`、仅本机可访问的后端 `8080`、仅本机可访问的 MySQL `3307`。发生端口冲突时，可在 `deploy/.env` 追加 `ADMIN_HTTP_PORT`、`BACKEND_HOST_PORT` 或 `MYSQL_HOST_PORT` 覆盖对应映射；默认开发环境不需要这些变量。
+默认端口：管理后台 `8081`、局域网可访问的后端 `8080`、仅本机可访问的 MySQL `3307`。小程序本机联调时，需将 `frontend/miniprogram/config.ts` 中的 API 地址设为开发电脑当前 Wi‑Fi IPv4 地址；正式环境应使用 HTTPS 合法域名。发生端口冲突时，可在 `deploy/.env` 追加 `ADMIN_HTTP_PORT`、`BACKEND_HOST_PORT` 或 `MYSQL_HOST_PORT` 覆盖对应映射；默认开发环境不需要这些变量。
 
 ## HTTPS 与上线边界
 
