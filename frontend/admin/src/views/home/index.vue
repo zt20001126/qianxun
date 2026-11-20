@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** S01 经营总览：按日查看房态与分摊金额，按月查看经营汇总，支持页内快捷建单、详情编辑与封房调整。 */
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { useRouter } from 'vue-router'
 import { channelApi } from '../../api/channels'
 import { creatorApi } from '../../api/creators'
@@ -96,9 +97,8 @@ const blockModalOpen = ref(false)
 const editingBlock = ref<RoomBlock | null>(null)
 const blockPresetRoomId = ref<number | null>(null)
 
-// Toast 提示
-const toastMessage = ref('')
-let toastTimer: number | null = null
+// 操作成功弹窗
+const successMessage = ref('')
 
 const isToday = computed(() => date.value === today)
 const statLabelPrefix = computed(() => {
@@ -427,29 +427,25 @@ function goToCalendar(): void {
   void router.push('/room-calendar')
 }
 
-function showToast(message: string): void {
-  toastMessage.value = message
-  if (toastTimer != null) window.clearTimeout(toastTimer)
-  toastTimer = window.setTimeout(() => {
-    toastMessage.value = ''
-  }, 2600)
+function showSuccessNotice(message: string): void {
+  successMessage.value = message
 }
 
 function handleOrderCreated(message: string): void {
   createModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   void load()
 }
 
 function handleOrderUpdated(message: string): void {
   detailModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   void load()
 }
 
 function handleBlockSaved(message: string): void {
   blockModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   void load()
 }
 
@@ -458,9 +454,6 @@ onMounted(() => {
   void load()
 })
 
-onBeforeUnmount(() => {
-  if (toastTimer != null) window.clearTimeout(toastTimer)
-})
 </script>
 
 <template>
@@ -526,11 +519,11 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <p v-if="error" class="notice notice-error" role="alert">{{ error }}</p>
+    <AdminNoticeDialog v-if="error" v-model:message="error" />
     <div v-else-if="loading && !dashboard" class="operation-card operation-empty">正在加载经营总览…</div>
 
     <template v-else-if="dashboard">
-      <p v-if="dailyFinanceError && mode === 'day'" class="notice notice-error" role="alert">{{ dailyFinanceError }}</p>
+      <AdminNoticeDialog v-model:message="dailyFinanceError" />
 
       <!-- 核心数据指标看板（6 项） -->
       <section class="dashboard-kpis" aria-label="经营核心指标">
@@ -738,12 +731,6 @@ onBeforeUnmount(() => {
       @saved="handleBlockSaved"
     />
 
-    <!-- 全局轻量 Toast -->
-    <div class="qx-toast-wrap" aria-live="polite">
-      <div class="qx-toast-box" :class="{ 'is-visible': Boolean(toastMessage) }">
-        <span class="qx-toast-dot"></span>
-        <span>{{ toastMessage }}</span>
-      </div>
-    </div>
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
   </section>
 </template>

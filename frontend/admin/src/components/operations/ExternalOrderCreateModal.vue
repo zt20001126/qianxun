@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** 页内弹窗：创建第三方平台订单（不含小程序，实时预览达人额外提成与商家到手金额）。 */
 import { computed, reactive, ref, watch } from 'vue'
+import AdminNoticeDialog from '../AdminNoticeDialog.vue'
 import { orderApi } from '../../api/orders'
 import type { Channel, Creator, Room } from '../../types/catalog'
 import type { CreateExternalOrderRequest, OrderStatus } from '../../types/orders'
@@ -201,7 +202,7 @@ async function submit(): Promise<void> {
           </button>
         </div>
 
-        <p v-if="errorMessage" class="notice notice-error qx-modal-alert" role="alert">{{ errorMessage }}</p>
+        <AdminNoticeDialog v-model:message="errorMessage" />
 
         <form class="qx-modal-form" @submit.prevent="submit">
           <div class="qx-form-grid-2">

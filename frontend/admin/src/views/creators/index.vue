@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** D01-D05 达人维护，筛选与编辑均沿用固定渠道资料。 */
 import { onMounted, reactive, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { channelApi } from '../../api/channels'
 import { creatorApi } from '../../api/creators'
 import type { Channel, Creator, CreatorSaveRequest } from '../../types/catalog'
@@ -140,8 +141,8 @@ function messageOf(error: unknown, fallback: string): string {
       <button class="button button-outline" type="submit" :disabled="loading">查询</button>
     </form>
 
-    <p v-if="successMessage" class="notice notice-success" role="status">{{ successMessage }}</p>
-    <p v-if="errorMessage && !dialogOpen" class="notice notice-error" role="alert">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
+    <AdminNoticeDialog v-model:message="errorMessage" />
 
     <div class="table-card">
       <div v-if="loading" class="table-state">正在读取达人资料…</div>
@@ -182,7 +183,6 @@ function messageOf(error: unknown, fallback: string): string {
               <option v-for="channel in channels" :key="channel.id" :value="String(channel.id)">{{ channel.name }}{{ channel.enabled ? '' : '（停用）' }}</option>
             </select>
           </label>
-          <p v-if="errorMessage && dialogOpen" class="notice notice-error" role="alert">{{ errorMessage }}</p>
           <footer class="dialog-actions">
             <button class="button button-outline" type="button" :disabled="saving" @click="closeDialog">取消</button>
             <button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '保存中…' : '保存达人' }}</button>

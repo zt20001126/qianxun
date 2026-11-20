@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** E01–E06 经营支出页面；支出创建后只允许查询，不开放编辑或删除。 */
 import { computed, onMounted, reactive, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { expenseApi } from '../../api/expenses'
 import type { Expense, ExpensePage, ExpenseSummary } from '../../types/operations'
 import '../../styles/operations.css'
@@ -132,8 +133,9 @@ onMounted(() => void load())
       <button class="button button-primary" type="button" @click="showCreateDialog">新增支出</button>
     </div>
 
-    <p v-if="success" class="notice notice-success">{{ success }}</p>
-    <p v-if="error" class="notice notice-error">{{ error }}</p>
+    <AdminNoticeDialog v-model:message="success" kind="success" />
+    <AdminNoticeDialog v-model:message="error" />
+    <AdminNoticeDialog v-model:message="formError" />
 
     <div class="operation-toolbar">
       <div class="filter-card">
@@ -216,7 +218,6 @@ onMounted(() => void load())
           <label>实际支出日期
             <input v-model="form.date" type="date" required />
           </label>
-          <p v-if="formError" class="notice notice-error">{{ formError }}</p>
           <div class="dialog-actions">
             <button class="button button-outline" type="button" @click="dialogOpen = false">返回</button>
             <button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '提交中…' : '确认新增' }}</button>

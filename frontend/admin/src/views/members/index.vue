@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** M03–M05 会员管理：手机号检索、预建会员、查看关联订单和发放积分。 */
 import { onMounted, reactive, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { memberApi } from '../../api/members'
 import { pointsApi } from '../../api/points'
 import type { MemberDetail, MemberListItem, PointsGrantRequest, PointsLog, PointsLogType } from '../../types/members'
@@ -212,8 +213,8 @@ function messageOf(error: unknown, fallback: string): string {
       <button class="button button-quiet" type="button" :disabled="loading" @click="phoneFilter = ''; search()">重置</button>
     </form>
 
-    <p v-if="successMessage" class="notice notice-success" role="status">{{ successMessage }}</p>
-    <p v-if="errorMessage && !createOpen && !grantOpen" class="notice notice-error" role="alert">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
+    <AdminNoticeDialog v-model:message="errorMessage" />
 
     <div class="table-card">
       <div v-if="loading" class="table-state">正在读取会员资料…</div>
@@ -240,7 +241,6 @@ function messageOf(error: unknown, fallback: string): string {
         <form class="catalog-form" @submit.prevent="createMember">
           <label>会员手机号<input v-model="createPhone" maxlength="20" inputmode="numeric" placeholder="请输入中国大陆手机号" required /></label>
           <p class="form-help">昵称自动取手机号后四位，头像使用系统默认头像。初始积分需通过积分流水单独登记。</p>
-          <p v-if="errorMessage" class="notice notice-error">{{ errorMessage }}</p>
           <div class="dialog-actions"><button class="button button-outline" type="button" :disabled="saving" @click="closeDialog">取消</button><button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '正在创建…' : '创建会员' }}</button></div>
         </form>
       </section>
@@ -255,7 +255,6 @@ function messageOf(error: unknown, fallback: string): string {
           <label>关联订单编号（选填）<input v-model="grantForm.order_id" type="number" min="1" step="1" placeholder="订单 ID" /></label>
           <label>备注（选填）<textarea v-model="grantForm.remark" maxlength="300" placeholder="说明发放原因"></textarea></label>
           <p class="form-help">余额与流水会在同一事务写入。网络异常后请用相同内容重试，系统会按请求编号去重。</p>
-          <p v-if="errorMessage" class="notice notice-error">{{ errorMessage }}</p>
           <div class="dialog-actions"><button class="button button-outline" type="button" :disabled="saving" @click="closeDialog">取消</button><button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '正在发放…' : '确认发放' }}</button></div>
         </form>
       </section>
@@ -278,7 +277,6 @@ function messageOf(error: unknown, fallback: string): string {
             <tr v-for="log in detailLogs" :key="log.id"><td>{{ typeLabel(log.type) }}</td><td :class="log.points >= 0 ? 'points-positive' : 'points-negative'">{{ log.points > 0 ? '+' : '' }}{{ log.points }}</td><td>{{ log.growth_points > 0 ? '+' : '' }}{{ log.growth_points }}</td><td>{{ log.balance_after }}</td><td>{{ log.order_id || '—' }}</td><td><strong>{{ log.created_at.replace('T', ' ').slice(0, 16) }}</strong><small>{{ log.remark || '—' }}</small></td></tr>
           </tbody></table></div>
           <button v-if="detailLogs.length < detailLogTotal" class="button button-outline load-more-button" type="button" :disabled="detailLogsLoadingMore" @click="loadMoreLogs">{{ detailLogsLoadingMore ? '正在加载…' : '加载更多流水' }}</button>
-          <p v-if="errorMessage" class="notice notice-error">{{ errorMessage }}</p>
           <div class="dialog-actions"><button class="button button-outline" type="button" @click="beginGrant(detail)">发放积分</button><button class="button button-primary" type="button" @click="closeDialog">关闭</button></div>
         </template>
       </section>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** S02–S05 经营报表页面，统一提供状态范围和四维统计切换。 */
 import { onMounted, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { channelApi } from '../../api/channels'
 import { creatorApi } from '../../api/creators'
 import { reportApi } from '../../api/reports'
@@ -125,7 +126,7 @@ onMounted(async () => {
       </div>
     </div>
 
-    <p v-if="error" class="notice notice-error">{{ error }}</p>
+    <AdminNoticeDialog v-model:message="error" />
 
     <section class="operation-card">
       <div class="filter-card order-filter-card">

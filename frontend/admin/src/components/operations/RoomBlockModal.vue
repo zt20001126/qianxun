@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** 页内弹窗：新增管理员封房 / 调整封房区间与解除封房。 */
 import { computed, reactive, ref, watch } from 'vue'
+import AdminNoticeDialog from '../AdminNoticeDialog.vue'
 import { roomBlockApi } from '../../api/room-blocks'
 import type { RoomBlock, RoomBlockSaveRequest } from '../../api/room-blocks'
 import type { Room } from '../../types/catalog'
@@ -120,7 +121,7 @@ async function removeBlock(): Promise<void> {
           </button>
         </div>
 
-        <p v-if="errorMessage" class="notice notice-error qx-modal-alert" role="alert">{{ errorMessage }}</p>
+        <AdminNoticeDialog v-model:message="errorMessage" />
 
         <form class="qx-modal-form" @submit.prevent="submit">
           <label class="qx-field">

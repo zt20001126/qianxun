@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** 页内弹窗：订单详情、资料编辑、状态流转（确认/入住/退房）与第三方订单取消。 */
 import { computed, reactive, ref, watch } from 'vue'
+import AdminNoticeDialog from '../AdminNoticeDialog.vue'
 import { orderApi } from '../../api/orders'
 import type { Creator, Room } from '../../types/catalog'
 import type { OrderDetail, UpdateOrderRequest } from '../../types/orders'
@@ -212,7 +213,7 @@ async function confirmCancelExternal(): Promise<void> {
           </button>
         </div>
 
-        <p v-if="errorMessage" class="notice notice-error qx-modal-alert" role="alert">{{ errorMessage }}</p>
+        <AdminNoticeDialog v-model:message="errorMessage" />
 
         <div v-if="loading" class="qx-modal-loading">正在读取订单详情…</div>
 

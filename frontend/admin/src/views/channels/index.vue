@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** C01/C02 固定七渠道管理。停用不影响历史订单，后续仅限制新订单选用。 */
 import { onMounted, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { channelApi } from '../../api/channels'
 import type { Channel } from '../../types/catalog'
 
@@ -53,8 +54,8 @@ function messageOf(error: unknown, fallback: string): string {
         <p class="page-description">七个固定订单来源。停用仅影响新订单，不更改历史订单归属。</p>
       </div>
     </div>
-    <p v-if="successMessage" class="notice notice-success" role="status">{{ successMessage }}</p>
-    <p v-if="errorMessage" class="notice notice-error" role="alert">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
+    <AdminNoticeDialog v-model:message="errorMessage" />
 
     <div class="table-card">
       <div v-if="loading" class="table-state">正在读取渠道资料…</div>

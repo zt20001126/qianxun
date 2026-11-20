@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** 管理员登录页面：提供账号密码输入、提交状态和简短错误提示。 */
 import { ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 
@@ -54,7 +55,6 @@ async function submit(): Promise<void> {
           maxlength="60"
           placeholder="管理员账号"
           :aria-invalid="Boolean(errorMessage)"
-          :aria-describedby="errorMessage ? 'login-error' : undefined"
         />
         <label class="login-visually-hidden" for="password">登录密码</label>
         <input
@@ -65,13 +65,12 @@ async function submit(): Promise<void> {
           maxlength="128"
           placeholder="登录密码"
           :aria-invalid="Boolean(errorMessage)"
-          :aria-describedby="errorMessage ? 'login-error' : undefined"
         />
-        <p v-if="errorMessage" id="login-error" class="error-message" role="alert">{{ errorMessage }}</p>
         <button class="primary-button" type="submit" :disabled="loading">
           {{ loading ? '正在登录…' : '登录' }}
         </button>
       </form>
     </section>
+    <AdminNoticeDialog v-model:message="errorMessage" />
   </main>
 </template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** T04 后台积分流水查询：支持按会员、订单与变更类型筛选。 */
 import { onMounted, reactive, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { pointsApi } from '../../api/points'
 import type { PointsLog, PointsLogType } from '../../types/members'
 
@@ -62,7 +63,7 @@ function typeLabel(type: PointsLogType): string {
       <button class="button button-outline" type="submit" :disabled="loading">查询</button>
       <button class="button button-quiet" type="button" @click="filters.member_id = ''; filters.order_id = ''; filters.type = ''; search()">重置</button>
     </form>
-    <p v-if="errorMessage" class="notice notice-error" role="alert">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="errorMessage" />
     <div class="table-card">
       <div v-if="loading" class="table-state">正在读取积分流水…</div>
       <div v-else-if="rows.length === 0" class="table-state"><strong>没有匹配的流水</strong><span>调整筛选条件后重试。</span></div>

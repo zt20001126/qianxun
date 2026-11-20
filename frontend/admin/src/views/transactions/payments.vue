@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** P04 后台模拟支付流水查询页。 */
 import { onMounted, reactive, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { transactionApi } from '../../api/transactions'
 import type { PaymentListItem, PaymentStatus, TransactionPage } from '../../types/transactions'
 
@@ -60,7 +61,7 @@ onMounted(() => void load())
       <label>支付日期止<input v-model="filters.end_date" type="date" :disabled="loading"></label>
       <button class="button button-primary" type="button" :disabled="loading" @click="search">查询</button>
     </div>
-    <p v-if="errorMessage" class="notice notice-error">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="errorMessage" />
     <div class="table-card">
       <div class="table-scroll">
         <table class="data-table">

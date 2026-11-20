@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** O04-O12 订单管理页面：多维度筛选、关键词实时搜索、8列明细展示、状态逐级流转及页内弹窗编辑。 */
-import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { channelApi } from '../../api/channels'
 import { creatorApi } from '../../api/creators'
@@ -52,9 +53,8 @@ const createPresetCheckIn = ref('')
 const detailModalOpen = ref(false)
 const activeOrderId = ref<number | null>(null)
 
-// Toast
-const toastMessage = ref('')
-let toastTimer: number | null = null
+// 操作成功弹窗
+const successMessage = ref('')
 
 const isClientFilterMode = computed(
   () => filters.creator_id === 'NONE' || filters.keyword.trim().length > 0,
@@ -231,13 +231,13 @@ async function advanceStatus(row: OrderListItem, action: 'confirm' | 'check-in' 
   try {
     if (action === 'confirm') {
       await orderApi.confirm(row.id)
-      showToast(`订单 ${row.order_no} 已确认，进入待入住`)
+      showSuccessNotice(`订单 ${row.order_no} 已确认，进入待入住`)
     } else if (action === 'check-in') {
       await orderApi.checkIn(row.id)
-      showToast(`订单 ${row.order_no} 已办理入住`)
+      showSuccessNotice(`订单 ${row.order_no} 已办理入住`)
     } else {
       await orderApi.checkOut(row.id)
-      showToast(`订单 ${row.order_no} 已办理退房完成`)
+      showSuccessNotice(`订单 ${row.order_no} 已办理退房完成`)
     }
     const nextCache = { ...detailCache.value }
     delete nextCache[row.id]
@@ -252,7 +252,7 @@ async function advanceStatus(row: OrderListItem, action: 'confirm' | 'check-in' 
 
 function handleOrderCreated(message: string): void {
   createModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   page.value = 1
   void loadOrders()
 }
@@ -260,7 +260,7 @@ function handleOrderCreated(message: string): void {
 function handleOrderUpdated(message: string): void {
   const updatedId = activeOrderId.value
   detailModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   if (updatedId != null) {
     const nextCache = { ...detailCache.value }
     delete nextCache[updatedId]
@@ -294,12 +294,8 @@ function hasExtraCommission(value: string): boolean {
   return amountToCents(value) > 0
 }
 
-function showToast(message: string): void {
-  toastMessage.value = message
-  if (toastTimer != null) window.clearTimeout(toastTimer)
-  toastTimer = window.setTimeout(() => {
-    toastMessage.value = ''
-  }, 2600)
+function showSuccessNotice(message: string): void {
+  successMessage.value = message
 }
 
 function queryValue(key: string): string | undefined {
@@ -341,9 +337,6 @@ onMounted(async () => {
   await applyRouteIntent()
 })
 
-onBeforeUnmount(() => {
-  if (toastTimer != null) window.clearTimeout(toastTimer)
-})
 </script>
 
 <template>
@@ -428,7 +421,8 @@ onBeforeUnmount(() => {
       </div>
     </section>
 
-    <p v-if="errorMessage" class="notice notice-error" role="alert">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="errorMessage" />
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
 
     <!-- 2. 订单明细列表（8 列完整字段结构） -->
     <section class="orders-table-card">
@@ -625,12 +619,5 @@ onBeforeUnmount(() => {
       @updated="handleOrderUpdated"
     />
 
-    <!-- 全局轻量 Toast -->
-    <div class="qx-toast-wrap" aria-live="polite">
-      <div class="qx-toast-box" :class="{ 'is-visible': Boolean(toastMessage) }">
-        <span class="qx-toast-dot"></span>
-        <span>{{ toastMessage }}</span>
-      </div>
-    </div>
   </section>
 </template>

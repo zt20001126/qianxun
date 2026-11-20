@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** R10-R13 管理员封房记录维护与日期冲突提示。 */
 import { onMounted, reactive, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { roomBlockApi } from '../../api/room-blocks'
 import { roomApi } from '../../api/rooms'
@@ -153,8 +154,8 @@ function messageOf(error: unknown, fallback: string): string {
       <button class="button button-primary" type="button" :disabled="rooms.length === 0" @click="beginAdd">新增封房</button>
     </div>
 
-    <p v-if="successMessage" class="notice notice-success">{{ successMessage }}</p>
-    <p v-if="errorMessage && !dialogOpen" class="notice notice-error">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
+    <AdminNoticeDialog v-model:message="errorMessage" />
 
     <form class="filter-card" @submit.prevent="loadBlocks">
       <label>
@@ -203,7 +204,6 @@ function messageOf(error: unknown, fallback: string): string {
           <button class="icon-button" type="button" aria-label="关闭" @click="closeDialog">×</button>
         </div>
         <form class="catalog-form" @submit.prevent="saveBlock">
-          <p v-if="errorMessage" class="notice notice-error">{{ errorMessage }}</p>
           <label>客房
             <select v-model.number="form.room_id" required>
               <option v-for="room in rooms" :key="room.id" :value="room.id">{{ room.number }} · {{ room.name }}</option>

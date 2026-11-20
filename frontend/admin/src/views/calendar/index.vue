@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** K01 后台房态日历：支持按日 / 按周 / 按月三维度筛选、订单详情/入离与封房页内操作。 */
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { calendarApi } from '../../api/calendar'
 import type { CalendarDay } from '../../api/calendar'
 import { channelApi } from '../../api/channels'
@@ -80,9 +81,8 @@ const editingBlock = ref<RoomBlock | null>(null)
 const blockPresetRoomId = ref<number | null>(null)
 const blockPresetStartDate = ref(today)
 
-// Toast
-const toastMessage = ref('')
-let toastTimer: number | null = null
+// 操作成功弹窗
+const successMessage = ref('')
 
 const dateCols = computed((): string[] => {
   if (mode.value === 'day') return [anchorDate.value]
@@ -351,29 +351,25 @@ function openNewBlockModal(): void {
   blockModalOpen.value = true
 }
 
-function showToast(message: string): void {
-  toastMessage.value = message
-  if (toastTimer != null) window.clearTimeout(toastTimer)
-  toastTimer = window.setTimeout(() => {
-    toastMessage.value = ''
-  }, 2600)
+function showSuccessNotice(message: string): void {
+  successMessage.value = message
 }
 
 function handleOrderCreated(message: string): void {
   createModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   void loadCalendar()
 }
 
 function handleOrderUpdated(message: string): void {
   detailModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   void loadCalendar()
 }
 
 function handleBlockSaved(message: string): void {
   blockModalOpen.value = false
-  showToast(message)
+  showSuccessNotice(message)
   void loadCalendar()
 }
 
@@ -382,9 +378,6 @@ onMounted(() => {
   void loadCalendar()
 })
 
-onBeforeUnmount(() => {
-  if (toastTimer != null) window.clearTimeout(toastTimer)
-})
 </script>
 
 <template>
@@ -459,7 +452,7 @@ onBeforeUnmount(() => {
       <span class="cal-legend-hint">点击「空房」直接建单，点击已占日期查看详情或办理入离</span>
     </section>
 
-    <p v-if="errorMessage" class="notice notice-error" role="alert">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="errorMessage" />
 
     <!-- 房态矩阵表格 -->
     <section class="cal-matrix-card">
@@ -623,12 +616,6 @@ onBeforeUnmount(() => {
       @saved="handleBlockSaved"
     />
 
-    <!-- 全局轻量 Toast -->
-    <div class="qx-toast-wrap" aria-live="polite">
-      <div class="qx-toast-box" :class="{ 'is-visible': Boolean(toastMessage) }">
-        <span class="qx-toast-dot"></span>
-        <span>{{ toastMessage }}</span>
-      </div>
-    </div>
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
   </section>
 </template>

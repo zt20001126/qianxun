@@ -909,7 +909,6 @@
   stroke-linejoin: round;
 }
 
-.qx-modal-alert { margin: 12px 0 0; }
 .qx-modal-loading { padding: 36px 0; color: #6e777a; font-size: 13px; text-align: center; }
 
 .qx-modal-form { display: grid; gap: 14px; margin-top: 16px; font-size: 12px; }
@@ -1067,32 +1066,6 @@
 .qx-btn-danger-outline:disabled,
 .qx-btn-danger-solid:disabled,
 .qx-btn-status:disabled { opacity: .55; cursor: wait; }
-
-/* 全局 Toast */
-.qx-toast-wrap {
-  pointer-events: none;
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 80;
-}
-.qx-toast-box {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  color: #ffffff;
-  background: #1f2426;
-  font-size: 12px;
-  font-weight: 500;
-  box-shadow: 0 12px 30px rgba(15, 23, 25, .24);
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity .22s ease, transform .22s ease;
-}
-.qx-toast-box.is-visible { opacity: 1; transform: translateY(0); }
-.qx-toast-dot { width: 8px; height: 8px; border-radius: 999px; background: #c49655; }
 
 /* ---------- 订单管理（对齐原型图 1:1） ---------- */
 .orders-proto-page { display: grid; gap: 16px; min-width: 0; }

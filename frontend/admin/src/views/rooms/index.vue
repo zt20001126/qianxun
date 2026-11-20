@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /** R05-R09 客房资料维护。具体日期占用由房态模块统一校验。 */
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
 import { roomApi } from '../../api/rooms'
 import type { Room, RoomSaveRequest } from '../../types/catalog'
 
@@ -178,8 +179,8 @@ function messageOf(error: unknown, fallback: string): string {
       <span>当前上架 <strong>{{ rooms.filter((room) => room.enabled).length }}</strong></span>
     </div>
 
-    <p v-if="successMessage" class="notice notice-success" role="status">{{ successMessage }}</p>
-    <p v-if="errorMessage && !dialogOpen" class="notice notice-error" role="alert">{{ errorMessage }}</p>
+    <AdminNoticeDialog v-model:message="successMessage" kind="success" />
+    <AdminNoticeDialog v-model:message="errorMessage" />
 
     <div class="table-card">
       <div v-if="loading" class="table-state">正在读取客房资料…</div>
@@ -256,7 +257,6 @@ function messageOf(error: unknown, fallback: string): string {
               <textarea v-model="form.description" rows="4" placeholder="填写房间介绍" />
             </label>
           </div>
-          <p v-if="errorMessage && dialogOpen" class="notice notice-error" role="alert">{{ errorMessage }}</p>
           <footer class="dialog-actions">
             <button class="button button-outline" type="button" :disabled="saving" @click="closeDialog">取消</button>
             <button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '保存中…' : '保存客房' }}</button>
