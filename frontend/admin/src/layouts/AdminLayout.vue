@@ -56,7 +56,6 @@ function openExternalOrder(): void {
     <div class="admin-main">
       <header class="admin-topbar" :class="{ 'admin-topbar-dashboard': isPrototypeShell }">
         <div class="topbar-heading">
-          <p>芊浔民宿 · 南浔</p>
           <div class="topbar-title-line">
             <strong>{{ $route.meta.title || '经营管理' }}</strong>
             <span v-if="isPrototypeShell" class="beijing-date">
@@ -67,7 +66,6 @@ function openExternalOrder(): void {
         </div>
         <div v-if="isPrototypeShell" class="topbar-actions">
           <button class="button button-primary" type="button" @click="openExternalOrder">＋ 录入第三方订单</button>
-          <button class="button button-outline" type="button" @click="logout">退出登录</button>
         </div>
       </header>
       <main class="admin-content" :class="{ 'admin-content-dashboard': isPrototypeShell }"><RouterView /></main>

@@ -104,7 +104,6 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .sidebar-nav a.sidebar-nav-primary .sidebar-icon { color: var(--qx-primary); }
 .admin-main { min-width: 0; }
 .admin-topbar { display: flex; min-height: 78px; align-items: center; justify-content: space-between; padding: 12px 36px; border-bottom: 1px solid var(--qx-border); background: rgba(255, 255, 255, .88); }
-.topbar-heading p { margin: 0 0 4px; color: var(--qx-muted); font-size: 11px; }
 .topbar-heading strong { color: var(--qx-text); font-size: 14px; font-weight: 600; }
 .topbar-title-line { display: flex; align-items: center; gap: 13px; }
 .beijing-date { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--qx-border); border-radius: 999px; color: var(--qx-muted); background: #f8f8f7; font-size: 11px; white-space: nowrap; }
