@@ -1,10 +1,10 @@
 <view class="my-page">
   <view class="my-modules">
     <view class="profile-card" bindtap="onProfileTap">
-      <image class="profile-background" src="/assets/login-baijianlou-hero.webp" mode="aspectFill" />
+      <image class="profile-background" src="/assets/login-baijianlou-hero.jpg" mode="aspectFill" />
       <view class="profile-gradient" />
       <view class="profile-main">
-        <image class="profile-avatar" src="/assets/member-default-avatar.png" mode="aspectFill" />
+        <image class="profile-avatar" src="/assets/member-default-avatar.jpg" mode="aspectFill" />
         <view class="profile-copy">
           <view class="profile-identity">
             <text class="profile-name">{{nickname}}</text>

@@ -1,6 +1,6 @@
 /** 本机真机调试地址；手机需与开发电脑同一局域网。正式部署时改为已备案的 HTTPS 合法域名。 */
 export const API_BASE_URL = 'http://192.168.1.7:8080'
-export const DEFAULT_AVATAR_PATH = '/assets/member-default-avatar.png'
+export const DEFAULT_AVATAR_PATH = '/assets/member-default-avatar.jpg'
 /** 小程序统一展示的民宿地址。 */
 export const STORE_ADDRESS = '南浔古镇宝善街167号'
 /** 店铺联系电话，用于不可自助退款时联系商家。 */

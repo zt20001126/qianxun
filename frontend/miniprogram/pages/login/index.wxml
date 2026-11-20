@@ -1,6 +1,6 @@
 <view class="page-shell">
   <view class="hero-scene">
-    <image class="hero-background" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+    <image class="hero-background" src="../../assets/login-baijianlou-hero.jpg" mode="aspectFill" />
     <view class="hero-wash"></view>
 
     <view class="brand-block">

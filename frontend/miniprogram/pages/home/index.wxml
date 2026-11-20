@@ -1,6 +1,6 @@
 <view class="home-page">
   <view class="home-hero">
-    <image class="home-hero-image" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+    <image class="home-hero-image" src="../../assets/login-baijianlou-hero.jpg" mode="aspectFill" />
     <view class="home-hero-shade"></view>
     <view class="home-brand">
       <view class="brand-title-row">
@@ -63,7 +63,7 @@
   </view>
 
   <view class="nanxun-banner" data-type="nanxun" bindtap="onGuideTap">
-    <image class="banner-image" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+    <image class="banner-image" src="../../assets/login-baijianlou-hero.jpg" mode="aspectFill" />
     <view class="banner-shade"></view>
     <view class="banner-copy">
       <text class="banner-title">走进南浔古镇</text>

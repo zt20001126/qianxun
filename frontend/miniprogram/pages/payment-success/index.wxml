@@ -2,7 +2,7 @@
   <view wx:if="{{loading}}" class="success-loading">正在确认预订结果…</view>
   <view wx:elif="{{confirmed}}">
     <view class="success-hero">
-      <image class="success-hero-image" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+      <image class="success-hero-image" src="../../assets/login-baijianlou-hero.jpg" mode="aspectFill" />
       <view class="success-hero-shade"></view>
     </view>
 

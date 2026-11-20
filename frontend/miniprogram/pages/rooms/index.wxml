@@ -1,6 +1,6 @@
 <view class="rooms-page">
   <view class="rooms-hero">
-    <image class="rooms-hero-image" src="../../assets/decoration-baijianlou-houses.webp" mode="aspectFill" />
+    <image class="rooms-hero-image" src="../../assets/decoration-baijianlou-houses.jpg" mode="aspectFill" />
     <view class="rooms-hero-shade"></view>
   </view>
 

@@ -260,26 +260,10 @@
   white-space: nowrap;
 }
 
-.points-link {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
-  margin-top: 4rpx;
-  color: #8b4d25;
-  font-size: 20rpx;
-  white-space: nowrap;
-}
-
 .feature-extra image {
   width: 32rpx;
   height: 32rpx;
   flex: 0 0 32rpx;
-}
-
-.points-link image {
-  width: 24rpx;
-  height: 24rpx;
-  flex: 0 0 24rpx;
 }
 
 .feature-card {

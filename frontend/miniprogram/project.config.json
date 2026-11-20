@@ -2,7 +2,7 @@
   "description": "芊浔民宿微信小程序：第一阶段认证",
   "miniprogramRoot": "./",
   "compileType": "miniprogram",
-  "appid": "wxef5a49c421729a46",
+  "appid": "wx4cca0f5e70d52aca",
   "projectname": "qianxun-miniprogram",
   "setting": {
     "urlCheck": false,
@@ -36,7 +36,37 @@
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [],
-    "include": []
+    "include": [
+      { "type": "file", "value": "assets/login-baijianlou-hero.jpg" },
+      { "type": "file", "value": "assets/decoration-baijianlou-houses.jpg" },
+      { "type": "file", "value": "assets/member-default-avatar.jpg" },
+      { "type": "file", "value": "assets/tab-home.png" },
+      { "type": "file", "value": "assets/tab-home-active.png" },
+      { "type": "file", "value": "assets/tab-orders.png" },
+      { "type": "file", "value": "assets/tab-orders-active.png" },
+      { "type": "file", "value": "assets/tab-member.png" },
+      { "type": "file", "value": "assets/tab-member-active.png" },
+      { "type": "file", "value": "assets/tab-my.png" },
+      { "type": "file", "value": "assets/tab-my-active.png" },
+      { "type": "file", "value": "assets/orders-x-circle.svg" },
+      { "type": "file", "value": "assets/orders-clock.svg" },
+      { "type": "file", "value": "assets/orders-alert-circle.svg" },
+      { "type": "file", "value": "assets/orders-phone-call.svg" },
+      { "type": "file", "value": "assets/orders-rotate-ccw.svg" },
+      { "type": "file", "value": "assets/orders-chevron-right.svg" },
+      { "type": "file", "value": "assets/orders-calendar.svg" },
+      { "type": "file", "value": "assets/my-crown.svg" },
+      { "type": "file", "value": "assets/my-headphones.svg" },
+      { "type": "file", "value": "assets/member-crown-watermark.svg" },
+      { "type": "file", "value": "assets/member-crown-gold.svg" },
+      { "type": "file", "value": "assets/member-crown-wood.svg" },
+      { "type": "file", "value": "assets/member-trending-up.svg" },
+      { "type": "file", "value": "assets/member-wallet.svg" },
+      { "type": "file", "value": "assets/member-chevron-right.svg" },
+      { "type": "file", "value": "assets/member-coins.svg" },
+      { "type": "file", "value": "assets/member-book-open.svg" },
+      { "type": "folder", "value": "assets/icons" }
+    ]
   },
   "editorSetting": {}
 }

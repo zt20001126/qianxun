@@ -47,17 +47,13 @@
             </view>
           </view>
 
-          <view class="points-item available-item" bindtap="onPointsLogsTap">
+          <view class="points-item available-item">
             <view class="points-icon available-icon">
               <image src="/assets/member-wallet.svg" mode="aspectFit" />
             </view>
             <view class="points-copy">
               <text class="points-label">可用积分</text>
               <text class="points-number available-number">{{availablePointsDisplay}}</text>
-              <view class="points-link">
-                <text>点击查看流水明细</text>
-                <image src="/assets/member-chevron-right.svg" mode="aspectFit" />
-              </view>
             </view>
           </view>
         </view>
