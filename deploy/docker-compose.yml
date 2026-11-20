@@ -38,7 +38,7 @@ services:
       OSS_BUCKET: ${OSS_BUCKET:-}
       OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
       OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
-      MEMBER_DEFAULT_AVATAR: ${MEMBER_DEFAULT_AVATAR:-https://qianxunminsu.oss-cn-shanghai.aliyuncs.com/avatars/member-default-avatar.png}
+      MEMBER_DEFAULT_AVATAR: ${MEMBER_DEFAULT_AVATAR:-/assets/member-default-avatar.png}
       TZ: Asia/Shanghai
     ports:
       - "${BACKEND_HOST_PORT:-8080}:8080"
