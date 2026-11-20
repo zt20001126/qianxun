@@ -217,7 +217,7 @@
 .footer-actions {
   display: flex;
   align-items: center;
-  gap: 24rpx;
+  gap: 20rpx;
 }
 
 .footer-actions .cancel-button,
@@ -227,15 +227,26 @@
   justify-content: center;
   box-sizing: border-box;
   width: auto;
-  height: 84rpx;
-  flex: 1;
+  height: 88rpx;
+  flex: 1 1 0;
   margin: 0;
-  padding: 0 20rpx;
+  padding: 0 16rpx;
   border: 2rpx solid transparent;
-  border-radius: 32rpx;
+  border-radius: 26rpx;
   font-size: 24rpx;
   font-weight: 600;
   line-height: 1;
+}
+
+.footer-actions .contact-button {
+  flex-grow: 1.1;
+  gap: 12rpx;
+}
+
+.contact-button-icon {
+  width: 30rpx;
+  height: 30rpx;
+  flex: none;
 }
 
 .cancel-button::after,
@@ -246,22 +257,22 @@
 }
 
 .cancel-available {
-  border-color: #b83b2a;
+  border-color: rgba(184, 59, 42, 0.45);
   color: #b83b2a;
-  background: #ffffff;
+  background: #fff8f6;
 }
 
 .cancel-unavailable {
   border-color: #e8e0d4;
-  color: rgba(122, 114, 107, 0.6);
-  background: #faf7f2;
+  color: #8b8178;
+  background: #fffdfb;
 }
 
 .contact-button {
   border-color: #8b4d25;
   color: #ffffff;
   background: #8b4d25;
-  box-shadow: 0 8rpx 24rpx rgba(139, 77, 37, 0.2);
+  box-shadow: 0 6rpx 18rpx rgba(139, 77, 37, 0.16);
 }
 
 .home-indicator {

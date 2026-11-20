@@ -19,19 +19,20 @@
   text-align: center;
 }
 
-.payment-seal {
+.payment-icon-wrap {
   display: grid;
-  width: 96rpx;
-  height: 96rpx;
+  width: 104rpx;
+  height: 104rpx;
   place-items: center;
   margin: 0 auto;
-  border: 2rpx solid rgba(139, 77, 37, 0.25);
+  border: 2rpx solid rgba(139, 77, 37, 0.18);
   border-radius: 50%;
-  color: #8b4d25;
   background: #f7efe8;
-  font-family: "Songti SC", "Noto Serif SC", serif;
-  font-size: 40rpx;
-  font-weight: 700;
+}
+
+.payment-icon {
+  width: 52rpx;
+  height: 52rpx;
 }
 
 .payment-title {

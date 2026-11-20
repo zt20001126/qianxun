@@ -46,9 +46,11 @@
       </view>
     </scroll-view>
 
-    <button class="calendar-confirm {{nights > 0 ? '' : 'is-disabled'}}" disabled="{{nights < 1}}" bindtap="onConfirmTap">
-      <text wx:if="{{nights > 0}}">确认日期（共 {{nights}} 晚）</text>
-      <text wx:else>请选择退房日期</text>
-    </button>
+    <view class="calendar-footer">
+      <button class="calendar-confirm {{nights > 0 ? '' : 'is-disabled'}}" disabled="{{nights < 1}}" bindtap="onConfirmTap">
+        <text wx:if="{{nights > 0}}">确认日期（共 {{nights}} 晚）</text>
+        <text wx:else>请选择退房日期</text>
+      </button>
+    </view>
   </view>
 </view>

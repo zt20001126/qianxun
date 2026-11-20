@@ -198,7 +198,7 @@ Page({
         discountAmountLabel: formatMoney(order.discount_amount),
         paidAmountLabel: formatMoney(order.paid_amount),
       })
-      wx.setNavigationBarTitle({ title: `${order.room_number} 房订单` })
+      wx.setNavigationBarTitle({ title: '订单详情' })
     } catch (error) {
       this.setData({ errorMessage: error instanceof Error ? error.message : '订单详情读取失败' })
     } finally {

@@ -38,12 +38,6 @@
   white-space: nowrap;
 }
 
-.heading-hint {
-  flex-shrink: 0;
-  color: #7a726b;
-  font-size: 22rpx;
-}
-
 .orders-list {
   display: flex;
   flex-direction: column;

@@ -57,7 +57,10 @@
           disabled="{{refundPending}}"
           bindtap="onCancelTap"
         >{{refundPending ? '退款处理中' : '取消订单'}}</button>
-        <button class="contact-button" bindtap="onContactTap">联系商家</button>
+        <button class="contact-button" bindtap="onContactTap">
+          <image class="contact-button-icon" src="/assets/orders-phone-call-white.svg" mode="aspectFit" />
+          <text>联系商家</text>
+        </button>
       </view>
     </view>
 

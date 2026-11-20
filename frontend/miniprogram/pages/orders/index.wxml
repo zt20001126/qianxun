@@ -4,7 +4,6 @@
       <view class="heading-mark"></view>
       <text class="heading-copy">全部订单（{{total}}）</text>
     </view>
-    <text class="heading-hint">点击订单查看详情与退改</text>
   </view>
 
   <view wx:if="{{loading}}" class="orders-state">正在读取订单…</view>
