@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.common.security.service.JwtService;
+import com.qianxun.homestay.modules.payment.provider.WechatPayGateway;
 import com.qianxun.homestay.modules.refund.service.WechatRefundTransactionService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -22,10 +23,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /** 使用真实 MySQL 8 验证 O03/P03 自助模拟退款事务与幂等行为。 */
 @Testcontainers(disabledWithoutDocker = true)
@@ -59,6 +63,8 @@ class RefundApiIntegrationTest {
     private JwtService jwtService;
     @Autowired
     private WechatRefundTransactionService wechatRefundTransactionService;
+    @MockitoBean
+    private WechatPayGateway wechatPayGateway;
 
     private long memberId;
     private long orderId;
@@ -191,6 +197,46 @@ class RefundApiIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM points_log WHERE ref_no = ?", Integer.class, "RETURN:ORDER:" + orderId))
                 .isEqualTo(1);
+    }
+
+    @Test
+    void wechatRefundApiKeepsOrderAndPointsUnchangedUntilProviderConfirms() throws Exception {
+        jdbcTemplate.update(
+                "UPDATE payments SET payment_method = 'WECHAT', transaction_id = 'wx-transaction-api' WHERE order_id = ?",
+                orderId);
+
+        String firstResponse = mockMvc.perform(post("/api/app/orders/{id}/refunds", orderId)
+                        .header("Authorization", bearer(memberToken))
+                        .contentType("application/json")
+                        .content("{\"reason\":\"微信退款等待测试\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode first = objectMapper.readTree(firstResponse).path("data");
+        String secondResponse = mockMvc.perform(post("/api/app/orders/{id}/refunds", orderId)
+                        .header("Authorization", bearer(memberToken))
+                        .contentType("application/json")
+                        .content("{\"reason\":\"微信退款等待测试\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andReturn().getResponse().getContentAsString();
+        JsonNode second = objectMapper.readTree(secondResponse).path("data");
+
+        assertThat(second.path("refund_id").asLong()).isEqualTo(first.path("refund_id").asLong());
+        assertThat(second.path("refund_no").asText()).isEqualTo(first.path("refund_no").asText());
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM orders WHERE id = ?", String.class, orderId))
+                .isEqualTo("PENDING_CONFIRM");
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM refunds WHERE order_id = ?", String.class, orderId))
+                .isEqualTo("PENDING");
+        assertThat(jdbcTemplate.queryForObject("SELECT points FROM members WHERE id = ?", Integer.class, memberId))
+                .isEqualTo(40);
+        verify(wechatPayGateway, times(2)).createRefund(
+                org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.eq(first.path("refund_no").asText()),
+                org.mockito.ArgumentMatchers.any(BigDecimal.class),
+                org.mockito.ArgumentMatchers.any(BigDecimal.class),
+                org.mockito.ArgumentMatchers.eq("微信退款等待测试"));
     }
 
     @Test

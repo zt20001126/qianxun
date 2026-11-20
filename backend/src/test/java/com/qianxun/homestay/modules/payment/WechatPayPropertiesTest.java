@@ -29,6 +29,33 @@ class WechatPayPropertiesTest {
                 .hasMessageContaining("WECHAT_PAY_NOTIFY_URL");
     }
 
+    @Test
+    void rejectsMissingMerchantConfigurationWhenWechatPayIsEnabled() {
+        WechatPayProperties properties = completeProperties(
+                "https://api.example.com/api/payment/wechat/notify/payment",
+                "https://api.example.com/api/payment/wechat/notify/refund");
+        properties.setApiV3Key(" ");
+
+        assertThatThrownBy(properties::validateEnabledConfiguration)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("WECHAT_PAY_API_V3_KEY");
+    }
+
+    @Test
+    void rejectsHttpsCallbackUrlWithUserInfoOrFragment() {
+        WechatPayProperties withUserInfo = completeProperties(
+                "https://user@api.example.com/api/payment/wechat/notify/payment",
+                "https://api.example.com/api/payment/wechat/notify/refund");
+        WechatPayProperties withFragment = completeProperties(
+                "https://api.example.com/api/payment/wechat/notify/payment#fragment",
+                "https://api.example.com/api/payment/wechat/notify/refund");
+
+        assertThatThrownBy(withUserInfo::validateEnabledConfiguration)
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(withFragment::validateEnabledConfiguration)
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private WechatPayProperties completeProperties(String paymentUrl, String refundUrl) {
         WechatPayProperties properties = new WechatPayProperties();
         properties.setAppId("wx-app-id");

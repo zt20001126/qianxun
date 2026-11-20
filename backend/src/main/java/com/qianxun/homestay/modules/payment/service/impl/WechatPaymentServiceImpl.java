@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -93,7 +94,8 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
             String serial, String timestamp, String nonce, String signature, String body) {
         Transaction transaction = wechatPayGateway.parsePaymentNotification(
                 requestParam(serial, timestamp, nonce, signature, body));
-        if (!properties.getAppId().equals(transaction.getAppid())
+        if (transaction == null
+                || !properties.getAppId().equals(transaction.getAppid())
                 || !properties.getMerchantId().equals(transaction.getMchid())
                 || transaction.getTradeState() == null
                 || !"SUCCESS".equals(transaction.getTradeState().name())
@@ -107,11 +109,16 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "微信支付通知内容无效");
         }
         BigDecimal amount = BigDecimal.valueOf(transaction.getAmount().getTotal(), 2);
-        LocalDateTime paidAt = OffsetDateTime.parse(transaction.getSuccessTime()).atZoneSameInstant(BUSINESS_ZONE)
-                .toLocalDateTime();
+        LocalDateTime paidAt;
+        try {
+            paidAt = OffsetDateTime.parse(transaction.getSuccessTime()).atZoneSameInstant(BUSINESS_ZONE)
+                    .toLocalDateTime();
+        } catch (DateTimeParseException exception) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "微信支付通知成功时间格式无效");
+        }
         paymentTransactionService.settleWechatPayment(
                 transaction.getOutTradeNo(), transaction.getTransactionId(), amount, paidAt,
-                transaction.getPayer() == null ? null : transaction.getPayer().getOpenid());
+                transaction.getPayer().getOpenid());
     }
 
     @Override
@@ -119,18 +126,22 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
             String serial, String timestamp, String nonce, String signature, String body) {
         RefundNotification notification = wechatPayGateway.parseRefundNotification(
                 requestParam(serial, timestamp, nonce, signature, body));
-        if (notification.getRefundStatus() == null) {
+        if (notification == null || notification.getRefundStatus() == null) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "微信退款通知状态无效");
         }
         String refundStatus = notification.getRefundStatus().name();
         if ("CLOSED".equals(refundStatus) || "ABNORMAL".equals(refundStatus)) {
+            if (notification.getOutRefundNo() == null || notification.getOutRefundNo().isBlank()) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "微信退款通知缺少退款单号");
+            }
             wechatRefundService.failRefund(notification.getOutRefundNo(), "微信退款状态：" + refundStatus);
             return;
         }
         if (!"SUCCESS".equals(refundStatus)) {
             return;
         }
-        if (notification.getAmount() == null || notification.getAmount().getRefund() == null
+        if (notification.getOutRefundNo() == null || notification.getOutRefundNo().isBlank()
+                || notification.getAmount() == null || notification.getAmount().getRefund() == null
                 || notification.getAmount().getTotal() == null || notification.getRefundId() == null
                 || !"CNY".equals(notification.getAmount().getCurrency())
                 || notification.getTransactionId() == null || notification.getOutTradeNo() == null) {

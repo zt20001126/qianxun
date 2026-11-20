@@ -9,7 +9,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.security.service.JwtService;
 import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
+import com.qianxun.homestay.modules.payment.provider.WechatPayGateway;
+import com.qianxun.homestay.modules.payment.service.PaymentTimeoutService;
 import com.qianxun.homestay.modules.payment.service.PaymentTransactionService;
+import com.wechat.pay.java.service.payments.model.Transaction;
+import com.wechat.pay.java.service.payments.model.TransactionAmount;
+import com.wechat.pay.java.service.payments.model.TransactionPayer;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.http.MediaType;
@@ -34,6 +40,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /** 使用真实 MySQL 8 验证 P01/P08 预订支付闭环、快照、幂等和超时状态。 */
 @Testcontainers(disabledWithoutDocker = true)
@@ -72,6 +82,10 @@ class PaymentFlowApiIntegrationTest {
     private WechatPayProperties wechatPayProperties;
     @Autowired
     private PaymentTransactionService paymentTransactionService;
+    @Autowired
+    private PaymentTimeoutService paymentTimeoutService;
+    @MockitoBean
+    private WechatPayGateway wechatPayGateway;
 
     private long memberId;
     private long roomId;
@@ -178,6 +192,32 @@ class PaymentFlowApiIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"login_code\":\"unused\",\"phone_code\":\"unused\"}"))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void wechatPrepayEndpointValidatesOneTimeCodesAndRequiresMemberAuthentication() throws Exception {
+        JsonNode prepay = prepay();
+        String paymentNo = prepay.path("payment_no").asText();
+
+        mockMvc.perform(post("/api/app/payments/{paymentNo}/wechat-prepay", paymentNo)
+                        .header("Authorization", bearer(memberToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"login_code\":\"\",\"phone_code\":\"phone-code\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/app/payments/{paymentNo}/wechat-prepay", paymentNo)
+                        .header("Authorization", bearer(memberToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"login_code\":{\"code\":\"invalid-type\"},\"phone_code\":\"phone-code\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/app/payments/{paymentNo}/wechat-prepay", paymentNo)
+                        .header("Authorization", bearer(memberToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"login_code\":\"" + "x".repeat(129) + "\",\"phone_code\":\"phone-code\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/app/payments/{paymentNo}/wechat-prepay", paymentNo)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"login_code\":\"login-code\",\"phone_code\":\"phone-code\"}"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -319,6 +359,116 @@ class PaymentFlowApiIntegrationTest {
                 .isEqualTo(POINTS_TO_USE);
     }
 
+    @Test
+    void expiredWechatLockIsReleasedOnlyAfterProviderCloseSucceeds() throws Exception {
+        JsonNode prepay = wechatPrepay();
+        String paymentNo = prepay.path("payment_no").asText();
+        long paymentId = expireWechatTrade(prepay);
+
+        paymentTimeoutService.closeExpiredPayment(paymentId);
+        paymentTimeoutService.closeExpiredPayment(paymentId);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM payments WHERE id = ?", String.class, paymentId)).isEqualTo("CLOSED");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM booking_lock WHERE id = ?", String.class,
+                prepay.path("booking_id").asLong())).isEqualTo("EXPIRED");
+        verify(wechatPayGateway, times(1)).closePayment(paymentNo);
+    }
+
+    @Test
+    void closeFailureWithWechatClosedQueryReleasesReservation() throws Exception {
+        JsonNode prepay = wechatPrepay();
+        String paymentNo = prepay.path("payment_no").asText();
+        long paymentId = expireWechatTrade(prepay);
+        doThrow(new IllegalStateException("close response lost"))
+                .when(wechatPayGateway).closePayment(paymentNo);
+        Transaction transaction = new Transaction();
+        transaction.setTradeState(Transaction.TradeStateEnum.CLOSED);
+        when(wechatPayGateway.queryPayment(paymentNo)).thenReturn(transaction);
+
+        paymentTimeoutService.closeExpiredPayment(paymentId);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM payments WHERE id = ?", String.class, paymentId)).isEqualTo("CLOSED");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM booking_lock WHERE id = ?", String.class,
+                prepay.path("booking_id").asLong())).isEqualTo("EXPIRED");
+    }
+
+    @Test
+    void unknownWechatTradeStateKeepsPaymentAndRoomReservationPending() throws Exception {
+        JsonNode prepay = wechatPrepay();
+        String paymentNo = prepay.path("payment_no").asText();
+        long paymentId = expireWechatTrade(prepay);
+        doThrow(new IllegalStateException("close response lost"))
+                .when(wechatPayGateway).closePayment(paymentNo);
+        Transaction transaction = new Transaction();
+        transaction.setTradeState(Transaction.TradeStateEnum.NOTPAY);
+        when(wechatPayGateway.queryPayment(paymentNo)).thenReturn(transaction);
+
+        paymentTimeoutService.closeExpiredPayment(paymentId);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM payments WHERE id = ?", String.class, paymentId)).isEqualTo("PENDING");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM booking_lock WHERE id = ?", String.class,
+                prepay.path("booking_id").asLong())).isEqualTo("PENDING");
+    }
+
+    @Test
+    void closeAndQueryNetworkFailuresKeepWechatReservationPending() throws Exception {
+        JsonNode prepay = wechatPrepay();
+        String paymentNo = prepay.path("payment_no").asText();
+        long paymentId = expireWechatTrade(prepay);
+        doThrow(new IllegalStateException("close unavailable"))
+                .when(wechatPayGateway).closePayment(paymentNo);
+        when(wechatPayGateway.queryPayment(paymentNo)).thenThrow(new IllegalStateException("query unavailable"));
+
+        paymentTimeoutService.closeExpiredPayment(paymentId);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM payments WHERE id = ?", String.class, paymentId)).isEqualTo("PENDING");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM booking_lock WHERE id = ?", String.class,
+                prepay.path("booking_id").asLong())).isEqualTo("PENDING");
+    }
+
+    @Test
+    void closeFailureFollowedByWechatSuccessQuerySettlesPaidOrderInsteadOfReleasingRoom() throws Exception {
+        JsonNode prepay = wechatPrepay();
+        String paymentNo = prepay.path("payment_no").asText();
+        long paymentId = expireWechatTrade(prepay);
+        String openid = "wx-timeout-test-openid";
+        jdbcTemplate.update("UPDATE members SET openid = ? WHERE id = ?", openid, memberId);
+        LocalDateTime expiresAt = LocalDateTime.now(BUSINESS_ZONE).minusMinutes(1);
+        LocalDateTime paidAt = expiresAt.minusMinutes(1);
+        doThrow(new IllegalStateException("close raced with payment"))
+                .when(wechatPayGateway).closePayment(paymentNo);
+        Transaction transaction = new Transaction();
+        transaction.setTradeState(Transaction.TradeStateEnum.SUCCESS);
+        transaction.setOutTradeNo(paymentNo);
+        transaction.setTransactionId("wx-timeout-transaction");
+        transaction.setSuccessTime(paidAt.atZone(BUSINESS_ZONE).toOffsetDateTime().toString());
+        TransactionAmount amount = new TransactionAmount();
+        amount.setTotal(19000);
+        amount.setCurrency("CNY");
+        transaction.setAmount(amount);
+        TransactionPayer payer = new TransactionPayer();
+        payer.setOpenid(openid);
+        transaction.setPayer(payer);
+        when(wechatPayGateway.queryPayment(paymentNo)).thenReturn(transaction);
+
+        paymentTimeoutService.closeExpiredPayment(paymentId);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM payments WHERE id = ?", String.class, paymentId)).isEqualTo("SUCCESS");
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM booking_lock WHERE id = ?", String.class,
+                prepay.path("booking_id").asLong())).isEqualTo("PAID");
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM orders", Integer.class)).isEqualTo(1);
+    }
+
     private JsonNode prepay() throws Exception {
         String response = mockMvc.perform(post("/api/app/payments/prepay")
                         .header("Authorization", bearer(memberToken))
@@ -327,6 +477,25 @@ class PaymentFlowApiIntegrationTest {
                 .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).path("data");
+    }
+
+    private JsonNode wechatPrepay() throws Exception {
+        wechatPayProperties.setEnabled(true);
+        try {
+            return prepay();
+        } finally {
+            wechatPayProperties.setEnabled(false);
+        }
+    }
+
+    private long expireWechatTrade(JsonNode prepay) {
+        String paymentNo = prepay.path("payment_no").asText();
+        Long paymentId = jdbcTemplate.queryForObject(
+                "SELECT id FROM payments WHERE payment_no = ?", Long.class, paymentNo);
+        jdbcTemplate.update("UPDATE payments SET wechat_prepay_id = 'test-prepay-id' WHERE id = ?", paymentId);
+        jdbcTemplate.update("UPDATE booking_lock SET expires_at = ? WHERE id = ?",
+                LocalDateTime.now(BUSINESS_ZONE).minusMinutes(1), prepay.path("booking_id").asLong());
+        return paymentId;
     }
 
     private String prepayRequestBody() throws Exception {

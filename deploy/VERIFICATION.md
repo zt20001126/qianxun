@@ -31,8 +31,9 @@
 
 | 检查 | 结果 |
 | --- | --- |
-| `mvn -f backend/pom.xml test` | 通过：52 tests，0 failures，0 errors，0 skipped；覆盖 V1–V10 Flyway 与 MySQL 8 集成测试 |
-| `mvn -f backend/pom.xml "-Dtest=PaymentFlowApiIntegrationTest,RefundApiIntegrationTest,WechatPayPropertiesTest" test`（最终代码复核） | 通过：18 tests，0 failures，0 errors，0 skipped；验证支付模式开关、微信结算/退款幂等、金额与 OpenID 核对、失败退款不取消订单/不返积分及 HTTPS 回调配置 |
+| `mvn -f backend/pom.xml test` | 通过：99 tests，0 failures，0 errors，0 skipped；覆盖 V1–V10 Flyway 与 MySQL 8 集成测试 |
+| 微信身份、支付、通知、退款与配置专项测试（8 个测试类） | 通过：65 tests，0 failures，0 errors，0 skipped；覆盖 OpenID/手机号绑定、HTTP 回调、支付模式、金额和付款人核对、退款等待/失败/重试、超时对账和 HTTPS 配置 |
+| `mvn -f backend/pom.xml "-Dtest=PaymentFlowApiIntegrationTest" test`（重复超时扫描复核） | 通过：14 tests，0 failures，0 errors，0 skipped；确认未知微信状态保留预订，已关闭支付的重复扫描不再调用微信 |
 | `npm run typecheck`（`frontend/miniprogram`） | 通过 |
 | `docker compose --env-file deploy/.env.example -f deploy/docker-compose.yml config --quiet`（进程内提供测试 JWT 值） | 通过；测试值未写入文件 |
 
