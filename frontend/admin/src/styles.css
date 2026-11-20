@@ -104,6 +104,11 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .admin-topbar { display: flex; min-height: 78px; align-items: center; justify-content: space-between; padding: 12px 36px; border-bottom: 1px solid var(--qx-border); background: rgba(255, 255, 255, .88); }
 .topbar-heading p { margin: 0 0 4px; color: var(--qx-muted); font-size: 11px; }
 .topbar-heading strong { color: var(--qx-text); font-size: 14px; font-weight: 600; }
+.topbar-title-line { display: flex; align-items: center; gap: 13px; }
+.beijing-date { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--qx-border); border-radius: 999px; color: var(--qx-muted); background: #f8f8f7; font-size: 11px; white-space: nowrap; }
+.beijing-date svg { width: 14px; height: 14px; fill: none; stroke: var(--qx-primary); stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.admin-content.admin-content-dashboard { width: 100%; max-width: none; padding-top: 22px; }
 .admin-account { display: flex; align-items: center; gap: 10px; }
 .sidebar-account { margin-top: auto; padding: 12px; border: 1px solid #e5ebeb; border-radius: 16px; background: #f7f8f8; }
 .account-avatar { display: block; width: 40px; height: 40px; flex: 0 0 auto; border: 1px solid #d9e7e8; border-radius: 50%; background: #fff; object-fit: cover; }
@@ -224,6 +229,8 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
   .sidebar-nav { overflow-x: auto; }
   .sidebar-nav a { flex: 0 0 auto; min-height: 39px; padding: 0 10px; }
   .admin-topbar { min-height: 64px; padding: 10px 20px; }
+  .admin-topbar-dashboard { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .topbar-actions { width: 100%; justify-content: flex-end; }
   .admin-content { padding: 25px 20px 40px; }
 }
 @media (max-width: 560px) {
@@ -233,6 +240,10 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
   .sidebar-nav a { gap: 6px; padding: 0 7px; font-size: 11px; }
   .sidebar-nav a span { width: 21px; height: 21px; font-size: 10px; }
   .admin-topbar { padding: 10px 14px; }
+  .admin-topbar-dashboard { gap: 8px; }
+  .topbar-title-line { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .beijing-date { font-size: 10px; }
+  .topbar-actions .button { min-height: 33px; padding: 0 10px; font-size: 10px; }
   .admin-content { padding: 22px 13px 32px; }
   .page-heading-row { align-items: flex-start; }
   .page-heading-row h1 { font-size: 23px; }

@@ -1,14 +1,23 @@
 <script setup lang="ts">
 /** 后台壳层，集中提供模块导航、管理员身份和退出入口。 */
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { formatChineseDate, shanghaiDate } from '../utils/operations'
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
+const isPrototypeShell = computed(() => route.path === '/home' || route.path === '/room-calendar')
+const beijingDateLabel = formatChineseDate(shanghaiDate(new Date()))
 
 function logout(): void {
   auth.clear()
   void router.replace('/login')
+}
+
+function openExternalOrder(): void {
+  void router.push({ path: '/orders', query: { calendar_action: 'create' } })
 }
 </script>
 
@@ -42,13 +51,23 @@ function logout(): void {
     </aside>
 
     <div class="admin-main">
-      <header class="admin-topbar">
+      <header class="admin-topbar" :class="{ 'admin-topbar-dashboard': isPrototypeShell }">
         <div class="topbar-heading">
           <p>芊浔民宿 · 南浔</p>
-          <strong>{{ $route.meta.title || '经营管理' }}</strong>
+          <div class="topbar-title-line">
+            <strong>{{ $route.meta.title || '经营管理' }}</strong>
+            <span v-if="isPrototypeShell" class="beijing-date">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              北京时间截至：{{ beijingDateLabel }}
+            </span>
+          </div>
+        </div>
+        <div v-if="isPrototypeShell" class="topbar-actions">
+          <button class="button button-primary" type="button" @click="openExternalOrder">＋ 录入第三方订单</button>
+          <button class="button button-outline" type="button" @click="logout">退出登录</button>
         </div>
       </header>
-      <main class="admin-content"><RouterView /></main>
+      <main class="admin-content" :class="{ 'admin-content-dashboard': isPrototypeShell }"><RouterView /></main>
     </div>
   </div>
 </template>

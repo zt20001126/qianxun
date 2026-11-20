@@ -1,248 +1,634 @@
 <script setup lang="ts">
-/** K01 后台月历：按房间和住宿日展示订单、封房及空房状态。 */
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+/** K01 后台房态日历：支持按日 / 按周 / 按月三维度筛选、订单详情/入离与封房页内操作。 */
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { calendarApi } from '../../api/calendar'
-import type { CalendarDay, CalendarDayStatus, RoomCalendar } from '../../api/calendar'
+import type { CalendarDay } from '../../api/calendar'
+import { channelApi } from '../../api/channels'
+import { creatorApi } from '../../api/creators'
+import { orderApi } from '../../api/orders'
+import { roomBlockApi } from '../../api/room-blocks'
+import type { RoomBlock } from '../../api/room-blocks'
+import { roomApi } from '../../api/rooms'
+import ExternalOrderCreateModal from '../../components/operations/ExternalOrderCreateModal.vue'
+import OrderDetailModal from '../../components/operations/OrderDetailModal.vue'
+import RoomBlockModal from '../../components/operations/RoomBlockModal.vue'
+import type { Channel, Creator, Room } from '../../types/catalog'
+import type { OrderDetail } from '../../types/orders'
+import {
+  addDays,
+  dayDifference,
+  isWeekendDate,
+  monthDateList,
+  roomStatusLabel,
+  shanghaiDate,
+  shiftMonthValue,
+  weekdayShort,
+} from '../../utils/operations'
+import '../../styles/operations.css'
 
-const router = useRouter()
-const month = ref(currentMonth())
-const calendar = ref<RoomCalendar | null>(null)
+type CalendarMode = 'day' | 'week' | 'month'
+
+interface CalendarRowRoom {
+  id: number
+  number: string
+  name: string
+}
+
+interface CellRenderInfo {
+  type: 'AVAILABLE' | 'BLOCKED' | 'ORDER'
+  statusCode: string
+  label: string
+  isFirstNight: boolean
+  guestName: string
+  channelName: string
+  order: OrderDetail | null
+  orderId: number | null
+  block: RoomBlock | null
+  blockReason: string
+  nights: number
+  guestCount: number
+  paidAmount: string
+}
+
+const today = shanghaiDate()
+const mode = ref<CalendarMode>('week')
+const anchorDate = ref(today)
+const month = ref(today.slice(0, 7))
+
 const loading = ref(false)
 const errorMessage = ref('')
-let latestRequest = 0
+let loadSequence = 0
 
-const dates = computed(() => {
-  const [year, monthNumber] = month.value.split('-').map(Number)
-  if (!year || !monthNumber) return []
-  const dayCount = new Date(year, monthNumber, 0).getDate()
-  return Array.from({ length: dayCount }, (_, index) =>
-    `${month.value}-${String(index + 1).padStart(2, '0')}`,
-  )
+const rooms = ref<Room[]>([])
+const channels = ref<Channel[]>([])
+const creators = ref<Creator[]>([])
+const calendarRoomList = ref<CalendarRowRoom[]>([])
+const dayMapByRoom = ref<Record<number, Record<string, CalendarDay>>>({})
+const blockById = ref<Record<number, RoomBlock>>({})
+const orderDetails = ref<Record<number, OrderDetail>>({})
+
+// 页内弹窗状态
+const createModalOpen = ref(false)
+const createPresetRoomId = ref<number | null>(null)
+const createPresetCheckIn = ref(today)
+
+const detailModalOpen = ref(false)
+const activeOrderId = ref<number | null>(null)
+
+const blockModalOpen = ref(false)
+const editingBlock = ref<RoomBlock | null>(null)
+const blockPresetRoomId = ref<number | null>(null)
+const blockPresetStartDate = ref(today)
+
+// Toast
+const toastMessage = ref('')
+let toastTimer: number | null = null
+
+const dateCols = computed((): string[] => {
+  if (mode.value === 'day') return [anchorDate.value]
+  if (mode.value === 'week') return Array.from({ length: 7 }, (_, i) => addDays(anchorDate.value, i))
+  return monthDateList(month.value)
 })
 
-const monthLabel = computed(() => {
-  const [year, monthNumber] = month.value.split('-')
-  return `${year} 年 ${Number(monthNumber)} 月`
+const weekEndShort = computed(() => {
+  const cols = dateCols.value
+  return cols.length > 0 ? cols[cols.length - 1].slice(5) : ''
 })
 
-const statusLabels: Record<CalendarDayStatus, string> = {
-  AVAILABLE: '空房',
-  BLOCKED: '不可预订',
-  PENDING_CONFIRM: '已预订',
-  PENDING_CHECKIN: '待入住',
-  CHECKED_IN: '已入住',
-  COMPLETED: '已退房',
-  OCCUPIED: '占用',
-}
+const isCurrentPeriod = computed(() => {
+  if (mode.value === 'day') return anchorDate.value === today
+  if (mode.value === 'week') return dateCols.value.includes(today)
+  return month.value === today.slice(0, 7)
+})
 
-onMounted(() => loadCalendar())
+const currentPeriodBadge = computed(() => {
+  if (mode.value === 'day') return '今日'
+  if (mode.value === 'week') return '本周'
+  return '本月'
+})
 
-function currentMonth(): string {
-  const today = new Date()
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
-}
+const resetBtnLabel = computed(() => {
+  if (mode.value === 'day') return '回到今日'
+  if (mode.value === 'week') return '回到本周'
+  return '回到本月'
+})
 
-function changeMonth(offset: number): void {
-  const [year, monthNumber] = month.value.split('-').map(Number)
-  if (!year || !monthNumber) return
-  const nextMonth = new Date(year, monthNumber - 1 + offset, 1)
-  month.value = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}`
-  void loadCalendar()
-}
-
-function goToCurrentMonth(): void {
-  month.value = currentMonth()
-  void loadCalendar()
+async function loadCatalogs(): Promise<void> {
+  const [channelList, creatorList] = await Promise.all([
+    channelApi.list().catch(() => []),
+    creatorApi.list({}).catch(() => []),
+  ])
+  channels.value = channelList
+  creators.value = creatorList
 }
 
 async function loadCalendar(): Promise<void> {
-  const requestNumber = ++latestRequest
+  const cols = dateCols.value
+  if (cols.length === 0) return
+
+  const sequence = ++loadSequence
+  const involvedMonths = [...new Set(cols.map((d) => d.slice(0, 7)))]
   loading.value = true
   errorMessage.value = ''
-  calendar.value = null
+
   try {
-    const result = await calendarApi.month(month.value)
-    if (requestNumber === latestRequest) calendar.value = result
-  } catch (error) {
-    if (requestNumber === latestRequest) {
-      errorMessage.value = error instanceof Error ? error.message : '房态日历读取失败'
-      calendar.value = null
+    const [monthResults, blockLists, roomList] = await Promise.all([
+      Promise.all(involvedMonths.map((m) => calendarApi.month(m))),
+      Promise.all(involvedMonths.map((m) => roomBlockApi.list(undefined, m).catch(() => []))),
+      roomApi.list().catch(() => rooms.value),
+    ])
+    if (sequence !== loadSequence) return
+
+    rooms.value = roomList
+    const roomNameById = new Map(roomList.map((r) => [r.id, r.name]))
+
+    const mergedRoomOrder: CalendarRowRoom[] = []
+    const seenRoomIds = new Set<number>()
+    const mergedDays: Record<number, Record<string, CalendarDay>> = {}
+
+    for (const cal of monthResults) {
+      for (const rm of cal.rooms) {
+        if (!seenRoomIds.has(rm.room_id)) {
+          seenRoomIds.add(rm.room_id)
+          mergedRoomOrder.push({
+            id: rm.room_id,
+            number: rm.room_number,
+            name: roomNameById.get(rm.room_id) || '客房',
+          })
+        }
+        if (!mergedDays[rm.room_id]) mergedDays[rm.room_id] = {}
+        for (const day of rm.days) {
+          mergedDays[rm.room_id][day.date] = day
+        }
+      }
     }
+
+    const mergedBlocks: Record<number, RoomBlock> = {}
+    for (const list of blockLists) {
+      for (const blk of list) {
+        mergedBlocks[blk.id] = blk
+      }
+    }
+
+    calendarRoomList.value = mergedRoomOrder
+    dayMapByRoom.value = mergedDays
+    blockById.value = mergedBlocks
+
+    // 仅拉取当前可见日期列中出现的订单详情（去重并行）
+    const orderIdSet = new Set<number>()
+    for (const rm of mergedRoomOrder) {
+      const days = mergedDays[rm.id]
+      if (!days) continue
+      for (const d of cols) {
+        const cell = days[d]
+        if (cell?.order_id != null) orderIdSet.add(cell.order_id)
+      }
+    }
+
+    const orderIds = [...orderIdSet]
+    const detailResults = await Promise.allSettled(orderIds.map((id) => orderApi.detail(id)))
+    if (sequence !== loadSequence) return
+
+    const details: Record<number, OrderDetail> = {}
+    detailResults.forEach((entry, index) => {
+      if (entry.status === 'fulfilled') details[orderIds[index]] = entry.value
+    })
+    orderDetails.value = details
+  } catch (cause) {
+    if (sequence !== loadSequence) return
+    errorMessage.value = cause instanceof Error ? cause.message : '房态日历读取失败'
   } finally {
-    if (requestNumber === latestRequest) loading.value = false
+    if (sequence === loadSequence) loading.value = false
   }
 }
 
-function weekday(date: string): string {
-  const [year, monthNumber, day] = date.split('-').map(Number)
-  return new Date(year, monthNumber - 1, day).toLocaleDateString('zh-CN', { weekday: 'short' })
-}
-
-function statusLabel(status: CalendarDayStatus): string {
-  return statusLabels[status]
-}
-
-function openCell(roomId: number, day: CalendarDay): void {
-  if (day.status === 'AVAILABLE') {
-    void router.push({
-      path: '/orders',
-      query: {
-        calendar_action: 'create',
-        room_id: String(roomId),
-        check_in: day.date,
-        check_out: nextDate(day.date),
-      },
-    })
-    return
+function getCellInfo(roomId: number, dateStr: string): CellRenderInfo {
+  const day = dayMapByRoom.value[roomId]?.[dateStr]
+  if (!day || day.status === 'AVAILABLE') {
+    return {
+      type: 'AVAILABLE',
+      statusCode: 'AVAILABLE',
+      label: '空房',
+      isFirstNight: true,
+      guestName: '',
+      channelName: '',
+      order: null,
+      orderId: null,
+      block: null,
+      blockReason: '',
+      nights: 0,
+      guestCount: 0,
+      paidAmount: '0.00',
+    }
   }
+
   if (day.status === 'BLOCKED') {
-    void router.push({
-      path: '/room-blocks',
-      query: { calendar_action: 'block', room_id: String(roomId), month: month.value },
-    })
+    const block = day.block_id != null ? blockById.value[day.block_id] ?? null : null
+    return {
+      type: 'BLOCKED',
+      statusCode: 'BLOCKED',
+      label: '不可预订',
+      isFirstNight: true,
+      guestName: '',
+      channelName: '',
+      order: null,
+      orderId: null,
+      block,
+      blockReason: block?.reason || '管理员封房',
+      nights: 0,
+      guestCount: 0,
+      paidAmount: '0.00',
+    }
+  }
+
+  const order = day.order_id != null ? orderDetails.value[day.order_id] ?? null : null
+  const statusCode = order?.status || day.status
+  const isFirstNight = order ? order.check_in === dateStr : day.status !== 'OCCUPIED'
+  const nights = order ? order.nights || Math.max(1, dayDifference(order.check_in, order.check_out)) : 1
+
+  return {
+    type: 'ORDER',
+    statusCode,
+    label: roomStatusLabel(statusCode),
+    isFirstNight,
+    guestName: order?.guest_name || '散客',
+    channelName: order?.channel_name || '外部',
+    order,
+    orderId: day.order_id,
+    block: null,
+    blockReason: '',
+    nights,
+    guestCount: order?.guest_count ?? 1,
+    paidAmount: order?.paid_amount ?? '0.00',
+  }
+}
+
+function orderToneClass(statusCode: string): string {
+  const map: Record<string, string> = {
+    PENDING_CONFIRM: 'is-reserved',
+    PENDING_CHECKIN: 'is-pending',
+    CHECKED_IN: 'is-checked-in',
+    OCCUPIED: 'is-checked-in',
+    COMPLETED: 'is-completed',
+  }
+  return map[statusCode] || 'is-checked-in'
+}
+
+function formatHeaderDate(dateStr: string): string {
+  return mode.value === 'month' ? `${dateStr.slice(8)}日` : dateStr.slice(5).replace('-', '/')
+}
+
+function setMode(nextMode: CalendarMode): void {
+  mode.value = nextMode
+  if (nextMode === 'month') {
+    month.value = anchorDate.value.slice(0, 7)
+  }
+  void loadCalendar()
+}
+
+function setAnchorDate(nextDate: string): void {
+  if (!nextDate) return
+  anchorDate.value = nextDate
+  month.value = nextDate.slice(0, 7)
+  void loadCalendar()
+}
+
+function onAnchorDateInput(event: Event): void {
+  const target = event.target
+  if (target instanceof HTMLInputElement && target.value) setAnchorDate(target.value)
+}
+
+function onMonthInput(event: Event): void {
+  const target = event.target
+  if (!(target instanceof HTMLInputElement) || !target.value) return
+  month.value = target.value
+  anchorDate.value = `${target.value}-01`
+  void loadCalendar()
+}
+
+function shiftPeriod(delta: number): void {
+  if (mode.value === 'day') {
+    anchorDate.value = addDays(anchorDate.value, delta)
+    month.value = anchorDate.value.slice(0, 7)
+  } else if (mode.value === 'week') {
+    anchorDate.value = addDays(anchorDate.value, delta * 7)
+    month.value = anchorDate.value.slice(0, 7)
+  } else {
+    month.value = shiftMonthValue(month.value, delta)
+    anchorDate.value = `${month.value}-01`
+  }
+  void loadCalendar()
+}
+
+function resetToToday(): void {
+  anchorDate.value = today
+  month.value = today.slice(0, 7)
+  void loadCalendar()
+}
+
+function handleCellClick(roomId: number, dateStr: string, info: CellRenderInfo): void {
+  if (info.type === 'ORDER' && info.orderId != null) {
+    activeOrderId.value = info.orderId
+    detailModalOpen.value = true
     return
   }
-  if (day.order_id != null) {
-    void router.push({
-      path: '/orders',
-      query: { calendar_action: 'detail', order_id: String(day.order_id) },
-    })
+  if (info.type === 'BLOCKED') {
+    editingBlock.value = info.block
+    blockPresetRoomId.value = roomId
+    blockPresetStartDate.value = dateStr
+    blockModalOpen.value = true
+    return
   }
+  createPresetRoomId.value = roomId
+  createPresetCheckIn.value = dateStr
+  createModalOpen.value = true
 }
 
-function nextDate(date: string): string {
-  const [year, monthNumber, day] = date.split('-').map(Number)
-  const next = new Date(year, monthNumber - 1, day + 1)
-  return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`
+function openNewBlockModal(): void {
+  editingBlock.value = null
+  blockPresetRoomId.value = rooms.value[0]?.id ?? calendarRoomList.value[0]?.id ?? null
+  blockPresetStartDate.value = anchorDate.value
+  blockModalOpen.value = true
 }
 
-function cellClass(status: CalendarDayStatus): string {
-  return `calendar-cell-${status.toLowerCase()}`
+function showToast(message: string): void {
+  toastMessage.value = message
+  if (toastTimer != null) window.clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => {
+    toastMessage.value = ''
+  }, 2600)
 }
+
+function handleOrderCreated(message: string): void {
+  createModalOpen.value = false
+  showToast(message)
+  void loadCalendar()
+}
+
+function handleOrderUpdated(message: string): void {
+  detailModalOpen.value = false
+  showToast(message)
+  void loadCalendar()
+}
+
+function handleBlockSaved(message: string): void {
+  blockModalOpen.value = false
+  showToast(message)
+  void loadCalendar()
+}
+
+onMounted(() => {
+  void loadCatalogs()
+  void loadCalendar()
+})
+
+onBeforeUnmount(() => {
+  if (toastTimer != null) window.clearTimeout(toastTimer)
+})
 </script>
 
 <template>
-  <section class="calendar-page">
-    <div class="page-heading-row calendar-heading">
-      <div>
-        <p class="page-eyebrow">ROOM CALENDAR</p>
-        <h1>房态日历</h1>
-        <p class="page-description">查看客房每日订单和封房情况；待支付临时锁房不在此日历显示。</p>
-      </div>
-      <div class="calendar-month-controls">
-        <button class="button button-outline" type="button" :disabled="loading" aria-label="上一个月" @click="changeMonth(-1)">‹</button>
-        <input v-model="month" type="month" aria-label="选择月份" @change="loadCalendar">
-        <button class="button button-outline" type="button" :disabled="loading" aria-label="下一个月" @click="changeMonth(1)">›</button>
-        <button class="button button-quiet" type="button" :disabled="loading" @click="goToCurrentMonth">本月</button>
-      </div>
-    </div>
+  <section class="cal-proto-page">
+    <!-- 顶部日/周/月三维度筛选 + 时间步进导航 + 新增封房 -->
+    <section class="cal-toolbar-card" aria-label="房态日历筛选与导航">
+      <div class="cal-toolbar-left">
+        <div class="cal-mode-switch" role="group" aria-label="日历时间维度">
+          <button type="button" :class="{ 'is-active': mode === 'day' }" @click="setMode('day')">按日</button>
+          <button type="button" :class="{ 'is-active': mode === 'week' }" @click="setMode('week')">按周</button>
+          <button type="button" :class="{ 'is-active': mode === 'month' }" @click="setMode('month')">按月</button>
+        </div>
 
-    <div class="calendar-summary-row">
-      <strong>{{ monthLabel }}</strong>
-      <div class="calendar-legend" aria-label="房态说明">
-        <span><i class="legend-dot legend-available" />空房</span>
-        <span><i class="legend-dot legend-booked" />已预订 / 待入住</span>
-        <span><i class="legend-dot legend-checked-in" />已入住 / 占用</span>
-        <span><i class="legend-dot legend-completed" />已退房</span>
-        <span><i class="legend-dot legend-blocked" />不可预订</span>
+        <!-- 按日时间导航 -->
+        <div v-if="mode === 'day'" class="dashboard-date-picker">
+          <button type="button" aria-label="前一天" title="前一天" :disabled="loading" @click="shiftPeriod(-1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <input :value="anchorDate" type="date" aria-label="选择房态日期" @change="onAnchorDateInput" />
+          <button type="button" aria-label="后一天" title="后一天" :disabled="loading" @click="shiftPeriod(1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </div>
+
+        <!-- 按周时间导航 -->
+        <div v-else-if="mode === 'week'" class="dashboard-date-picker cal-week-picker">
+          <button type="button" aria-label="上一周" title="上一周" :disabled="loading" @click="shiftPeriod(-1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <div class="cal-week-range">
+            <input :value="anchorDate" type="date" aria-label="选择周起始日期" @change="onAnchorDateInput" />
+            <span class="is-mono">至 {{ weekEndShort }}</span>
+          </div>
+          <button type="button" aria-label="下一周" title="下一周" :disabled="loading" @click="shiftPeriod(1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </div>
+
+        <!-- 按月时间导航 -->
+        <div v-else class="dashboard-date-picker">
+          <button type="button" aria-label="上一月" title="上一月" :disabled="loading" @click="shiftPeriod(-1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+          <input :value="month" type="month" aria-label="选择月份" @change="onMonthInput" />
+          <button type="button" aria-label="下一月" title="下一月" :disabled="loading" @click="shiftPeriod(1)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </div>
+
+        <span v-if="isCurrentPeriod" class="status-pill-tag is-today">{{ currentPeriodBadge }}</span>
+        <button v-else type="button" class="status-pill-btn is-rect" :disabled="loading" @click="resetToToday">
+          {{ resetBtnLabel }}
+        </button>
       </div>
-    </div>
+
+      <div class="cal-toolbar-right">
+        <button type="button" class="cal-add-block-btn" @click="openNewBlockModal">+ 新增封房</button>
+      </div>
+    </section>
+
+    <!-- 房态颜色图例条 -->
+    <section class="cal-legend-bar" aria-label="房态图例">
+      <div class="cal-legend-items">
+        <span class="cal-legend-title">房态图例：</span>
+        <span class="cal-legend-pill is-available">空房</span>
+        <span class="cal-legend-pill is-reserved">已预订(待确认)</span>
+        <span class="cal-legend-pill is-pending">待入住</span>
+        <span class="cal-legend-pill is-checked-in">已入住</span>
+        <span class="cal-legend-pill is-completed">已退房</span>
+        <span class="cal-legend-pill is-blocked">不可预订(封房)</span>
+      </div>
+      <span class="cal-legend-hint">点击「空房」直接建单，点击已占日期查看详情或办理入离</span>
+    </section>
 
     <p v-if="errorMessage" class="notice notice-error" role="alert">{{ errorMessage }}</p>
 
-    <div class="calendar-card">
-      <div v-if="loading && !calendar" class="calendar-state">正在读取房态日历…</div>
-      <div v-else-if="!calendar || calendar.rooms.length === 0" class="calendar-state">
-        <strong>没有客房日历数据</strong>
-        <span>请检查客房资料或重试。</span>
-        <button class="button button-outline" type="button" :disabled="loading" @click="loadCalendar">重新加载</button>
+    <!-- 房态矩阵表格 -->
+    <section class="cal-matrix-card">
+      <div v-if="loading && calendarRoomList.length === 0" class="operation-empty">正在读取房态日历…</div>
+      <div v-else-if="calendarRoomList.length === 0" class="operation-empty">
+        <div>
+          <strong>没有客房日历数据</strong>
+          <p class="cal-empty-sub">请检查客房资料或稍后重试。</p>
+          <button type="button" class="qx-btn-ghost" :disabled="loading" @click="loadCalendar">重新加载</button>
+        </div>
       </div>
-      <div v-else class="calendar-scroll" :aria-busy="loading">
-        <table class="room-calendar-table">
+
+      <div v-else class="cal-table-scroll" :class="{ 'is-loading': loading }" :aria-busy="loading">
+        <table class="cal-matrix-table">
           <thead>
             <tr>
-              <th class="calendar-room-heading">客房</th>
-              <th v-for="date in dates" :key="date" class="calendar-date-heading">
-                <span>{{ Number(date.slice(-2)) }} 日</span>
-                <small>{{ weekday(date) }}</small>
+              <th class="cal-room-th">房间号 / 名称</th>
+              <th
+                v-for="d in dateCols"
+                :key="d"
+                class="cal-date-th"
+                :class="[`is-mode-${mode}`, { 'is-today': d === today }]"
+              >
+                <div class="cal-date-th-inner">
+                  <span class="cal-date-text is-mono">{{ formatHeaderDate(d) }}</span>
+                  <span
+                    class="cal-week-text"
+                    :class="{ 'is-today': d === today, 'is-weekend': d !== today && isWeekendDate(d) }"
+                  >
+                    周{{ weekdayShort(d) }}
+                  </span>
+                  <span v-if="d === today" class="cal-today-chip">今日</span>
+                </div>
               </th>
             </tr>
           </thead>
+
           <tbody>
-            <tr v-for="room in calendar.rooms" :key="room.room_id">
-              <th class="calendar-room-cell" scope="row">
-                <strong>{{ room.room_number }}</strong>
-                <small>客房</small>
-              </th>
-              <td v-for="day in room.days" :key="day.date" class="calendar-day-cell">
-                <button
-                  type="button"
-                  class="calendar-day-button"
-                  :class="cellClass(day.status)"
-                  :aria-label="`${room.room_number}，${day.date}，${statusLabel(day.status)}`"
-                  :title="`${day.date} · ${statusLabel(day.status)}`"
-                  @click="openCell(room.room_id, day)"
-                >
-                  <span>{{ statusLabel(day.status) }}</span>
-                  <small v-if="day.order_id != null">订单详情</small>
-                  <small v-else-if="day.block_id != null">封房管理</small>
-                  <small v-else-if="day.status === 'AVAILABLE'">新增订单</small>
-                </button>
+            <tr v-for="room in calendarRoomList" :key="room.id">
+              <!-- 左侧精简客房信息：仅房间号 + 房间名称 -->
+              <td class="cal-room-td">
+                <div class="cal-room-identity">
+                  <span class="dashboard-room-number">{{ room.number }}</span>
+                  <strong class="cal-room-name" :title="room.name">{{ room.name }}</strong>
+                </div>
+              </td>
+
+              <td v-for="d in dateCols" :key="d" class="cal-cell-td">
+                <template v-for="info in [getCellInfo(room.id, d)]" :key="`${room.id}-${d}`">
+                  <!-- 空房单元格 -->
+                  <button
+                    v-if="info.type === 'AVAILABLE'"
+                    type="button"
+                    class="cal-cell-card is-available"
+                    :class="`is-mode-${mode}`"
+                    :aria-label="`${room.number} ${room.name}，${d}，空房`"
+                    @click="handleCellClick(room.id, d, info)"
+                  >
+                    <span class="cal-avail-label">空房</span>
+                    <span v-if="mode === 'day'" class="cal-avail-sub">+ 点击创建第三方订单</span>
+                  </button>
+
+                  <!-- 封房单元格 -->
+                  <button
+                    v-else-if="info.type === 'BLOCKED'"
+                    type="button"
+                    class="cal-cell-card is-blocked"
+                    :class="`is-mode-${mode}`"
+                    :aria-label="`${room.number} ${room.name}，${d}，不可预订`"
+                    @click="handleCellClick(room.id, d, info)"
+                  >
+                    <span class="cal-card-top">
+                      <span class="cal-mini-badge is-blocked">{{ info.label }}</span>
+                      <span v-if="mode === 'day' && info.block" class="cal-block-dates is-mono">
+                        {{ info.block.start_date }} ~ {{ info.block.end_date }}
+                      </span>
+                    </span>
+                    <span class="cal-block-reason-line" :title="info.blockReason">{{ info.blockReason }}</span>
+                  </button>
+
+                  <!-- 订单占房：按日宽幅横向卡片 -->
+                  <button
+                    v-else-if="mode === 'day'"
+                    type="button"
+                    class="cal-cell-card is-order-day"
+                    :class="orderToneClass(info.statusCode)"
+                    :aria-label="`${room.number} ${room.name}，${d}，${info.label}，${info.guestName}`"
+                    @click="handleCellClick(room.id, d, info)"
+                  >
+                    <span class="cal-day-left">
+                      <span class="cal-day-row-1">
+                        <span class="cal-mini-badge" :class="orderToneClass(info.statusCode)">{{ info.label }}</span>
+                        <strong class="cal-day-guest">{{ info.guestName }}</strong>
+                        <span class="cal-source-chip" :class="orderToneClass(info.statusCode)">{{ info.channelName }}</span>
+                        <span v-if="!info.isFirstNight" class="cal-continue-inline">· 续住</span>
+                      </span>
+                      <span v-if="info.order" class="cal-day-row-2 is-mono">
+                        {{ info.order.check_in }} 至 {{ info.order.check_out }}（共 {{ info.nights }} 晚 · {{ info.guestCount }}人）
+                      </span>
+                    </span>
+                    <span class="cal-day-right">
+                      <small>实付金额</small>
+                      <strong class="is-mono">¥{{ info.paidAmount }}</strong>
+                    </span>
+                  </button>
+
+                  <!-- 订单占房：按周 / 按月垂直三要素卡片 -->
+                  <button
+                    v-else
+                    type="button"
+                    class="cal-cell-card is-order-grid"
+                    :class="orderToneClass(info.statusCode)"
+                    :aria-label="`${room.number} ${room.name}，${d}，${info.label}，${info.guestName}`"
+                    @click="handleCellClick(room.id, d, info)"
+                  >
+                    <span class="cal-card-top">
+                      <span class="cal-mini-badge" :class="orderToneClass(info.statusCode)">{{ info.label }}</span>
+                      <span v-if="!info.isFirstNight" class="cal-continue-tag">续住</span>
+                    </span>
+                    <strong class="cal-grid-guest" :title="info.guestName">{{ info.guestName }}</strong>
+                    <span class="cal-grid-source-row">
+                      <span class="cal-source-chip" :class="orderToneClass(info.statusCode)">{{ info.channelName }}</span>
+                    </span>
+                  </button>
+                </template>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+    </section>
+
+    <!-- 页内弹窗 -->
+    <ExternalOrderCreateModal
+      :open="createModalOpen"
+      :channels="channels"
+      :creators="creators"
+      :rooms="rooms"
+      :preset-room-id="createPresetRoomId"
+      :preset-check-in="createPresetCheckIn"
+      @close="createModalOpen = false"
+      @created="handleOrderCreated"
+    />
+
+    <OrderDetailModal
+      :open="detailModalOpen"
+      :order-id="activeOrderId"
+      :rooms="rooms"
+      :creators="creators"
+      @close="detailModalOpen = false"
+      @updated="handleOrderUpdated"
+    />
+
+    <RoomBlockModal
+      :open="blockModalOpen"
+      :rooms="rooms"
+      :block="editingBlock"
+      :preset-room-id="blockPresetRoomId"
+      :preset-start-date="blockPresetStartDate"
+      @close="blockModalOpen = false"
+      @saved="handleBlockSaved"
+    />
+
+    <!-- 全局轻量 Toast -->
+    <div class="qx-toast-wrap" aria-live="polite">
+      <div class="qx-toast-box" :class="{ 'is-visible': Boolean(toastMessage) }">
+        <span class="qx-toast-dot"></span>
+        <span>{{ toastMessage }}</span>
+      </div>
     </div>
   </section>
 </template>
-
-<style scoped>
-.calendar-page { display: grid; gap: 18px; min-width: 0; }
-.calendar-heading { align-items: flex-end; }
-.calendar-month-controls { display: flex; align-items: center; gap: 8px; }
-.calendar-month-controls input { min-height: 40px; padding: 0 10px; border: 1px solid #dfe6e6; border-radius: 9px; background: #fff; color: var(--qx-text); font: inherit; }
-.calendar-summary-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.calendar-summary-row > strong { color: var(--qx-primary-dark); font-size: 18px; }
-.calendar-legend { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; color: var(--qx-muted); font-size: 12px; }
-.calendar-legend span { display: inline-flex; align-items: center; gap: 6px; }
-.legend-dot { width: 9px; height: 9px; border-radius: 50%; }
-.legend-available { background: #66816c; }
-.legend-booked { background: #a17a3b; }
-.legend-checked-in { background: var(--qx-primary); }
-.legend-completed { background: #71848b; }
-.legend-blocked { background: #b45c4c; }
-.calendar-card { overflow: hidden; border: 1px solid var(--qx-border); border-radius: 16px; background: #fff; box-shadow: var(--qx-shadow-sm); }
-.calendar-scroll { max-width: 100%; overflow: auto; }
-.room-calendar-table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
-.room-calendar-table th, .room-calendar-table td { border-right: 1px solid #e8eded; border-bottom: 1px solid #e8eded; }
-.room-calendar-table thead th { position: sticky; top: 0; z-index: 2; height: 58px; background: #f3f6f6; color: #4d4945; }
-.calendar-room-heading, .calendar-room-cell { position: sticky; left: 0; z-index: 3; width: 118px; min-width: 118px; text-align: left; }
-.calendar-room-heading { padding: 0 14px; }
-.calendar-date-heading { width: 82px; min-width: 82px; text-align: center; font-size: 12px; }
-.calendar-date-heading span, .calendar-date-heading small { display: block; }
-.calendar-date-heading small { margin-top: 4px; color: var(--qx-muted); font-weight: 400; }
-.calendar-room-cell { padding: 10px 14px; background: #fff; color: var(--qx-primary-dark); }
-.calendar-room-cell strong, .calendar-room-cell small { display: block; }
-.calendar-room-cell small { margin-top: 3px; color: var(--qx-muted); font-size: 11px; font-weight: 400; }
-.calendar-day-cell { padding: 4px; background: #fff; }
-.calendar-day-button { display: flex; width: 100%; min-height: 54px; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 4px 2px; border: 1px solid transparent; border-radius: 9px; color: #4d4945; cursor: pointer; font: inherit; font-size: 11px; transition: border-color .15s ease, filter .15s ease; }
-.calendar-day-button:hover { border-color: #9bb9bf; filter: brightness(.98); }
-.calendar-day-button small { color: inherit; opacity: .72; font-size: 9px; }
-.calendar-cell-available { background: #edf4ef; color: #4c7058; }
-.calendar-cell-blocked { background: #fff1ed; color: #a34436; }
-.calendar-cell-pending_confirm, .calendar-cell-pending_checkin { background: #f8f2e6; color: #8c641f; }
-.calendar-cell-checked_in, .calendar-cell-occupied { background: #eaf2f3; color: #285f6c; }
-.calendar-cell-completed { background: #edf2f3; color: #506d78; }
-.calendar-state { display: flex; min-height: 220px; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--qx-muted); }
-.calendar-state strong { color: var(--qx-primary-dark); }
-@media (max-width: 760px) {
-  .calendar-heading { align-items: flex-start; flex-direction: column; }
-  .calendar-month-controls { width: 100%; }
-  .calendar-month-controls input { flex: 1; }
-  .calendar-legend { gap: 9px; }
-  .calendar-room-heading, .calendar-room-cell { width: 92px; min-width: 92px; }
-  .calendar-date-heading { width: 72px; min-width: 72px; }
-}
-</style>
