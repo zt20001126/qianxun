@@ -8,6 +8,8 @@ import com.qianxun.homestay.modules.order.domain.OrderCancellationDecision;
 import com.qianxun.homestay.modules.order.domain.OrderCancellationPolicy;
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.order.mapper.OrderMapper;
+import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
+import com.qianxun.homestay.modules.payment.mapper.PaymentMapper;
 import com.qianxun.homestay.modules.order.service.AppOrderService;
 import com.qianxun.homestay.modules.order.vo.AppOrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.AppOrderListItemVO;
@@ -30,10 +32,13 @@ public class AppOrderServiceImpl implements AppOrderService {
 
     private final OrderMapper orderMapper;
     private final OrderCancellationPolicy cancellationPolicy;
+    private final PaymentMapper paymentMapper;
 
-    public AppOrderServiceImpl(OrderMapper orderMapper, OrderCancellationPolicy cancellationPolicy) {
+    public AppOrderServiceImpl(
+            OrderMapper orderMapper, OrderCancellationPolicy cancellationPolicy, PaymentMapper paymentMapper) {
         this.orderMapper = orderMapper;
         this.cancellationPolicy = cancellationPolicy;
+        this.paymentMapper = paymentMapper;
     }
 
     @Override
@@ -54,11 +59,13 @@ public class AppOrderServiceImpl implements AppOrderService {
         if (order == null) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "订单不存在");
         }
+        PaymentEntity payment = paymentMapper.findByOrderId(orderId);
         return new AppOrderDetailVO(
                 order.getId(), order.getOrderNo(), order.getRoomId(), order.getRoomNumber(), order.getGuestName(),
                 order.getPhone(), order.getGuestCount(), order.getCheckIn(), order.getCheckOut(), order.getNights(),
                 order.getStatus(), order.getRemark(), money(order.getPaidAmount()), money(order.getRoomAmount()),
-                order.getPointsUsed(), money(order.getDiscountAmount()), ApiTime.fromShanghai(order.getCreatedAt()),
+                order.getPointsUsed(), money(order.getDiscountAmount()),
+                payment == null ? null : payment.getPaymentMethod(), ApiTime.fromShanghai(order.getCreatedAt()),
                 ApiTime.fromShanghai(order.getUpdatedAt()));
     }
 

@@ -11,11 +11,11 @@ public class RefundEntity {
     private Long id;
     /** 被取消订单的数据库主键。 */
     private Long orderId;
-    /** 原模拟支付流水的数据库主键。 */
+    /** 原支付流水的数据库主键。 */
     private Long paymentId;
     /** 服务端生成且全局唯一的商户退款单号。 */
     private String refundNo;
-    /** 预留微信退款单号；第一期模拟退款为空。 */
+    /** 微信退款单号；模拟退款为空。 */
     private String wechatRefundId;
     /** 退款金额与模拟支付实付金额保持一致。 */
     private BigDecimal amount;
@@ -23,7 +23,7 @@ public class RefundEntity {
     private RefundStatus status;
     /** 顾客填写的取消原因；失败说明也使用同一契约字段。 */
     private String reason;
-    /** 同步模拟退款的完成时间，按北京时间存储。 */
+    /** 支付渠道确认退款完成的时间，按北京时间存储。 */
     private LocalDateTime refundedAt;
     /** 退款流水创建时间，按北京时间存储。 */
     private LocalDateTime createdAt;

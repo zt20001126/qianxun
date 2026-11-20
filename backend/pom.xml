@@ -21,6 +21,7 @@
         <mybatis-spring-boot.version>3.0.5</mybatis-spring-boot.version>
         <jjwt.version>0.13.0</jjwt.version>
         <testcontainers.version>1.21.3</testcontainers.version>
+        <wechatpay-java.version>0.2.17</wechatpay-java.version>
     </properties>
 
     <dependencies>
@@ -53,6 +54,11 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.wechatpay-apiv3</groupId>
+            <artifactId>wechatpay-java</artifactId>
+            <version>${wechatpay-java.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

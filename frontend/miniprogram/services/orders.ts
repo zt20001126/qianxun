@@ -17,3 +17,7 @@ export function getCancellationEligibility(id: number): Promise<OrderCancellatio
 export function refundMyOrder(id: number): Promise<RefundResult> {
   return request<RefundResult>({ method: 'POST', url: `/api/app/orders/${id}/refunds` })
 }
+
+export function getLatestRefund(id: number): Promise<RefundResult | null> {
+  return request<RefundResult | null>({ url: `/api/app/orders/${id}/refunds/latest` })
+}

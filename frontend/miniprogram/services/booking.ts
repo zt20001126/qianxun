@@ -1,6 +1,6 @@
 /** P01/P02/P08/T03 小程序预订、积分试算与模拟支付调用。 */
 import { request } from './request'
-import type { MockPayResult, PaymentState, PointsPreview, PrepayResult } from '../types/booking'
+import type { MockPayResult, PaymentState, PointsPreview, PrepayResult, WechatPrepayResult } from '../types/booking'
 
 export function previewPoints(data: {
   room_id: number
@@ -32,5 +32,16 @@ export function mockPay(paymentNo: string): Promise<MockPayResult> {
   return request<MockPayResult>({
     url: `/api/app/payments/${encodeURIComponent(paymentNo)}/mock-pay`,
     method: 'POST',
+  })
+}
+
+export function createWechatPrepay(
+  paymentNo: string,
+  data: { login_code: string; phone_code: string },
+): Promise<WechatPrepayResult> {
+  return request<WechatPrepayResult>({
+    url: `/api/app/payments/${encodeURIComponent(paymentNo)}/wechat-prepay`,
+    method: 'POST',
+    data,
   })
 }

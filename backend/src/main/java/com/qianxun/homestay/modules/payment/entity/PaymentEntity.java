@@ -1,10 +1,11 @@
 package com.qianxun.homestay.modules.payment.entity;
 
 import com.qianxun.homestay.modules.payment.enums.PaymentStatus;
+import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/** payments 表的模拟支付流水映射。 */
+/** payments 表的支付流水映射。 */
 public class PaymentEntity {
 
     /** 支付流水数据库主键。 */
@@ -15,7 +16,11 @@ public class PaymentEntity {
     private Long orderId;
     /** 服务端生成的商户支付单号。 */
     private String paymentNo;
-    /** 预留的微信交易号；第一期模拟支付始终为空。 */
+    /** 创建流水时确定的支付渠道。 */
+    private PaymentMethod paymentMethod;
+    /** 微信预支付会话标识；模拟支付为空。 */
+    private String wechatPrepayId;
+    /** 微信支付成功后返回的交易号；模拟支付为空。 */
     private String transactionId;
     /** 后端计算的积分抵扣后应付金额。 */
     private BigDecimal amount;
@@ -36,6 +41,10 @@ public class PaymentEntity {
     public void setOrderId(Long orderId) { this.orderId = orderId; }
     public String getPaymentNo() { return paymentNo; }
     public void setPaymentNo(String paymentNo) { this.paymentNo = paymentNo; }
+    public PaymentMethod getPaymentMethod() { return paymentMethod; }
+    public void setPaymentMethod(PaymentMethod paymentMethod) { this.paymentMethod = paymentMethod; }
+    public String getWechatPrepayId() { return wechatPrepayId; }
+    public void setWechatPrepayId(String wechatPrepayId) { this.wechatPrepayId = wechatPrepayId; }
     public String getTransactionId() { return transactionId; }
     public void setTransactionId(String transactionId) { this.transactionId = transactionId; }
     public BigDecimal getAmount() { return amount; }

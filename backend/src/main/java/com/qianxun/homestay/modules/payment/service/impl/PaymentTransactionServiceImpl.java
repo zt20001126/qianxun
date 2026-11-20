@@ -16,6 +16,7 @@ import com.qianxun.homestay.modules.order.mapper.OrderMapper;
 import com.qianxun.homestay.modules.payment.domain.PaymentAttemptResult;
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
 import com.qianxun.homestay.modules.payment.enums.PaymentStatus;
+import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
 import com.qianxun.homestay.modules.payment.mapper.PaymentMapper;
 import com.qianxun.homestay.modules.payment.service.PaymentTransactionService;
 import com.qianxun.homestay.modules.payment.vo.MockPayVO;
@@ -88,14 +89,74 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         if (payment.getStatus() == PaymentStatus.SUCCESS) {
             return successResult(payment, memberId);
         }
+        if (payment.getPaymentMethod() != PaymentMethod.MOCK) {
+            throw new BusinessException(HttpStatus.CONFLICT, "该交易不支持模拟支付");
+        }
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new BusinessException(HttpStatus.CONFLICT, "支付交易已关闭或不可支付");
         }
 
-        // 支付与超时任务使用相同的支付、锁房、客房、会员锁顺序，避免互相覆盖交易结果。
-        availabilityService.lockRoomsForUpdate(List.of(booking.getRoomId()));
         LocalDateTime paidAt = now();
-        if (booking.getStatus() != BookingLockStatus.PENDING || !booking.getExpiresAt().isAfter(paidAt)) {
+        if (!booking.getExpiresAt().isAfter(paidAt)) {
+            closeExpired(payment, booking);
+            return new PaymentAttemptResult(true, null);
+        }
+        return settleLocked(payment, booking, memberId, null, paidAt, null);
+    }
+
+    @Override
+    @Transactional
+    public PaymentAttemptResult settleWechatPayment(
+            String paymentNo, String transactionId, BigDecimal amount, LocalDateTime paidAt, String payerOpenid) {
+        if (transactionId == null || transactionId.isBlank() || payerOpenid == null || payerOpenid.isBlank()) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "微信支付通知缺少交易号或付款人");
+        }
+        PaymentEntity payment = paymentMapper.findByPaymentNoForUpdate(paymentNo);
+        if (payment == null) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "支付交易不存在");
+        }
+        BookingLockEntity booking = bookingLockMapper.findByIdForUpdate(payment.getBookingId());
+        if (booking == null) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "支付交易关联的临时预订不存在");
+        }
+        if (payment.getPaymentMethod() != PaymentMethod.WECHAT) {
+            throw new BusinessException(HttpStatus.CONFLICT, "支付流水渠道与微信通知不一致");
+        }
+        if (payment.getAmount().compareTo(amount) != 0) {
+            throw new BusinessException(HttpStatus.CONFLICT, "微信通知金额与支付流水不一致");
+        }
+        if (payment.getStatus() == PaymentStatus.SUCCESS) {
+            if (!transactionId.equals(payment.getTransactionId())) {
+                throw new BusinessException(HttpStatus.CONFLICT, "微信交易号与已结算流水不一致");
+            }
+            return successResult(payment, booking.getMemberId());
+        }
+        if (payment.getStatus() != PaymentStatus.PENDING) {
+            throw new BusinessException(HttpStatus.CONFLICT, "微信支付流水已关闭或不可支付");
+        }
+        if (paidAt.isAfter(booking.getExpiresAt())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "微信支付时间晚于锁房截止时间");
+        }
+        return settleLocked(payment, booking, booking.getMemberId(), payerOpenid, paidAt, transactionId);
+    }
+
+    private PaymentAttemptResult settleLocked(
+            PaymentEntity payment,
+            BookingLockEntity booking,
+            Long memberId,
+            String expectedOpenid,
+            LocalDateTime paidAt,
+            String transactionId) {
+        // 支付通知、模拟支付与超时处理都在支付行锁内串行执行，并沿用库存锁顺序。
+        availabilityService.lockRoomsForUpdate(List.of(booking.getRoomId()));
+        if (booking.getStatus() != BookingLockStatus.PENDING) {
+            if (payment.getPaymentMethod() == PaymentMethod.MOCK
+                    && booking.getStatus() == BookingLockStatus.EXPIRED) {
+                return new PaymentAttemptResult(true, null);
+            }
+            throw new BusinessException(HttpStatus.CONFLICT, "临时预订已关闭，无法完成支付");
+        }
+        if (payment.getPaymentMethod() == PaymentMethod.MOCK && !booking.getExpiresAt().isAfter(paidAt)) {
             closeExpired(payment, booking);
             return new PaymentAttemptResult(true, null);
         }
@@ -112,6 +173,14 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             throw new BusinessException(HttpStatus.CONFLICT, "所选日期已不可预订，请重新选择");
         }
 
+        MemberEntity member = memberMapper.findByIdForUpdate(memberId);
+        if (member == null) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "支付会员不存在");
+        }
+        if (expectedOpenid != null && !expectedOpenid.equals(member.getOpenid())) {
+            throw new BusinessException(HttpStatus.CONFLICT, "微信付款人和会员绑定账号不一致");
+        }
+
         OrderEntity order = createOrder(booking, memberId);
         if (orderMapper.insert(order) != 1) {
             throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "创建正式订单失败");
@@ -123,7 +192,10 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         if (bookingLockMapper.updateStatus(booking.getId(), BookingLockStatus.PAID.name()) != 1) {
             throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "更新临时预订状态失败");
         }
-        if (paymentMapper.markSuccess(payment.getId(), order.getId(), paidAt) != 1) {
+        int updated = payment.getPaymentMethod() == PaymentMethod.WECHAT
+                ? paymentMapper.markWechatSuccess(payment.getId(), order.getId(), transactionId, paidAt)
+                : paymentMapper.markSuccess(payment.getId(), order.getId(), null, paidAt);
+        if (updated != 1) {
             throw new BusinessException(HttpStatus.CONFLICT, "支付交易状态已变化，请查询支付结果");
         }
         return new PaymentAttemptResult(false, new MockPayVO(

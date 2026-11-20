@@ -34,7 +34,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiRequestLoggingFilter.class);
     private static final int REQUEST_BODY_CACHE_LIMIT = 64 * 1024;
     private static final Pattern SENSITIVE_TEXT_VALUE = Pattern.compile(
-            "(?i)(\\\"?(?:password|passwd|pwd|token|authorization|secret|access[_-]?key|api[_-]?key|credential)\\\"?\\s*[:=]\\s*\\\"?)[^\\\"&,}\\s]*");
+            "(?i)(\\\"?(?:password|passwd|pwd|token|authorization|secret|access[_-]?key|api[_-]?key|credential|login[_-]?code|phone[_-]?code|js[_-]?code|openid)\\\"?\\s*[:=]\\s*\\\"?)[^\\\"&,}\\s]*");
 
     private final ObjectMapper objectMapper;
 
@@ -61,7 +61,9 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         } finally {
             long durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
             String query = sanitizeQuery(request.getQueryString());
-            String body = getRequestBody(cachedRequest);
+            String body = request.getRequestURI().startsWith("/api/payment/wechat/notify/")
+                    ? "[wechat notification omitted]"
+                    : getRequestBody(cachedRequest);
             String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
             LOGGER.info("HTTP 请求 method={} path={} query={} auth={} auth_scheme={} body={} status={} duration_ms={}",
                     request.getMethod(), request.getRequestURI(), query, authenticationInfo(),
@@ -164,7 +166,10 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                 || normalized.contains("secret")
                 || normalized.contains("accesskey")
                 || normalized.contains("apikey")
-                || normalized.contains("credential");
+                || normalized.contains("credential")
+                || normalized.equals("code")
+                || normalized.endsWith("code")
+                || normalized.contains("openid");
     }
 
     private boolean isJsonContent(String contentType) {

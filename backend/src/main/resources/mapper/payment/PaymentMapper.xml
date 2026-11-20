@@ -6,6 +6,8 @@
         <result property="bookingId" column="booking_id"/>
         <result property="orderId" column="order_id"/>
         <result property="paymentNo" column="payment_no"/>
+        <result property="paymentMethod" column="payment_method"/>
+        <result property="wechatPrepayId" column="wechat_prepay_id"/>
         <result property="transactionId" column="transaction_id"/>
         <result property="amount" column="amount"/>
         <result property="status" column="status"/>
@@ -15,16 +17,21 @@
     </resultMap>
 
     <sql id="paymentColumns">
-        id, booking_id, order_id, payment_no, transaction_id, amount, status, paid_at, created_at, updated_at
+        id, booking_id, order_id, payment_no, payment_method, transaction_id, wechat_prepay_id,
+        amount, status, paid_at, created_at, updated_at
     </sql>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-        INSERT INTO payments (booking_id, payment_no, amount, status)
-        VALUES (#{bookingId}, #{paymentNo}, #{amount}, #{status})
+        INSERT INTO payments (booking_id, payment_no, payment_method, amount, status)
+        VALUES (#{bookingId}, #{paymentNo}, #{paymentMethod}, #{amount}, #{status})
     </insert>
 
     <select id="findByPaymentNo" resultMap="paymentResultMap">
         SELECT <include refid="paymentColumns"/> FROM payments WHERE payment_no = #{paymentNo}
+    </select>
+
+    <select id="findById" resultMap="paymentResultMap">
+        SELECT <include refid="paymentColumns"/> FROM payments WHERE id = #{id}
     </select>
 
     <select id="findByPaymentNoForUpdate" resultMap="paymentResultMap">
@@ -38,6 +45,11 @@
     <select id="findByOrderIdForUpdate" resultMap="paymentResultMap">
         SELECT <include refid="paymentColumns"/>
         FROM payments WHERE order_id = #{orderId} ORDER BY id DESC LIMIT 1 FOR UPDATE
+    </select>
+
+    <select id="findByOrderId" resultMap="paymentResultMap">
+        SELECT <include refid="paymentColumns"/>
+        FROM payments WHERE order_id = #{orderId} ORDER BY id DESC LIMIT 1
     </select>
 
     <sql id="adminFilters">
@@ -74,8 +86,22 @@
 
     <update id="markSuccess">
         UPDATE payments
-        SET status = 'SUCCESS', order_id = #{orderId}, paid_at = #{paidAt}, updated_at = CURRENT_TIMESTAMP(3)
+        SET status = 'SUCCESS', order_id = #{orderId}, transaction_id = #{transactionId},
+            paid_at = #{paidAt}, updated_at = CURRENT_TIMESTAMP(3)
         WHERE id = #{id} AND status = 'PENDING'
+    </update>
+
+    <update id="updateWechatPrepayId">
+        UPDATE payments
+        SET wechat_prepay_id = #{prepayId}, updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND payment_method = 'WECHAT' AND status = 'PENDING'
+    </update>
+
+    <update id="markWechatSuccess">
+        UPDATE payments
+        SET status = 'SUCCESS', order_id = #{orderId}, transaction_id = #{transactionId},
+            paid_at = #{paidAt}, updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND payment_method = 'WECHAT' AND status = 'PENDING'
     </update>
 
     <update id="markClosed">

@@ -1,6 +1,6 @@
 /** O02 小程序本人订单详情与 O03/P03 自助退款交互。 */
 import { getRoomDetail } from '../../services/rooms'
-import { getCancellationEligibility, getMyOrder, refundMyOrder } from '../../services/orders'
+import { getCancellationEligibility, getLatestRefund, getMyOrder, refundMyOrder } from '../../services/orders'
 import type { AppOrderDetail, OrderCancellationEligibility } from '../../types/booking'
 import { getOrderStatusLabel } from '../../types/booking'
 import { STORE_CONTACT_PHONE_LABEL } from '../../config'
@@ -25,6 +25,7 @@ interface OrderDetailPageData {
   errorMessage: string
   dialogType: DialogType
   refundSubmitting: boolean
+  refundPending: boolean
   contactPhone: string
   cancelDialogMessage: string
   unitPrice: string
@@ -112,7 +113,9 @@ function divideMoneyByNights(roomAmount: string | null, nights: number): string 
 function getStatusHint(
   order: AppOrderDetail,
   cancellation: OrderCancellationEligibility | null,
+  refundPending: boolean,
 ): string {
+  if (refundPending) return '退款正在由支付平台处理中，完成后订单将自动取消。'
   if (order.status === 'CANCELLED') return '订单已取消，房费及已使用积分已全额退还。'
   if (cancellation?.eligible) return '可在入住当天 18:00（北京时间）前自助申请取消退款。'
   if (cancellation?.reason) return cancellation.reason
@@ -130,6 +133,7 @@ Page({
     errorMessage: '',
     dialogType: 'none',
     refundSubmitting: false,
+    refundPending: false,
     contactPhone: STORE_CONTACT_PHONE_LABEL,
     cancelDialogMessage:
       '当前订单不支持自助退款（仅待确认/待入住且早于入住当日 18:00 可自助取消），如需退改请联系商家协商。',
@@ -157,7 +161,7 @@ Page({
     this.setData({ loading: true, errorMessage: '' })
     try {
       const order = await getMyOrder(id)
-      const [room, cancellation] = await Promise.all([
+      const [room, cancellation, latestRefund] = await Promise.all([
         getRoomDetail(order.room_id).catch(() => null),
         order.status === 'CANCELLED'
           ? Promise.resolve(null)
@@ -166,7 +170,9 @@ Page({
               reason: '暂时无法读取取消资格，请稍后重试或联系商家',
               deadline: '',
             })),
+        getLatestRefund(id).catch(() => null),
       ])
+      const refundPending = latestRefund?.status === 'PENDING'
       const roomName = room ? `${order.room_number} · ${room.name}` : `${order.room_number} 房`
       const roomAmount = resolveRoomAmount(order)
       const detailRows: DetailRow[] = [
@@ -185,7 +191,8 @@ Page({
         detailRows,
         cancellation,
         statusLabel: getOrderStatusLabel(order.status),
-        statusHint: getStatusHint(order, cancellation),
+        statusHint: getStatusHint(order, cancellation, refundPending),
+        refundPending,
         unitPrice: divideMoneyByNights(roomAmount, order.nights),
         roomAmountLabel: roomAmount ? formatMoney(roomAmount) : '—',
         discountAmountLabel: formatMoney(order.discount_amount),
@@ -228,16 +235,49 @@ Page({
     if (!order || !this.data.cancellation?.eligible || this.data.refundSubmitting) return
     this.setData({ refundSubmitting: true })
     try {
-      await refundMyOrder(order.id)
+      const result = await refundMyOrder(order.id)
       this.setData({ dialogType: 'none' })
-      wx.showToast({ title: '订单已取消', icon: 'success' })
-      await this.loadOrder(order.id)
+      if (result.status === 'SUCCESS') {
+        wx.showToast({ title: '退款成功，订单已取消', icon: 'success' })
+        await this.loadOrder(order.id)
+      } else if (result.status === 'FAILED') {
+        wx.showToast({ title: '退款失败，请联系商家处理', icon: 'none' })
+      } else {
+        this.setData({
+          refundPending: true,
+          statusHint: '退款正在由支付平台处理中，完成后订单将自动取消。',
+        })
+        wx.showToast({ title: '退款处理中', icon: 'none' })
+        await this.pollRefundStatus(order.id)
+      }
     } catch (error) {
       this.setData({ dialogType: 'none' })
       wx.showToast({ title: error instanceof Error ? error.message : '退款未完成，请稍后重试', icon: 'none' })
       await this.loadOrder(order.id)
     } finally {
       this.setData({ refundSubmitting: false })
+    }
+  },
+
+  async pollRefundStatus(orderId: number) {
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      try {
+        const result = await getLatestRefund(orderId)
+        if (result?.status === 'SUCCESS') {
+          wx.showToast({ title: '退款成功，订单已取消', icon: 'success' })
+          await this.loadOrder(orderId)
+          return
+        }
+        if (result?.status === 'FAILED') {
+          this.setData({ refundPending: false })
+          wx.showToast({ title: '退款失败，请联系商家处理', icon: 'none' })
+          await this.loadOrder(orderId)
+          return
+        }
+      } catch {
+        // 查询暂时失败时保留处理中提示，可由用户下拉刷新再次确认。
+      }
     }
   },
 })

@@ -1,12 +1,18 @@
 package com.qianxun.homestay.modules.payment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.security.service.JwtService;
+import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
+import com.qianxun.homestay.modules.payment.service.PaymentTransactionService;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +29,8 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.http.MediaType;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -60,6 +68,10 @@ class PaymentFlowApiIntegrationTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private WechatPayProperties wechatPayProperties;
+    @Autowired
+    private PaymentTransactionService paymentTransactionService;
 
     private long memberId;
     private long roomId;
@@ -101,6 +113,7 @@ class PaymentFlowApiIntegrationTest {
         JsonNode prepay = prepay();
         String paymentNo = prepay.path("payment_no").asText();
 
+        assertThat(prepay.path("payment_method").asText()).isEqualTo("MOCK");
         assertThat(prepay.path("room_amount").asText()).isEqualTo("200.00");
         assertThat(prepay.path("points_used").asInt()).isEqualTo(POINTS_TO_USE);
         assertThat(prepay.path("discount_amount").asText()).isEqualTo("10.00");
@@ -136,6 +149,67 @@ class PaymentFlowApiIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT balance_after FROM points_log WHERE ref_no = ?", Integer.class, "REDEEM:ORDER:" + orderId))
                 .isZero();
+    }
+
+    @Test
+    void enabledSwitchCreatesWechatTradeAndRejectsMockPayment() throws Exception {
+        wechatPayProperties.setEnabled(true);
+        try {
+            JsonNode prepay = prepay();
+            assertThat(prepay.path("payment_method").asText()).isEqualTo("WECHAT");
+            assertThat(jdbcTemplate.queryForObject(
+                    "SELECT payment_method FROM payments WHERE payment_no = ?", String.class,
+                    prepay.path("payment_no").asText())).isEqualTo("WECHAT");
+
+            mockMvc.perform(post("/api/app/payments/{paymentNo}/mock-pay", prepay.path("payment_no").asText())
+                            .header("Authorization", bearer(memberToken)))
+                    .andExpect(status().isConflict());
+        } finally {
+            wechatPayProperties.setEnabled(false);
+        }
+    }
+
+    @Test
+    void disabledSwitchRejectsWechatPrepayWithoutCallingWechat() throws Exception {
+        assertThat(wechatPayProperties.isEnabled()).isFalse();
+        JsonNode prepay = prepay();
+        mockMvc.perform(post("/api/app/payments/{paymentNo}/wechat-prepay", prepay.path("payment_no").asText())
+                        .header("Authorization", bearer(memberToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"login_code\":\"unused\",\"phone_code\":\"unused\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void verifiedWechatSettlementCreatesOneOrderAndChecksPayerAndAmount() throws Exception {
+        wechatPayProperties.setEnabled(true);
+        try {
+            JsonNode prepay = prepay();
+            String paymentNo = prepay.path("payment_no").asText();
+            jdbcTemplate.update("UPDATE members SET openid = 'wx-test-openid' WHERE id = ?", memberId);
+            LocalDateTime paidAt = LocalDateTime.now(BUSINESS_ZONE);
+
+            assertThatThrownBy(() -> paymentTransactionService.settleWechatPayment(
+                    paymentNo, "wx-test-transaction", new BigDecimal("189.99"), paidAt, "wx-test-openid"))
+                    .isInstanceOf(BusinessException.class);
+            assertThatThrownBy(() -> paymentTransactionService.settleWechatPayment(
+                    paymentNo, "wx-test-transaction", new BigDecimal("190.00"), paidAt, "wrong-openid"))
+                    .isInstanceOf(BusinessException.class);
+            assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM orders", Integer.class)).isZero();
+
+            var first = paymentTransactionService.settleWechatPayment(
+                    paymentNo, "wx-test-transaction", new BigDecimal("190.00"), paidAt, "wx-test-openid");
+            var duplicate = paymentTransactionService.settleWechatPayment(
+                    paymentNo, "wx-test-transaction", new BigDecimal("190.00"), paidAt, "wx-test-openid");
+
+            assertThat(first.payment().orderId()).isEqualTo(duplicate.payment().orderId());
+            assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM orders", Integer.class)).isEqualTo(1);
+            assertThat(jdbcTemplate.queryForObject(
+                    "SELECT transaction_id FROM payments WHERE payment_no = ?", String.class, paymentNo))
+                    .isEqualTo("wx-test-transaction");
+        } finally {
+            wechatPayProperties.setEnabled(false);
+        }
     }
 
     @Test

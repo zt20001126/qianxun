@@ -8,8 +8,8 @@ public record PaymentStatusVO(
         String paymentNo,
         /** 支付流水状态。 */
         PaymentStatus status,
-        /** 模拟支付成功后生成的订单编号。 */
+        /** 支付成功后生成的订单编号。 */
         Long orderId,
-        /** 模拟支付成功后生成的系统订单号。 */
+        /** 支付成功后生成的系统订单号。 */
         String orderNo) {
 }

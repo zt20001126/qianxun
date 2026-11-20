@@ -1,5 +1,7 @@
 package com.qianxun.homestay.common.api;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * 统一 API 响应结构，供小程序和管理后台共享。
  *
@@ -11,6 +13,7 @@ public record ApiResponse<T>(
         /** 面向调用方的简短消息。 */
         String message,
         /** 当前接口的数据；失败时为空。 */
+        @JsonInclude(JsonInclude.Include.ALWAYS)
         T data) {
 
     /**

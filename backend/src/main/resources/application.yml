@@ -31,6 +31,17 @@ mybatis:
     map-underscore-to-camel-case: true
 
 app:
+  payment:
+    wechat:
+      enabled: ${WECHAT_PAY_ENABLED:false}
+      app-id: ${WECHAT_APP_ID:}
+      app-secret: ${WECHAT_APP_SECRET:}
+      merchant-id: ${WECHAT_PAY_MCH_ID:}
+      merchant-serial-number: ${WECHAT_PAY_MERCHANT_SERIAL:}
+      private-key-path: ${WECHAT_PAY_PRIVATE_KEY_PATH:}
+      api-v3-key: ${WECHAT_PAY_API_V3_KEY:}
+      payment-notify-url: ${WECHAT_PAY_NOTIFY_URL:}
+      refund-notify-url: ${WECHAT_REFUND_NOTIFY_URL:}
   channel:
     mini-program-id: ${APP_MINI_PROGRAM_CHANNEL_ID:1}
   jwt:

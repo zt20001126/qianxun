@@ -1,5 +1,6 @@
 # Local runtime credentials and environment overrides
 deploy/.env
+deploy/secrets/
 .env
 **/.env.local
 

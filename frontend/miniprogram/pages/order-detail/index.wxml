@@ -54,8 +54,9 @@
         <button
           wx:if="{{order.status !== 'CANCELLED'}}"
           class="cancel-button {{cancellation && cancellation.eligible ? 'cancel-available' : 'cancel-unavailable'}}"
+          disabled="{{refundPending}}"
           bindtap="onCancelTap"
-        >取消订单</button>
+        >{{refundPending ? '退款处理中' : '取消订单'}}</button>
         <button class="contact-button" bindtap="onContactTap">联系商家</button>
       </view>
     </view>
@@ -84,7 +85,7 @@
           </view>
           <text class="dialog-title">确认取消订单并退款？</text>
           <view class="dialog-copy">
-            <text>退款金额 </text><text class="dialog-emphasis">¥{{paidAmountLabel}}</text><text> 将同步模拟退回</text>
+            <text>退款金额 </text><text class="dialog-emphasis">¥{{paidAmountLabel}}</text><text>{{order.payment_method === 'WECHAT' ? ' 将原路退回，需等待微信处理' : ' 将按模拟支付流程退回'}}</text>
             <text wx:if="{{order.points_used > 0}}">，已抵扣的 <text class="dialog-points">{{order.points_used}} 积分</text> 将原路返还</text>
             <text>。</text>
           </view>

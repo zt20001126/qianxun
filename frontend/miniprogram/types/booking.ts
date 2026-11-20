@@ -12,11 +12,24 @@ export interface PointsPreview {
 export interface PrepayResult {
   booking_id: number
   payment_no: string
+  payment_method: PaymentMethod
   room_amount: string
   points_used: number
   discount_amount: string
   pay_amount: string
   expires_at: string
+}
+
+export type PaymentMethod = 'MOCK' | 'WECHAT'
+
+/** 服务端签名的 wx.requestPayment 参数。 */
+export interface WechatPrepayResult {
+  app_id: string
+  time_stamp: string
+  nonce_str: string
+  package: string
+  sign_type: string
+  pay_sign: string
 }
 
 export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'CLOSED'
@@ -56,6 +69,7 @@ export interface AppOrderDetail extends Omit<AppOrder, 'channel_id' | 'creator_i
   room_amount: string
   points_used: number
   discount_amount: string
+  payment_method: PaymentMethod | null
   created_at: string
   updated_at: string
 }
@@ -67,7 +81,7 @@ export interface OrderCancellationEligibility {
   deadline: string
 }
 
-/** P03 同步模拟退款结果。 */
+/** P03 退款处理结果；微信退款可能异步完成。 */
 export interface RefundResult {
   refund_id: number
   refund_no: string

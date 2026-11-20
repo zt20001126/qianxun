@@ -1,5 +1,6 @@
 package com.qianxun.homestay.modules.payment.vo;
 
+import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
 import java.time.OffsetDateTime;
 
 /** P01 待支付交易与十分钟锁房响应。 */
@@ -8,6 +9,8 @@ public record PrepayVO(
         Long bookingId,
         /** 服务端生成的商户支付单号。 */
         String paymentNo,
+        /** 本次交易创建时确定的支付渠道。 */
+        PaymentMethod paymentMethod,
         /** 房费原价快照，十进制字符串，单位为元。 */
         String roomAmount,
         /** 预占的积分数量。 */

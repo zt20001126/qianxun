@@ -68,6 +68,19 @@
         LIMIT 1
     </select>
 
+    <select id="findByOpenid" resultMap="MemberResultMap">
+        SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
+        FROM members
+        WHERE openid = #{openid}
+        LIMIT 1
+    </select>
+
+    <update id="bindOpenidIfAbsent">
+        UPDATE members
+        SET openid = #{openid}, updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND openid IS NULL
+    </update>
+
     <select id="findPage" resultMap="MemberResultMap">
         SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
         FROM members

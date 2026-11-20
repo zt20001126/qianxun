@@ -1,6 +1,7 @@
 package com.qianxun.homestay.modules.order.vo;
 
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
+import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
@@ -38,6 +39,8 @@ public record AppOrderDetailVO(
         Integer pointsUsed,
         /** 积分抵扣金额，单位为元的十进制字符串。 */
         String discountAmount,
+        /** 成功支付订单使用的支付渠道。 */
+        PaymentMethod paymentMethod,
         /** 订单创建时间，包含北京时间偏移。 */
         OffsetDateTime createdAt,
         /** 订单更新时间，包含北京时间偏移。 */

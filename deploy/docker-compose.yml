@@ -39,7 +39,18 @@ services:
       OSS_ACCESS_KEY_ID: ${OSS_ACCESS_KEY_ID:-}
       OSS_ACCESS_KEY_SECRET: ${OSS_ACCESS_KEY_SECRET:-}
       MEMBER_DEFAULT_AVATAR: ${MEMBER_DEFAULT_AVATAR:-/assets/member-default-avatar.png}
+      WECHAT_PAY_ENABLED: ${WECHAT_PAY_ENABLED:-false}
+      WECHAT_APP_ID: ${WECHAT_APP_ID:-}
+      WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
+      WECHAT_PAY_MCH_ID: ${WECHAT_PAY_MCH_ID:-}
+      WECHAT_PAY_MERCHANT_SERIAL: ${WECHAT_PAY_MERCHANT_SERIAL:-}
+      WECHAT_PAY_PRIVATE_KEY_PATH: ${WECHAT_PAY_PRIVATE_KEY_PATH:-/run/secrets/wechat/apiclient_key.pem}
+      WECHAT_PAY_API_V3_KEY: ${WECHAT_PAY_API_V3_KEY:-}
+      WECHAT_PAY_NOTIFY_URL: ${WECHAT_PAY_NOTIFY_URL:-}
+      WECHAT_REFUND_NOTIFY_URL: ${WECHAT_REFUND_NOTIFY_URL:-}
       TZ: Asia/Shanghai
+    volumes:
+      - ${WECHAT_PAY_KEY_DIR:-./secrets}:/run/secrets/wechat:ro
     ports:
       - "${BACKEND_HOST_PORT:-8080}:8080"
     healthcheck:

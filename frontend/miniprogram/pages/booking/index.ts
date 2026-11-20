@@ -324,6 +324,7 @@ function formatNumber(value: number): string {
 function buildPaymentUrl(prepay: PrepayResult): string {
   const params = [
     'payment_no=' + encodeURIComponent(prepay.payment_no),
+    'payment_method=' + encodeURIComponent(prepay.payment_method),
     'room_amount=' + encodeURIComponent(prepay.room_amount),
     'points_used=' + prepay.points_used,
     'discount_amount=' + encodeURIComponent(prepay.discount_amount),

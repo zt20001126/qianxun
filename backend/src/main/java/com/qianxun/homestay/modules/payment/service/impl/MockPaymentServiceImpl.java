@@ -9,6 +9,7 @@ import com.qianxun.homestay.modules.payment.domain.PaymentAttemptResult;
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
 import com.qianxun.homestay.modules.payment.enums.PaymentStatus;
 import com.qianxun.homestay.modules.payment.mapper.PaymentMapper;
+import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
 import com.qianxun.homestay.modules.payment.service.MockPaymentService;
 import com.qianxun.homestay.modules.payment.service.PaymentTimeoutService;
 import com.qianxun.homestay.modules.payment.service.PaymentTransactionService;
@@ -31,18 +32,21 @@ public class MockPaymentServiceImpl implements MockPaymentService {
     private final PaymentMapper paymentMapper;
     private final PaymentTimeoutService paymentTimeoutService;
     private final PaymentTransactionService paymentTransactionService;
+    private final WechatPayProperties wechatPayProperties;
 
     public MockPaymentServiceImpl(
             BookingLockMapper bookingLockMapper,
             OrderMapper orderMapper,
             PaymentMapper paymentMapper,
             PaymentTimeoutService paymentTimeoutService,
-            PaymentTransactionService paymentTransactionService) {
+            PaymentTransactionService paymentTransactionService,
+            WechatPayProperties wechatPayProperties) {
         this.bookingLockMapper = bookingLockMapper;
         this.orderMapper = orderMapper;
         this.paymentMapper = paymentMapper;
         this.paymentTimeoutService = paymentTimeoutService;
         this.paymentTransactionService = paymentTransactionService;
+        this.wechatPayProperties = wechatPayProperties;
     }
 
     @Override
@@ -60,6 +64,9 @@ public class MockPaymentServiceImpl implements MockPaymentService {
 
     @Override
     public MockPayVO mockPay(Long memberId, String paymentNo) {
+        if (wechatPayProperties.isEnabled()) {
+            throw new BusinessException(HttpStatus.CONFLICT, "微信支付已启用，当前交易不支持模拟支付");
+        }
         PaymentAttemptResult result = paymentTransactionService.pay(memberId, paymentNo);
         if (result.expired()) {
             throw new BusinessException(HttpStatus.CONFLICT, "支付交易已过期，请重新预订");

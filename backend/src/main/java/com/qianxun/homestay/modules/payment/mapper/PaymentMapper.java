@@ -2,12 +2,13 @@ package com.qianxun.homestay.modules.payment.mapper;
 
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
 import com.qianxun.homestay.modules.payment.enums.PaymentStatus;
+import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-/** 模拟支付流水的数据访问接口。 */
+/** 支付流水的数据访问接口。 */
 @Mapper
 public interface PaymentMapper {
 
@@ -17,14 +18,20 @@ public interface PaymentMapper {
     /** 按支付单号查询支付流水。 */
     PaymentEntity findByPaymentNo(@Param("paymentNo") String paymentNo);
 
+    /** 按主键查询支付流水，不加锁。 */
+    PaymentEntity findById(@Param("id") Long id);
+
     /** 按支付单号锁定支付流水，支付与超时处理共用此锁。 */
     PaymentEntity findByPaymentNoForUpdate(@Param("paymentNo") String paymentNo);
 
     /** 按主键锁定支付流水，供超时任务与支付请求串行处理。 */
     PaymentEntity findByIdForUpdate(@Param("id") Long id);
 
-    /** 按正式订单锁定模拟支付流水，退款与重复取消请求串行处理。 */
+    /** 按正式订单锁定支付流水，退款与重复取消请求串行处理。 */
     PaymentEntity findByOrderIdForUpdate(@Param("orderId") Long orderId);
+
+    /** 按订单查询关联支付流水，不加锁。 */
+    PaymentEntity findByOrderId(@Param("orderId") Long orderId);
 
     /** 分页查询后台支付流水。 */
     List<PaymentEntity> findAdminPage(
@@ -47,6 +54,17 @@ public interface PaymentMapper {
     int markSuccess(
             @Param("id") Long id,
             @Param("orderId") Long orderId,
+            @Param("transactionId") String transactionId,
+            @Param("paidAt") LocalDateTime paidAt);
+
+    /** 保存微信预支付标识，仅允许更新待支付的微信交易。 */
+    int updateWechatPrepayId(@Param("id") Long id, @Param("prepayId") String prepayId);
+
+    /** 将微信支付通知对应的待支付流水标记成功。 */
+    int markWechatSuccess(
+            @Param("id") Long id,
+            @Param("orderId") Long orderId,
+            @Param("transactionId") String transactionId,
             @Param("paidAt") LocalDateTime paidAt);
 
     /** 关闭尚未成功的支付流水。 */

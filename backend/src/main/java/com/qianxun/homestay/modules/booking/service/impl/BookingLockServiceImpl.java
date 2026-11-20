@@ -12,6 +12,8 @@ import com.qianxun.homestay.modules.member.entity.MemberEntity;
 import com.qianxun.homestay.modules.member.mapper.MemberMapper;
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
 import com.qianxun.homestay.modules.payment.enums.PaymentStatus;
+import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
+import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
 import com.qianxun.homestay.modules.payment.mapper.PaymentMapper;
 import com.qianxun.homestay.modules.payment.vo.PrepayVO;
 import com.qianxun.homestay.modules.points.domain.PointsRedemptionQuote;
@@ -41,6 +43,7 @@ public class BookingLockServiceImpl implements BookingLockService {
     private final PaymentMapper paymentMapper;
     private final PointsBalanceService pointsBalanceService;
     private final RoomMapper roomMapper;
+    private final WechatPayProperties wechatPayProperties;
 
     public BookingLockServiceImpl(
             AvailabilityService availabilityService,
@@ -48,13 +51,15 @@ public class BookingLockServiceImpl implements BookingLockService {
             MemberMapper memberMapper,
             PaymentMapper paymentMapper,
             PointsBalanceService pointsBalanceService,
-            RoomMapper roomMapper) {
+            RoomMapper roomMapper,
+            WechatPayProperties wechatPayProperties) {
         this.availabilityService = availabilityService;
         this.bookingLockMapper = bookingLockMapper;
         this.memberMapper = memberMapper;
         this.paymentMapper = paymentMapper;
         this.pointsBalanceService = pointsBalanceService;
         this.roomMapper = roomMapper;
+        this.wechatPayProperties = wechatPayProperties;
     }
 
     @Override
@@ -109,13 +114,14 @@ public class BookingLockServiceImpl implements BookingLockService {
         PaymentEntity payment = new PaymentEntity();
         payment.setBookingId(bookingLock.getId());
         payment.setPaymentNo(UUID.randomUUID().toString().replace("-", ""));
+        payment.setPaymentMethod(wechatPayProperties.isEnabled() ? PaymentMethod.WECHAT : PaymentMethod.MOCK);
         payment.setAmount(quote.payAmount());
         payment.setStatus(PaymentStatus.PENDING);
         if (paymentMapper.insert(payment) != 1) {
             throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "创建支付交易失败");
         }
         return new PrepayVO(
-                bookingLock.getId(), payment.getPaymentNo(), money(quote.roomAmount()),
+                bookingLock.getId(), payment.getPaymentNo(), payment.getPaymentMethod(), money(quote.roomAmount()),
                 quote.pointsUsed(), money(quote.discountAmount()), money(quote.payAmount()),
                 ApiTime.fromShanghai(bookingLock.getExpiresAt()));
     }

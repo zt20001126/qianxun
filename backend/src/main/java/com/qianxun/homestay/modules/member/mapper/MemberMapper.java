@@ -55,6 +55,12 @@ public interface MemberMapper {
      */
     MemberEntity findById(@Param("id") Long id);
 
+    /** 按小程序 OpenID 查询会员，用于拒绝跨会员重复绑定。 */
+    MemberEntity findByOpenid(@Param("openid") String openid);
+
+    /** 仅绑定尚未关联 OpenID 的会员，唯一索引负责处理并发竞争。 */
+    int bindOpenidIfAbsent(@Param("id") Long id, @Param("openid") String openid);
+
     /** 按手机号筛选会员并分页返回。 */
     List<MemberEntity> findPage(@Param("phone") String phone, @Param("offset") long offset, @Param("size") int size);
 

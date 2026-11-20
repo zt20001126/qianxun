@@ -31,6 +31,29 @@
         ORDER BY id DESC LIMIT 1
     </select>
 
+    <select id="findByRefundNoForUpdate" resultMap="refundResultMap">
+        SELECT <include refid="refundColumns"/>
+        FROM refunds WHERE refund_no = #{refundNo} FOR UPDATE
+    </select>
+
+    <select id="findLatestByOrderId" resultMap="refundResultMap">
+        SELECT <include refid="refundColumns"/>
+        FROM refunds WHERE order_id = #{orderId} ORDER BY id DESC LIMIT 1
+    </select>
+
+    <update id="markWechatSuccess">
+        UPDATE refunds
+        SET status = 'SUCCESS', wechat_refund_id = #{wechatRefundId}, refunded_at = #{refundedAt},
+            updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND status = 'PENDING'
+    </update>
+
+    <update id="markFailed">
+        UPDATE refunds
+        SET status = 'FAILED', reason = COALESCE(#{reason}, reason), updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND status = 'PENDING'
+    </update>
+
     <sql id="adminFilters">
         <where>
             <if test="status != null">AND status = #{status}</if>

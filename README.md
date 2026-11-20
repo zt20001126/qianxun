@@ -1,8 +1,8 @@
 # 芊浔民宿
 
-芊浔民宿第一期包含 Spring Boot API、Vue 管理后台和微信小程序，按已确认的需求、数据库与接口 V3.1 文档交付。业务范围为手机号登录、客房和房态、后台订单、模拟支付与退款、会员积分、支出及经营报表。当前支付仅用于受控测试，不产生真实资金；OTA 订单由管理员手动录入。
+芊浔民宿包含 Spring Boot API、Vue 管理后台和微信小程序，基础业务遵循 V3.1 契约，并增加 V3.2 微信支付扩展。默认 `WECHAT_PAY_ENABLED=false`，继续使用不产生真实资金的模拟支付；仅在商户配置与公网 HTTPS 回调准备完成后，才可切换为真实微信支付。开启后新交易只使用微信支付。OTA 订单由管理员手动录入。
 
-本仓库已实现实施指南阶段 0–9 的业务模块，并补充阶段 10 的支付闭环验收、容器化管理后台、Nginx API 代理和数据库备份脚本。当前工作区不代表已部署到任何服务器。交付边界及操作步骤见 [阶段 10 部署与运维说明](deploy/README.md)；正式业务规则和完整接口见 [docs 文档中心](docs/README.md)。
+本仓库已实现实施指南阶段 0–9 的业务模块，并补充阶段 10 的支付闭环验收、容器化管理后台、Nginx API 代理和数据库备份脚本。当前工作区不代表已部署到任何服务器。配置步骤见 [阶段 10 部署与运维说明](deploy/README.md)，支付扩展契约见 [V3.2 微信支付需求](docs/01-需求/芊浔民宿_需求扩展_V3.2_微信支付_20261120.md)；完整文档见 [docs 文档中心](docs/README.md)。
 
 ## 环境要求
 
@@ -52,7 +52,7 @@ powershell -ExecutionPolicy Bypass -File scripts/migrate_legacy_rooms.ps1 -Apply
 
 ## 微信小程序
 
-用微信开发者工具打开 `frontend/miniprogram`。开发调试地址配置在 `frontend/miniprogram/config.ts`；真机预览或发布需要配置可访问的 HTTPS API 域名，并在微信公众平台登记合法 request 域名。第一期没有微信登录、手机号验证或真实微信支付。
+用微信开发者工具打开 `frontend/miniprogram`。开发调试地址配置在 `frontend/miniprogram/config.ts`；真机预览或发布需要配置可访问的 HTTPS API 域名，并在微信公众平台登记合法 request 域名。默认仍关闭真实微信支付；开启方式、私钥挂载和回调域名要求见部署说明。微信付款前会通过手机号授权核对已有会员并绑定 OpenID。
 
 ## 质量检查
 
@@ -62,4 +62,4 @@ npm --prefix frontend/admin run build
 npm --prefix frontend/miniprogram run typecheck
 ```
 
-真实 MySQL 行为由 Testcontainers 集成测试覆盖；运行时需要 Docker。阶段 10 支付闭环回归包含预支付、重复及并发模拟支付、积分扣减、订单快照和过期关单。当前阶段的实际命令和结果见 [阶段 10 验收记录](deploy/VERIFICATION.md)。
+真实 MySQL 行为由 Testcontainers 集成测试覆盖；运行时需要 Docker。支付回归覆盖模拟支付、支付模式开关、微信结算幂等、付款人/金额校验及微信退款成功/失败后的订单与积分状态。当前自动检查与未完成的线上验收见 [阶段 10 验收记录](deploy/VERIFICATION.md)。

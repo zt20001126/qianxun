@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.common.security.service.JwtService;
+import com.qianxun.homestay.modules.refund.service.WechatRefundTransactionService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -56,6 +57,8 @@ class RefundApiIntegrationTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private JwtService jwtService;
+    @Autowired
+    private WechatRefundTransactionService wechatRefundTransactionService;
 
     private long memberId;
     private long orderId;
@@ -122,6 +125,11 @@ class RefundApiIntegrationTest {
                 .andExpect(jsonPath("$.data.reason").value(""))
                 .andExpect(jsonPath("$.data.deadline").value(org.hamcrest.Matchers.endsWith("+08:00")));
 
+        mockMvc.perform(get("/api/app/orders/{id}/refunds/latest", orderId)
+                        .header("Authorization", bearer(memberToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value(org.hamcrest.Matchers.nullValue()));
+
         String firstResponse = mockMvc.perform(post("/api/app/orders/{id}/refunds", orderId)
                         .header("Authorization", bearer(memberToken)))
                 .andExpect(status().isOk())
@@ -146,6 +154,58 @@ class RefundApiIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM points_log WHERE ref_no = ?", Integer.class, "RETURN:ORDER:" + orderId))
                 .isEqualTo(1);
+
+        mockMvc.perform(get("/api/app/orders/{id}/refunds/latest", orderId)
+                        .header("Authorization", bearer(memberToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("SUCCESS"));
+    }
+
+    @Test
+    void wechatRefundWaitsForConfirmedResultThenCancelsAndReturnsPointsOnce() {
+        jdbcTemplate.update("UPDATE payments SET payment_method = 'WECHAT', transaction_id = 'wx-order-tx' WHERE order_id = ?",
+                orderId);
+        var command = wechatRefundTransactionService.prepare(memberId, orderId, "行程有变");
+
+        assertThat(command.status().name()).isEqualTo("PENDING");
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM orders WHERE id = ?", String.class, orderId))
+                .isEqualTo("PENDING_CONFIRM");
+        assertThat(jdbcTemplate.queryForObject("SELECT points FROM members WHERE id = ?", Integer.class, memberId))
+                .isEqualTo(40);
+
+        var completed = wechatRefundTransactionService.complete(
+                command.refundNo(), "PAY-REFUND-TEST", "wx-order-tx", new BigDecimal("98.00"),
+                new BigDecimal("98.00"), "wx-refund-id");
+        var duplicate = wechatRefundTransactionService.complete(
+                command.refundNo(), "PAY-REFUND-TEST", "wx-order-tx", new BigDecimal("98.00"),
+                new BigDecimal("98.00"), "wx-refund-id");
+
+        assertThat(completed.status().name()).isEqualTo("SUCCESS");
+        assertThat(duplicate.refundId()).isEqualTo(completed.refundId());
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM orders WHERE id = ?", String.class, orderId))
+                .isEqualTo("CANCELLED");
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM refunds WHERE refund_no = ?", String.class,
+                command.refundNo())).isEqualTo("SUCCESS");
+        assertThat(jdbcTemplate.queryForObject("SELECT points FROM members WHERE id = ?", Integer.class, memberId))
+                .isEqualTo(100);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM points_log WHERE ref_no = ?", Integer.class, "RETURN:ORDER:" + orderId))
+                .isEqualTo(1);
+    }
+
+    @Test
+    void failedWechatRefundDoesNotCancelOrderOrReturnPoints() {
+        jdbcTemplate.update("UPDATE payments SET payment_method = 'WECHAT', transaction_id = 'wx-order-tx' WHERE order_id = ?",
+                orderId);
+        var command = wechatRefundTransactionService.prepare(memberId, orderId, "行程有变");
+        wechatRefundTransactionService.fail(command.refundNo(), "微信退款状态：CLOSED");
+
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM refunds WHERE refund_no = ?", String.class,
+                command.refundNo())).isEqualTo("FAILED");
+        assertThat(jdbcTemplate.queryForObject("SELECT status FROM orders WHERE id = ?", String.class, orderId))
+                .isEqualTo("PENDING_CONFIRM");
+        assertThat(jdbcTemplate.queryForObject("SELECT points FROM members WHERE id = ?", Integer.class, memberId))
+                .isEqualTo(40);
     }
 
     @Test

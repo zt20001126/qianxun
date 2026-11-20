@@ -15,6 +15,7 @@ import com.qianxun.homestay.modules.refund.entity.RefundEntity;
 import com.qianxun.homestay.modules.refund.enums.RefundStatus;
 import com.qianxun.homestay.modules.refund.mapper.RefundMapper;
 import com.qianxun.homestay.modules.refund.service.RefundService;
+import com.qianxun.homestay.modules.refund.service.WechatRefundService;
 import com.qianxun.homestay.modules.refund.vo.RefundListItemVO;
 import com.qianxun.homestay.modules.refund.vo.RefundPageVO;
 import com.qianxun.homestay.modules.refund.vo.RefundResultVO;
@@ -27,8 +28,9 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
-/** 编排同步模拟退款，保证退款流水、订单状态与积分返还原子提交。 */
+/** 按原支付渠道编排退款，并保证本地退款事务的数据一致性。 */
 @Service
 public class RefundServiceImpl implements RefundService {
 
@@ -39,23 +41,41 @@ public class RefundServiceImpl implements RefundService {
     private final PaymentMapper paymentMapper;
     private final RefundMapper refundMapper;
     private final PointsBalanceService pointsBalanceService;
+    private final WechatRefundService wechatRefundService;
+    private final TransactionTemplate transactionTemplate;
 
     public RefundServiceImpl(
             OrderCancellationPolicy cancellationPolicy,
             OrderMapper orderMapper,
             PaymentMapper paymentMapper,
             RefundMapper refundMapper,
-            PointsBalanceService pointsBalanceService) {
+            PointsBalanceService pointsBalanceService,
+            WechatRefundService wechatRefundService,
+            org.springframework.transaction.PlatformTransactionManager transactionManager) {
         this.cancellationPolicy = cancellationPolicy;
         this.orderMapper = orderMapper;
         this.paymentMapper = paymentMapper;
         this.refundMapper = refundMapper;
         this.pointsBalanceService = pointsBalanceService;
+        this.wechatRefundService = wechatRefundService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     @Override
-    @Transactional
     public RefundResultVO refundMyOrder(Long memberId, Long orderId, String reason) {
+        OrderEntity ownedOrder = orderMapper.findAppById(memberId, orderId);
+        if (ownedOrder == null) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "订单不存在");
+        }
+        PaymentEntity observedPayment = paymentMapper.findByOrderId(orderId);
+        if (observedPayment != null && observedPayment.getPaymentMethod()
+                == com.qianxun.homestay.modules.payment.enums.PaymentMethod.WECHAT) {
+            return wechatRefundService.refundMyOrder(memberId, orderId, reason);
+        }
+        return transactionTemplate.execute(status -> refundMockMyOrder(memberId, orderId, reason));
+    }
+
+    private RefundResultVO refundMockMyOrder(Long memberId, Long orderId, String reason) {
         OrderEntity order = orderMapper.findAppByIdForUpdate(memberId, orderId);
         if (order == null) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "订单不存在");
@@ -102,6 +122,16 @@ public class RefundServiceImpl implements RefundService {
         }
         pointsBalanceService.returnForRefund(memberId, orderId);
         return toResult(refund);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public RefundResultVO findMyLatestRefund(Long memberId, Long orderId) {
+        if (orderMapper.findAppById(memberId, orderId) == null) {
+            throw new BusinessException(HttpStatus.NOT_FOUND, "订单不存在");
+        }
+        RefundEntity refund = refundMapper.findLatestByOrderId(orderId);
+        return refund == null ? null : toResult(refund);
     }
 
     @Override
