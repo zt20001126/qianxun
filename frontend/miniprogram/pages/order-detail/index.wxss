@@ -220,11 +220,14 @@
   gap: 24rpx;
 }
 
-.cancel-button,
-.contact-button {
+.footer-actions .cancel-button,
+.footer-actions .contact-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-sizing: border-box;
   width: auto;
-  height: 72rpx;
+  height: 84rpx;
   flex: 1;
   margin: 0;
   padding: 0 20rpx;
@@ -232,7 +235,7 @@
   border-radius: 32rpx;
   font-size: 24rpx;
   font-weight: 600;
-  line-height: 68rpx;
+  line-height: 1;
 }
 
 .cancel-button::after,
@@ -432,14 +435,14 @@
 .dialog-card button {
   box-sizing: border-box;
   min-width: 0;
-  height: 72rpx;
+  height: 80rpx;
   flex: 1;
   margin: 0;
   padding: 0 12rpx;
   border: 2rpx solid #e8e0d4;
   border-radius: 24rpx;
   font-size: 24rpx;
-  line-height: 68rpx;
+  line-height: 76rpx;
 }
 
 .dialog-secondary {

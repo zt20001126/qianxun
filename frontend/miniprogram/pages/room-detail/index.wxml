@@ -12,8 +12,8 @@
         </swiper-item>
       </swiper>
       <view class="gallery-gradient"></view>
-      <view class="gallery-control gallery-previous" data-delta="-1" bindtap="onGalleryStep"><qx-icon name="chevron-left" size="32" /></view>
-      <view class="gallery-control gallery-next" data-delta="1" bindtap="onGalleryStep"><qx-icon name="chevron-right" size="32" /></view>
+      <view class="gallery-control gallery-previous" data-delta="-1" bindtap="onGalleryStep"><qx-icon name="chevron-left-white" size="32" /></view>
+      <view class="gallery-control gallery-next" data-delta="1" bindtap="onGalleryStep"><qx-icon name="chevron-right-white" size="32" /></view>
       <view class="gallery-count">{{imageIndex + 1}} / {{imageCount}}</view>
     </view>
     <view wx:else class="gallery-empty"><text>暂无客房图片</text></view>
@@ -21,7 +21,7 @@
     <view class="detail-card">
       <view class="detail-heading">
         <text class="room-title">{{room.name}}</text>
-        <text class="floor-label">{{room.floor}}F</text>
+        <text class="floor-label">{{room.floor}}楼</text>
       </view>
 
       <view class="room-facts">
@@ -71,7 +71,6 @@
   <view wx:if="{{room && !loading && !errorMessage}}" class="detail-footer">
     <view class="footer-price"><text class="currency">¥</text><text class="price-number">{{priceLabel}}</text><text class="per-night">/晚</text></view>
     <button class="book-button" loading="{{bookingLoading}}" disabled="{{bookingLoading}}" bindtap="onBookTap">立即预订</button>
-    <view class="home-indicator"></view>
   </view>
 
   <booking-calendar

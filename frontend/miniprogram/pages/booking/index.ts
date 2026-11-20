@@ -14,7 +14,10 @@ interface BookingPageData {
   checkOut: string
   checkInLabel: string
   checkOutLabel: string
+  checkInWeek: string
+  checkOutWeek: string
   nights: number
+  tierLabel: string
   roomPriceLabel: string
   roomAmountLabel: string
   discountAmountLabel: string
@@ -47,7 +50,10 @@ Page({
     checkOut: '',
     checkInLabel: '',
     checkOutLabel: '',
+    checkInWeek: '',
+    checkOutWeek: '',
     nights: 0,
+    tierLabel: '',
     roomPriceLabel: '',
     roomAmountLabel: '',
     discountAmountLabel: '',
@@ -93,12 +99,14 @@ Page({
       checkOut,
       checkInLabel: formatMonthDay(checkIn),
       checkOutLabel: formatMonthDay(checkOut),
+      checkInWeek: formatWeek(checkIn),
+      checkOutWeek: formatWeek(checkOut),
       nights: daysBetween(checkIn, checkOut),
     })
     try {
       const room = await getRoomDetail(roomId)
       this.setData({ room, roomPriceLabel: formatPrice(room.price), guestCount: 1 })
-      wx.setNavigationBarTitle({ title: '填写预订' })
+      wx.setNavigationBarTitle({ title: '填写预订信息' })
       await this.refreshAvailability()
       const initialPreview = await this.loadPreview(0)
       if (initialPreview && initialPreview.max_points_usable > 0) {
@@ -158,6 +166,7 @@ Page({
       })
       this.setData({
         preview,
+        tierLabel: formatTierRateLabel(preview.points_per_yuan),
         roomAmountLabel: formatPrice(preview.room_amount),
         discountAmountLabel: formatPrice(preview.discount_amount),
         payAmountLabel: formatPrice(preview.pay_amount),
@@ -204,6 +213,8 @@ Page({
       checkOut,
       checkInLabel: formatMonthDay(checkIn),
       checkOutLabel: formatMonthDay(checkOut),
+      checkInWeek: formatWeek(checkIn),
+      checkOutWeek: formatWeek(checkOut),
       nights: daysBetween(checkIn, checkOut),
       roomAmountLabel: '',
       discountAmountLabel: '',
@@ -282,6 +293,24 @@ Page({
 function formatMonthDay(date: string): string {
   const [, month, day] = date.split('-')
   return Number(month) + '月' + Number(day) + '日'
+}
+
+function formatWeek(date: string): string {
+  const [year, month, day] = date.split('-').map(Number)
+  return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][
+    new Date(Date.UTC(year, month - 1, day)).getUTCDay()
+  ]
+}
+
+function formatTierRateLabel(pointsPerYuan: number): string {
+  const tierNames: Record<number, string> = {
+    30: '普通会员',
+    25: '银卡会员',
+    20: '金卡会员',
+    15: '钻石会员',
+  }
+  const tierName = tierNames[pointsPerYuan]
+  return tierName ? `${tierName}（${pointsPerYuan}积分=¥1）` : `${pointsPerYuan}积分=¥1`
 }
 
 function formatPrice(price: string): string {

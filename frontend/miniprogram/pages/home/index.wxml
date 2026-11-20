@@ -45,7 +45,7 @@
       <view class="quick-icon"><qx-icon name="landmark" size="40" /></view>
       <text>民宿介绍</text>
     </button>
-    <button class="quick-entry" data-type="rooms" bindtap="onGuideTap">
+    <button class="quick-entry" bindtap="onSearchTap">
       <view class="quick-icon"><qx-icon name="bed-double" size="40" /></view>
       <text>房型一览</text>
     </button>
@@ -65,7 +65,7 @@
     <view class="banner-copy">
       <text class="banner-title">走进南浔古镇</text>
       <text class="banner-subtitle">百间楼夜色 · 江南水乡韵</text>
-      <view class="banner-action">了解南浔 <qx-icon name="chevron-right" size="24" /></view>
+      <view class="banner-action">了解南浔 <qx-icon name="chevron-right-white" size="24" /></view>
     </view>
   </view>
 

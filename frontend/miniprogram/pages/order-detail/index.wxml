@@ -58,7 +58,6 @@
         >取消订单</button>
         <button class="contact-button" bindtap="onContactTap">联系商家</button>
       </view>
-      <view class="home-indicator"></view>
     </view>
 
     <view wx:if="{{dialogType !== 'none'}}" class="dialog-mask" bindtap="onDialogClose">

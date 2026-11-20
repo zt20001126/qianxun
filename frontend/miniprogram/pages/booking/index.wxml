@@ -13,9 +13,10 @@
       </view>
       <view class="summary-stay-row" bindtap="onCalendarOpen">
         <view class="summary-stay-dates">
-          <view><text class="summary-date-label">入住：</text><text class="summary-date-value">{{checkInLabel}}</text></view>
-          <qx-icon name="arrow-right" size="26" />
-          <view><text class="summary-date-label">退房：</text><text class="summary-date-value">{{checkOutLabel}}</text></view>
+          <qx-icon name="calendar" size="28" />
+          <view><text class="summary-date-label">入住：</text><text class="summary-date-value">{{checkInLabel}}</text><text class="summary-date-week"> {{checkInWeek}}</text></view>
+          <text class="summary-stay-arrow">→</text>
+          <view><text class="summary-date-label">退房：</text><text class="summary-date-value">{{checkOutLabel}}</text><text class="summary-date-week"> {{checkOutWeek}}</text></view>
         </view>
         <text class="summary-nights">共{{nights}}晚</text>
       </view>
@@ -50,7 +51,7 @@
     <view class="booking-card fee-card">
       <view class="fee-title-row">
         <view class="section-heading"><view class="section-rail"></view><text>费用明细</text></view>
-        <text wx:if="{{preview}}" class="tier-pill">{{preview.points_per_yuan}}积分=¥1</text>
+        <text wx:if="{{preview}}" class="tier-pill">{{tierLabel}}</text>
       </view>
       <view wx:if="{{preview}}" class="fee-line">
         <text>房费</text>
@@ -90,9 +91,9 @@
 
   <view wx:if="{{room}}" class="booking-footer">
     <button class="pay-button" disabled="{{submitting || loading || previewLoading || !preview || !availabilityVerified || !availability || !availability.available}}" bindtap="onPayTap">
+      <qx-icon name="message-circle-white" size="38" />
       <text>{{submitting ? '正在锁定客房…' : payButtonLabel}}</text>
     </button>
-    <view class="home-indicator"></view>
   </view>
 
   <booking-calendar
@@ -105,9 +106,41 @@
 
   <view wx:if="{{ruleVisible}}" class="rule-mask" catchtap="onPointsRuleClose">
     <view class="rule-dialog" catchtap="noop">
-      <view class="rule-title-row"><text class="rule-title">会员积分抵扣规则</text><button bindtap="onPointsRuleClose">×</button></view>
-      <text class="rule-body">积分兑换率按当前会员等级计算：普通会员 30 分抵 ¥1，银卡 25 分抵 ¥1，金卡 20 分抵 ¥1，钻石 15 分抵 ¥1。单笔积分抵扣不超过房费的 20%，最终抵扣金额及可用积分由服务端复核。</text>
-      <button class="rule-close" bindtap="onPointsRuleClose">我知道了</button>
+      <text class="rule-title">会员等级与积分规则</text>
+      <view class="rule-table">
+        <view class="rule-table-header">
+          <text>会员等级</text>
+          <text>成长积分门槛</text>
+          <text>抵扣比例</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">普通会员</text>
+          <text class="rule-tier-range">0 - 499</text>
+          <text class="rule-tier-rate">30积分 = ¥1</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">银卡会员</text>
+          <text class="rule-tier-range">500 - 999</text>
+          <text class="rule-tier-rate">25积分 = ¥1</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">金卡会员</text>
+          <text class="rule-tier-range">1000 - 1499</text>
+          <text class="rule-tier-rate">20积分 = ¥1</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">钻石会员</text>
+          <text class="rule-tier-range">≥ 1500</text>
+          <text class="rule-tier-rate">15积分 = ¥1</text>
+        </view>
+      </view>
+      <view class="rule-list">
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">消费获得积分：</text>订单完成后按实付金额满 ¥1 发 1 积分（向下取整）。</text></view>
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">单笔抵扣上限：</text>可用积分最高抵扣单笔房费的 <text class="rule-accent">20%</text>。</text></view>
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">取消订单返还：</text>自助取消退款成功后，已抵扣积分全额退回账户。</text></view>
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">永久有效保级：</text>积分不设有效期，消耗可用积分不降低会员等级。</text></view>
+      </view>
+      <button class="rule-close" bindtap="onPointsRuleClose">我明白了</button>
     </view>
   </view>
 </view>

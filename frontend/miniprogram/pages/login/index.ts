@@ -29,6 +29,10 @@ Page({
     this.setData({ phone, errorMessage: '' })
   },
 
+  onClearPhoneTap() {
+    this.setData({ phone: '', errorMessage: '' })
+  },
+
   onTermsToggle() {
     this.setData({ agreedTerms: !this.data.agreedTerms })
   },

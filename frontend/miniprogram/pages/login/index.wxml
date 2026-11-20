@@ -23,7 +23,7 @@
     <text class="card-title">手机号登录</text>
 
     <view class="phone-field">
-      <view class="phone-icon"><view class="phone-icon-dot"></view></view>
+      <qx-icon name="smartphone" size="32" />
       <input
         class="phone-input"
         type="number"
@@ -35,6 +35,9 @@
         bindinput="onPhoneInput"
         bindconfirm="onLoginTap"
       />
+      <view wx:if="{{phone}}" class="phone-clear" bindtap="onClearPhoneTap">
+        <qx-icon name="x-circle" size="32" />
+      </view>
     </view>
 
     <text wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</text>

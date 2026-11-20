@@ -36,7 +36,7 @@ Page({
         return
       }
       this.setData({ orderId, orderNo, paymentNo, confirmed: true })
-      wx.setNavigationBarTitle({ title: '预订完成' })
+      wx.setNavigationBarTitle({ title: '预订成功' })
     } catch {
       wx.showToast({ title: '暂时无法确认支付结果', icon: 'none' })
       this.returnHome()

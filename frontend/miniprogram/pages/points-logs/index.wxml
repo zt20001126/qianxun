@@ -1,19 +1,109 @@
 <view class="logs-page">
-  <view class="logs-heading"><text>积分明细</text><text>共 {{total}} 条</text></view>
+  <view class="summary-card">
+    <view class="summary-left">
+      <view class="summary-icon-circle">
+        <qx-icon name="coins" size="40" />
+      </view>
+      <view class="summary-copy">
+        <text class="summary-label">我的积分</text>
+        <text class="summary-value">{{availablePointsDisplay}}</text>
+      </view>
+    </view>
+
+    <view class="summary-right" bindtap="onPointsRuleOpen">
+      <view class="summary-right-main">
+        <qx-icon name="gift" size="32" />
+        <view class="summary-usage">
+          <text class="summary-usage-title">积分可用于</text>
+          <text class="summary-usage-desc">抵扣房费（最高20%）</text>
+        </view>
+      </view>
+      <qx-icon name="chevron-right-gray" size="32" />
+    </view>
+  </view>
+
+  <view class="logs-heading">
+    <view class="heading-left">
+      <view class="heading-mark"></view>
+      <text class="heading-title">积分明细</text>
+    </view>
+    <text class="heading-count">共 {{total}} 条记录</text>
+  </view>
+
   <view wx:if="{{loading && logs.length === 0}}" class="logs-state">正在读取积分流水…</view>
   <view wx:elif="{{errorMessage && logs.length === 0}}" class="logs-state logs-error">
-    <text>{{errorMessage}}</text><button class="retry-button" bindtap="loadLogs">重新加载</button>
+    <text>{{errorMessage}}</text>
+    <button class="retry-button" bindtap="onRetryTap">重新加载</button>
   </view>
-  <view wx:elif="{{logs.length === 0}}" class="logs-state">还没有积分流水</view>
-  <view wx:else class="logs-card">
-    <view wx:for="{{logs}}" wx:key="id" class="log-row">
-      <view class="log-main">
-        <view class="log-title"><text>{{item.type_label}}</text><text class="log-points {{item.points > 0 ? 'positive' : 'negative'}}">{{item.points_label}}</text></view>
-        <text class="log-source">{{item.source_label}}</text>
-        <text class="log-time">{{item.created_label}}</text>
+  <view wx:elif="{{logs.length === 0}}" class="logs-empty">
+    <text class="empty-title">暂无积分流水</text>
+    <text class="empty-desc">完成订单或积分抵扣后将自动记录在此</text>
+  </view>
+  <view wx:else class="month-groups">
+    <view wx:for="{{monthGroups}}" wx:key="month" class="month-card">
+      <view class="month-header">{{item.month}}</view>
+      <view class="month-list">
+        <view wx:for="{{item.items}}" wx:for-item="log" wx:key="id" class="log-row">
+          <view class="log-left">
+            <view class="log-icon-wrap {{log.is_positive ? 'is-positive' : 'is-negative'}}">
+              <qx-icon name="{{log.icon_name}}" size="32" />
+            </view>
+            <view class="log-copy">
+              <text class="log-title">{{log.type_label}}</text>
+              <text class="log-source">{{log.source_label}}</text>
+              <text class="log-meta">{{log.created_label}} · 余额 {{log.balance_after}}</text>
+            </view>
+          </view>
+          <text class="log-delta {{log.is_positive ? 'delta-positive' : 'delta-negative'}}">{{log.points_label}}</text>
+        </view>
       </view>
-      <view class="log-balance"><text>余额</text><text>{{item.balance_after}}</text></view>
     </view>
-    <view class="logs-footer">{{loadingMore ? '正在加载…' : logs.length < total ? '上拉加载更多' : '已显示全部流水'}}</view>
+    <view wx:if="{{loadingMore}}" class="logs-footer">正在加载更多…</view>
+    <view wx:elif="{{logs.length < total}}" class="logs-footer">上拉加载更多</view>
+  </view>
+
+  <button class="back-member-button" bindtap="onBackMemberTap">
+    <qx-icon name="crown-wood" size="28" />
+    <text>返回会员中心</text>
+  </button>
+
+  <view wx:if="{{ruleVisible}}" class="rule-mask" catchtap="onPointsRuleClose">
+    <view class="rule-dialog" catchtap="noop">
+      <text class="rule-title">会员等级与积分规则</text>
+      <view class="rule-table">
+        <view class="rule-table-header">
+          <text>会员等级</text>
+          <text>成长积分门槛</text>
+          <text>抵扣比例</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">普通会员</text>
+          <text class="rule-tier-range">0 - 499</text>
+          <text class="rule-tier-rate">30积分 = ¥1</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">银卡会员</text>
+          <text class="rule-tier-range">500 - 999</text>
+          <text class="rule-tier-rate">25积分 = ¥1</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">金卡会员</text>
+          <text class="rule-tier-range">1000 - 1499</text>
+          <text class="rule-tier-rate">20积分 = ¥1</text>
+        </view>
+        <view class="rule-table-row">
+          <text class="rule-tier-name">钻石会员</text>
+          <text class="rule-tier-range">≥ 1500</text>
+          <text class="rule-tier-rate">15积分 = ¥1</text>
+        </view>
+      </view>
+      <view class="rule-list">
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">消费获得积分：</text>订单完成后按实付金额满 ¥1 发 1 积分（向下取整）。</text></view>
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">单笔抵扣上限：</text>可用积分最高抵扣单笔房费的 <text class="rule-accent">20%</text>。</text></view>
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">取消订单返还：</text>自助取消退款成功后，已抵扣积分全额退回账户。</text></view>
+        <view class="rule-item"><text class="rule-bullet">• </text><text><text class="rule-strong">永久有效保级：</text>积分不设有效期，消耗可用积分不降低会员等级。</text></view>
+      </view>
+      <button class="rule-close" bindtap="onPointsRuleClose">我明白了</button>
+    </view>
   </view>
 </view>

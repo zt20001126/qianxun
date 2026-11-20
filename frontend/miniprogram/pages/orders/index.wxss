@@ -145,6 +145,7 @@
 .order-title-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8rpx;
 }
 
@@ -243,5 +244,31 @@
   color: #7a726b;
   font-size: 22rpx;
   text-align: center;
+}
+
+.orders-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12rpx;
+  padding: 72rpx 32rpx;
+  border: 2rpx solid rgba(232, 224, 212, 0.7);
+  border-radius: 32rpx;
+  background: #ffffff;
+  box-shadow: 0 8rpx 40rpx -4rpx rgba(35, 31, 29, 0.05);
+  text-align: center;
+}
+
+.empty-title {
+  color: #231f1d;
+  font-family: "Songti SC", "Noto Serif SC", serif;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.empty-hint {
+  color: #7a726b;
+  font-size: 22rpx;
 }
 

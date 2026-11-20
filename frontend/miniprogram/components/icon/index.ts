@@ -25,6 +25,19 @@ const ICON_NAMES: Record<string, string> = {
   home: 'home',
   'check-white': 'check-white',
   close: 'close',
+  'chevron-right-white': 'chevron-right-white',
+  'chevron-left-white': 'chevron-left-white',
+  'chevron-right-gray': 'chevron-right-gray',
+  'x-circle': 'x-circle',
+  smartphone: 'smartphone',
+  gift: 'gift',
+  'gift-celadon': 'gift-celadon',
+  'award-celadon': 'award-celadon',
+  'rotate-ccw-celadon': 'rotate-ccw-celadon',
+  'sparkles-celadon': 'sparkles-celadon',
+  ticket: 'ticket',
+  coins: 'coins',
+  'crown-wood': 'crown-wood',
 }
 
 Component({

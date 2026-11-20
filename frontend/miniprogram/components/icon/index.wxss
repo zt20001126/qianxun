@@ -1,1 +1,2 @@
-.qx-icon { display: inline-block; flex: none; vertical-align: middle; }
+:host { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; }
+.qx-icon { display: block; flex: none; }

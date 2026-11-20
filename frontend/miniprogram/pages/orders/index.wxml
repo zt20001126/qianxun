@@ -12,7 +12,10 @@
     <text>{{errorMessage}}</text>
     <button class="retry-button" bindtap="loadOrders">重新加载</button>
   </view>
-  <view wx:elif="{{orders.length === 0}}" class="orders-empty"></view>
+  <view wx:elif="{{orders.length === 0}}" class="orders-empty">
+    <text class="empty-title">暂无订单记录</text>
+    <text class="empty-hint">预订成功后的订单将显示在这里</text>
+  </view>
   <view wx:else class="orders-list">
     <view wx:for="{{orders}}" wx:key="id" class="order-card" data-order-id="{{item.id}}" bindtap="onOrderTap">
       <view class="order-card-top">
