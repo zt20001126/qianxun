@@ -43,7 +43,6 @@
             <view class="points-copy">
               <text class="points-label">累计成长积分</text>
               <text class="points-number growth-number">{{growthPointsDisplay}}</text>
-              <text class="points-caption">决定当前会员等级</text>
             </view>
           </view>
 
