@@ -5,8 +5,9 @@
 .home-brand { position: absolute; top: 48rpx; left: 0; right: 0; display: flex; flex-direction: column; align-items: center; color: #fff; text-shadow: 0 2rpx 12rpx rgba(0, 0, 0, .3); }
 .brand-title-row { display: flex; align-items: center; gap: 16rpx; }
 .brand-title { font-family: "Songti SC", "Noto Serif SC", serif; font-size: 56rpx; font-weight: 700; letter-spacing: 7rpx; }
-.brand-seal { display: grid; width: 42rpx; height: 48rpx; place-items: center; border-radius: 6rpx; color: #fff; background: #b83b2a; font-family: "Songti SC", serif; font-size: 19rpx; font-weight: 700; writing-mode: vertical-rl; letter-spacing: 2rpx; }
+.brand-seal { display: flex; width: 42rpx; height: 48rpx; flex-direction: column; align-items: center; justify-content: center; border-radius: 6rpx; color: #fff; background: #b83b2a; font-family: "Songti SC", serif; font-size: 19rpx; font-weight: 700; line-height: 1.15; }
 .brand-subtitle { margin-top: 10rpx; color: rgba(255, 255, 255, .95); font-size: 23rpx; letter-spacing: 5rpx; }
+.brand-location { display: flex; align-items: center; gap: 8rpx; margin-top: 18rpx; padding: 9rpx 18rpx; border: 1rpx solid rgba(255, 255, 255, .4); border-radius: 999rpx; color: #fff; background: rgba(35, 31, 29, .38); font-size: 22rpx; letter-spacing: 1rpx; }
 .booking-card { position: relative; z-index: 2; margin: -112rpx 32rpx 0; padding: 32rpx; border: 1rpx solid rgba(232, 224, 212, .8); border-radius: 52rpx; background: rgba(255, 255, 255, .98); box-shadow: 0 16rpx 48rpx rgba(139, 77, 37, .08); }
 .date-selector { display: flex; align-items: center; justify-content: space-between; padding: 26rpx 30rpx; border: 1rpx solid rgba(232, 224, 212, .7); border-radius: 32rpx; background: rgba(250, 247, 242, .86); }
 .date-side { display: flex; flex: 1; flex-direction: column; min-width: 0; }

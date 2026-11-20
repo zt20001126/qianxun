@@ -1,7 +1,7 @@
 /** 小程序首页：展示水乡品牌视觉、行程选择和导览入口。 */
 import { listRooms } from '../../services/rooms'
 import type { AppRoomSummary } from '../../types/room'
-import { STORE_CONTACT_PHONE_LABEL } from '../../config'
+import { STORE_ADDRESS, STORE_CONTACT_PHONE_LABEL } from '../../config'
 import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
 
 interface GuideContent {
@@ -13,6 +13,7 @@ interface GuideContent {
 
 interface HomePageData {
   today: string
+  storeAddress: string
   maxDate: string
   lastCheckInDate: string
   checkIn: string
@@ -34,39 +35,40 @@ interface HomePageData {
 const GUIDE_CONTENT: Record<string, GuideContent> = {
   intro: {
     tag: '关于芊浔',
-    title: '芊浔民宿 · 枕水而居',
-    body: '坐落于浙江省湖州市南浔区南浔古镇88号，全店精设 6 间水乡雅居（一楼 101/102/103、二楼 201/202/203），保留徽派马头墙与雕花木窗，推窗即见摇橹船影。',
-    extra: '地址：浙江省湖州市南浔区南浔古镇88号',
+    title: '芊浔民宿',
+    body: `芊浔民宿位于${STORE_ADDRESS}，设有六间客房。选择入住与退房日期后，可查询整段行程的可订房间；床型、面积和设施请查看对应房间详情。`,
+    extra: `民宿地址：${STORE_ADDRESS}`,
   },
   around: {
-    tag: '水乡漫游',
-    title: '周边必打卡景点',
-    body: '• 百间楼古民居群（步行 1 分钟，晨雾与灯笼夜色绝美）\n• 小莲庄 & 嘉业堂藏书楼（步行 6 分钟）\n• 张石铭旧宅（步行 8 分钟，中西合璧建筑瑰宝）',
-    extra: '每日 19:30 庭院免费奉上南浔三道茶',
+    tag: '古镇漫游',
+    title: '慢游南浔古镇',
+    body: '芊浔民宿位于南浔古镇内，可根据当天安排游览古镇景点。景点开放时间、路线及步行距离可能变化，出发前请查看景区公告或地图实时信息。',
+    extra: `导航搜索：${STORE_ADDRESS}`,
   },
   traffic: {
     tag: '出行指南',
-    title: '如何抵达芊浔民宿',
-    body: '• 高铁出行：乘至「湖州南浔站」，打车约 15 分钟即达古镇东门停车场。\n• 自驾导航：搜索「南浔古镇东门地面停车场」，管家将提前至入口迎候接行李。',
-    extra: `24小时管家热线：${STORE_CONTACT_PHONE_LABEL}`,
+    title: '芊浔民宿地址',
+    body: `民宿地址：${STORE_ADDRESS}\n可在地图应用中搜索该地址查看实时路线；停车和步行路线请以地图信息及现场指引为准。`,
+    extra: `联系电话：${STORE_CONTACT_PHONE_LABEL}`,
   },
   rooms: {
     tag: '雅居一览',
-    title: '寻一间临水雅室',
-    body: '芊浔民宿设有六间水乡客房。选择入住与退房日期后，系统会自动筛选整段行程可订的房间；每间房的床型、面积与设施可在房间详情中查看。',
+    title: '查看客房与设施',
+    body: '芊浔民宿设有六间客房。选择入住与退房日期后，可查询整段行程的可订房间；床型、面积与设施请查看对应房间详情。',
     extra: '点击“查询房间”查看当前日期可订房型',
   },
   nanxun: {
-    tag: '文化底蕴',
-    title: '百间楼夜色 · 江南水乡韵',
-    body: '南浔古镇素有“文化之邦”与“诗书之乡”美誉，相比喧闹商业古镇，这里仍保留着原住民临河浣洗、茶馆听评弹的烟火气。入住芊浔，私享整片静谧水乡。',
-    extra: '营业时间：全年无休 · 14:00 入住 / 次日 12:00 退房',
+    tag: '南浔漫游',
+    title: '在南浔，慢游古镇',
+    body: `芊浔民宿位于${STORE_ADDRESS}。古镇景点开放时间与游览路线请以景区公告和地图实时信息为准。`,
+    extra: `民宿地址：${STORE_ADDRESS}`,
   },
 }
 
 Page({
   data: {
     today: '',
+    storeAddress: STORE_ADDRESS,
     maxDate: '',
     lastCheckInDate: '',
     checkIn: '',

@@ -5,7 +5,7 @@
     <view class="booking-card room-summary-card">
       <view class="room-summary-top">
         <image wx:if="{{room.images.length}}" class="summary-image" src="{{room.images[0]}}" mode="aspectFill" />
-        <view wx:else class="summary-image summary-image-empty">芊浔雅居</view>
+        <view wx:else class="summary-image summary-image-empty">暂无房间图片</view>
         <view class="summary-room-info">
           <text class="summary-room-name">{{room.name}}</text>
         <text class="summary-room-meta">{{room.bed_info || '雅致客房'}} · 可住{{room.capacity}}人 · {{room.area || '—'}}㎡</text>

@@ -5,9 +5,16 @@
     <view class="home-brand">
       <view class="brand-title-row">
         <text class="brand-title">芊浔民宿</text>
-        <text class="brand-seal">南浔</text>
+        <view class="brand-seal">
+          <text>南</text>
+          <text>浔</text>
+        </view>
       </view>
       <text class="brand-subtitle">—— 枕水而居 · 诗意南浔 ——</text>
+      <view class="brand-location">
+        <qx-icon name="map-pin" size="24" />
+        <text>{{storeAddress}}</text>
+      </view>
     </view>
   </view>
 

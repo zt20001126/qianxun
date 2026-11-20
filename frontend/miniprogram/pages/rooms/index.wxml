@@ -33,7 +33,7 @@
     <view wx:else class="room-list">
       <view wx:for="{{rooms}}" wx:key="id" class="room-card" data-room-id="{{item.id}}" bindtap="onRoomTap">
         <image wx:if="{{item.images.length}}" class="room-cover" src="{{item.images[0]}}" mode="aspectFill" />
-        <view wx:else class="room-cover room-cover-empty">芊浔雅居</view>
+        <view wx:else class="room-cover room-cover-empty">暂无房间图片</view>
         <view class="room-info">
           <text class="room-name">{{item.name}}</text>
           <view class="room-facts">
