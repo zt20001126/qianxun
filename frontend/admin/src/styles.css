@@ -96,10 +96,12 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .sidebar-mark { display: block; width: 42px; height: 42px; flex: 0 0 auto; border: 1px solid #d9e7e8; border-radius: 50%; background: #fff; object-fit: cover; box-shadow: var(--qx-shadow-xs); }
 .sidebar-nav { display: grid; gap: 7px; overflow-y: auto; }
 .sidebar-nav a { display: flex; align-items: center; gap: 12px; min-height: 45px; padding: 0 12px; border-radius: 11px; color: var(--qx-muted); font-size: 14px; text-decoration: none; transition: background .15s, color .15s; }
-.sidebar-nav a span { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid #e3e8e8; border-radius: 8px; color: #65828a; font-size: 12px; }
+.sidebar-icon { display: block; width: 21px; height: 21px; flex: 0 0 auto; color: #818b8e; transition: color .15s; }
 .sidebar-nav a:hover { background: #f3f7f7; color: var(--qx-primary-dark); }
 .sidebar-nav a.router-link-active { color: var(--qx-primary-dark); background: #eaf2f3; font-weight: 600; }
-.sidebar-nav a.router-link-active span { border-color: var(--qx-primary); color: #fff; background: var(--qx-primary); }
+.sidebar-nav a:hover .sidebar-icon, .sidebar-nav a.router-link-active .sidebar-icon { color: var(--qx-primary); }
+.sidebar-nav a.sidebar-nav-primary { color: var(--qx-primary-dark); font-weight: 600; }
+.sidebar-nav a.sidebar-nav-primary .sidebar-icon { color: var(--qx-primary); }
 .admin-main { min-width: 0; }
 .admin-topbar { display: flex; min-height: 78px; align-items: center; justify-content: space-between; padding: 12px 36px; border-bottom: 1px solid var(--qx-border); background: rgba(255, 255, 255, .88); }
 .topbar-heading p { margin: 0 0 4px; color: var(--qx-muted); font-size: 11px; }
@@ -238,7 +240,7 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
   .sidebar-brand { padding-bottom: 10px; }
   .sidebar-nav { justify-content: space-between; }
   .sidebar-nav a { gap: 6px; padding: 0 7px; font-size: 11px; }
-  .sidebar-nav a span { width: 21px; height: 21px; font-size: 10px; }
+  .sidebar-icon { width: 18px; height: 18px; }
   .admin-topbar { padding: 10px 14px; }
   .admin-topbar-dashboard { gap: 8px; }
   .topbar-title-line { align-items: flex-start; flex-direction: column; gap: 6px; }
