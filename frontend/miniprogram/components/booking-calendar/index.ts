@@ -287,6 +287,24 @@ function buildCalendarDays(
       isCheckOut: date === checkOut,
     })
   }
+
+  // 补齐最后一周，保证只有少数日期的末行也占满七列并与星期标题对齐。
+  while (days.length % 7 !== 0) {
+    days.push({
+      key: 'empty-' + month + '-tail-' + days.length,
+      date: '',
+      label: '',
+      empty: true,
+      unavailable: false,
+      disabled: true,
+      selected: false,
+      inRange: false,
+      isToday: false,
+      isCheckIn: false,
+      isCheckOut: false,
+    })
+  }
+
   return days
 }
 
