@@ -487,12 +487,12 @@ onMounted(async () => {
 
               <!-- ④ 实付金额 -->
               <td class="col-right">
-                <span class="order-paid-text is-mono">¥{{ row.paid_amount }}</span>
+                <span class="order-paid-text money-value">¥{{ row.paid_amount }}</span>
               </td>
 
               <!-- ⑤ 手续费 / 达人提成 / 额外提成 -->
               <td class="col-right">
-                <div class="order-fee-lines is-mono">
+                <div class="order-fee-lines money-value">
                   <div>
                     平台手续费：<span class="fee-val">¥{{ row.platform_fee }}</span>
                   </div>
@@ -509,7 +509,7 @@ onMounted(async () => {
 
               <!-- ⑥ 商家到手 -->
               <td class="col-right">
-                <span class="order-net-text is-mono">¥{{ row.net_amount }}</span>
+                <span class="order-net-text money-value">¥{{ row.net_amount }}</span>
               </td>
 
               <!-- ⑦ 状态 -->

@@ -168,13 +168,13 @@ onMounted(async () => {
       <div class="operation-kpis">
         <article class="operation-kpi"><small>订单数</small><strong>{{ overview.order_count }} 笔</strong></article>
         <article class="operation-kpi"><small>间夜数</small><strong>{{ overview.night_count }} 间夜</strong></article>
-        <article class="operation-kpi is-highlight"><small>顾客实付</small><strong>¥ {{ overview.paid_amount }}</strong></article>
-        <article class="operation-kpi"><small>商家到手</small><strong>¥ {{ overview.net_amount }}</strong></article>
-        <article class="operation-kpi"><small>平台手续费</small><strong>¥ {{ overview.platform_fee }}</strong></article>
-        <article class="operation-kpi"><small>平台达人提成</small><strong>¥ {{ overview.platform_commission }}</strong></article>
-        <article class="operation-kpi"><small>达人额外提成</small><strong>¥ {{ overview.extra_commission }}</strong></article>
-        <article class="operation-kpi"><small>经营支出</small><strong>¥ {{ overview.expense_amount }}</strong></article>
-        <article class="operation-kpi is-profit"><small>经营净利润（固定口径）</small><strong>¥ {{ overview.operating_profit }}</strong></article>
+        <article class="operation-kpi is-highlight"><small>顾客实付</small><strong class="money-value">¥ {{ overview.paid_amount }}</strong></article>
+        <article class="operation-kpi"><small>商家到手</small><strong class="money-value">¥ {{ overview.net_amount }}</strong></article>
+        <article class="operation-kpi"><small>平台手续费</small><strong class="money-value">¥ {{ overview.platform_fee }}</strong></article>
+        <article class="operation-kpi"><small>平台达人提成</small><strong class="money-value">¥ {{ overview.platform_commission }}</strong></article>
+        <article class="operation-kpi"><small>达人额外提成</small><strong class="money-value">¥ {{ overview.extra_commission }}</strong></article>
+        <article class="operation-kpi"><small>经营支出</small><strong class="money-value">¥ {{ overview.expense_amount }}</strong></article>
+        <article class="operation-kpi is-profit"><small>经营净利润（固定口径）</small><strong class="money-value">¥ {{ overview.operating_profit }}</strong></article>
       </div>
     </section>
 
@@ -211,13 +211,13 @@ onMounted(async () => {
               <td>{{ row.name }}</td>
               <td>{{ row.order_count }}</td>
               <td>{{ row.night_count }}</td>
-              <td class="price-cell">¥ {{ row.paid_amount }}</td>
-              <td>¥ {{ row.platform_fee }}</td>
-              <td>¥ {{ row.platform_commission }}</td>
-              <td>¥ {{ row.extra_commission }}</td>
-              <td>¥ {{ row.total_commission }}</td>
-              <td>¥ {{ row.net_amount }}</td>
-              <td v-if="dimension === 'rooms'">¥ {{ row.room_profit || '0.00' }}</td>
+              <td class="price-cell money-value">¥ {{ row.paid_amount }}</td>
+              <td class="money-value">¥ {{ row.platform_fee }}</td>
+              <td class="money-value">¥ {{ row.platform_commission }}</td>
+              <td class="money-value">¥ {{ row.extra_commission }}</td>
+              <td class="money-value">¥ {{ row.total_commission }}</td>
+              <td class="money-value">¥ {{ row.net_amount }}</td>
+              <td v-if="dimension === 'rooms'" class="money-value">¥ {{ row.room_profit || '0.00' }}</td>
               <td v-if="dimension === 'rooms'" class="rate-cell">{{ formatPercent(row.occupancy_rate) }}</td>
             </tr>
           </tbody>

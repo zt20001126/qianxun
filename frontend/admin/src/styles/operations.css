@@ -226,7 +226,9 @@
   display: block;
   overflow-wrap: anywhere;
   color: #1f2426;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
   font-size: 20px;
   font-weight: 700;
   line-height: 1.25;
@@ -279,7 +281,9 @@
 }
 .room-rate-line strong {
   color: #337a8b;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
   font-weight: 700;
 }
 
@@ -1363,7 +1367,7 @@
 .operation-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 11px; }
 .operation-kpi { display: grid; min-height: 92px; align-content: space-between; gap: 10px; padding: 15px; border: 1px solid #e6ebeb; border-radius: 12px; background: #fff; box-shadow: var(--qx-shadow-xs); }
 .operation-kpi small { color: var(--qx-muted); font-size: 11px; }
-.operation-kpi strong { color: var(--qx-text); font-family: Georgia, serif; font-size: 20px; font-weight: 600; overflow-wrap: anywhere; }
+.operation-kpi strong { color: var(--qx-text); font-family: Inter, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 20px; font-variant-numeric: lining-nums tabular-nums; font-feature-settings: "lnum" 1, "tnum" 1; font-weight: 600; overflow-wrap: anywhere; }
 .operation-kpi.is-highlight { border-color: #c7dde0; background: #f0f6f6; }
 .operation-kpi.is-highlight strong { color: var(--qx-primary); }
 .operation-kpi.is-profit strong { color: var(--qx-success); }

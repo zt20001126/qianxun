@@ -265,12 +265,12 @@ async function submit(): Promise<void> {
             <div class="qx-amount-inputs">
               <label class="qx-field">
                 <span class="is-cinnabar">顾客实付金额 *</span>
-                <input v-model="form.paid_amount" type="text" inputmode="decimal" placeholder="0.00" class="is-mono" required />
+                <input v-model="form.paid_amount" type="text" inputmode="decimal" placeholder="0.00" class="is-mono money-value" required />
               </label>
 
               <label class="qx-field">
                 <span>平台手续费</span>
-                <input v-model="form.platform_fee" type="text" inputmode="decimal" placeholder="0.00" class="is-mono" />
+                <input v-model="form.platform_fee" type="text" inputmode="decimal" placeholder="0.00" class="is-mono money-value" />
               </label>
 
               <label class="qx-field">
@@ -280,7 +280,7 @@ async function submit(): Promise<void> {
                   type="text"
                   inputmode="decimal"
                   placeholder="0.00"
-                  class="is-mono"
+                  class="is-mono money-value"
                   :disabled="!hasCreator"
                 />
               </label>
@@ -292,15 +292,15 @@ async function submit(): Promise<void> {
                   type="text"
                   inputmode="decimal"
                   placeholder="无主播留空"
-                  class="is-mono"
+                  class="is-mono money-value"
                   :disabled="!hasCreator"
                 />
               </label>
             </div>
 
             <div class="qx-amount-preview">
-              <span>自动计算达人额外提成：<strong class="is-teal is-mono">¥{{ amountPreview.extra }}</strong></span>
-              <span>自动计算商家到手金额：<strong class="is-celadon is-mono is-lg">¥{{ amountPreview.net }}</strong></span>
+              <span>自动计算达人额外提成：<strong class="is-teal money-value">¥{{ amountPreview.extra }}</strong></span>
+              <span>自动计算商家到手金额：<strong class="is-celadon money-value is-lg">¥{{ amountPreview.net }}</strong></span>
             </div>
           </div>
 

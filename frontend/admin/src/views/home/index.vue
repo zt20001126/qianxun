@@ -668,7 +668,7 @@ onMounted(() => {
 
               <span class="proto-order-footer">
                 <span class="proto-order-footer-label">实付金额</span>
-                <strong class="proto-order-price is-mono">
+                <strong class="proto-order-price money-value">
                   {{ view.order ? `¥${view.order.paid_amount}` : '—' }}
                 </strong>
               </span>

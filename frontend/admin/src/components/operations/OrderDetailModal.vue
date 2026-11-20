@@ -226,27 +226,27 @@ async function confirmCancelExternal(): Promise<void> {
             <div class="qx-snapshot-grid">
               <div class="qx-snapshot-item">
                 <small>1. 顾客实付金额</small>
-                <strong class="is-cinnabar is-mono is-lg">¥{{ detail.paid_amount }}</strong>
+                <strong class="is-cinnabar money-value is-lg">¥{{ detail.paid_amount }}</strong>
               </div>
               <div class="qx-snapshot-item">
                 <small>2. 平台手续费</small>
-                <strong class="is-mono">¥{{ detail.platform_fee }}</strong>
+                <strong class="money-value">¥{{ detail.platform_fee }}</strong>
               </div>
               <div class="qx-snapshot-item">
                 <small>3. 平台达人提成</small>
-                <strong class="is-mono">¥{{ detail.platform_commission }}</strong>
+                <strong class="money-value">¥{{ detail.platform_commission }}</strong>
               </div>
               <div class="qx-snapshot-item">
                 <small>4. 达人额外提成</small>
-                <strong class="is-mono">¥{{ detail.extra_commission }}</strong>
+                <strong class="money-value">¥{{ detail.extra_commission }}</strong>
               </div>
               <div class="qx-snapshot-item">
                 <small>5. 预期收入</small>
-                <strong class="is-mono">{{ detail.expected_amount != null ? `¥${detail.expected_amount}` : '—' }}</strong>
+                <strong class="money-value">{{ detail.expected_amount != null ? `¥${detail.expected_amount}` : '—' }}</strong>
               </div>
               <div class="qx-snapshot-item is-net">
                 <small>6. 商家到手金额</small>
-                <strong class="is-celadon is-mono is-lg">¥{{ detail.net_amount }}</strong>
+                <strong class="is-celadon money-value is-lg">¥{{ detail.net_amount }}</strong>
               </div>
             </div>
           </div>

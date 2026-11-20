@@ -148,7 +148,7 @@ onMounted(() => void load())
     <section v-if="summary" class="expense-summary-row">
       <article class="operation-kpi is-highlight">
         <small>{{ month }} 实际经营支出</small>
-        <strong>¥ {{ summary.total_amount }}</strong>
+        <strong class="money-value">¥ {{ summary.total_amount }}</strong>
       </article>
       <article class="operation-kpi">
         <small>本月支出笔数</small>
@@ -213,7 +213,7 @@ onMounted(() => void load())
             <input v-model="form.content" maxlength="300" required placeholder="例如：采购洗漱用品" />
           </label>
           <label>支出金额（元）
-            <input v-model="form.amount" inputmode="decimal" required placeholder="0.00" />
+            <input v-model="form.amount" class="money-value" inputmode="decimal" required placeholder="0.00" />
           </label>
           <label>实际支出日期
             <input v-model="form.date" type="date" required />

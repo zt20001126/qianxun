@@ -235,7 +235,7 @@ function messageOf(error: unknown, fallback: string): string {
               <input v-model="form.name" maxlength="80" placeholder="例如：智能大床房" required />
             </label>
             <label>每晚价格（元）
-              <input v-model="form.price" inputmode="decimal" maxlength="13" placeholder="如 198.00" required />
+              <input v-model="form.price" class="money-value" inputmode="decimal" maxlength="13" placeholder="如 198.00" required />
             </label>
             <label>可入住人数
               <input v-model="form.capacity" type="number" min="1" max="65535" placeholder="人数" required />

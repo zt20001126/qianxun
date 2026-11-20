@@ -555,7 +555,7 @@ onMounted(() => {
                     </span>
                     <span class="cal-day-right">
                       <small>实付金额</small>
-                      <strong class="is-mono">¥{{ info.paidAmount }}</strong>
+                      <strong class="money-value">¥{{ info.paidAmount }}</strong>
                     </span>
                   </button>
 
