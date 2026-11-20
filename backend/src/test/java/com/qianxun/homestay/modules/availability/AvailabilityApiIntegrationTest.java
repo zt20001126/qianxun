@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zaxxer.hikari.HikariDataSource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -96,6 +97,46 @@ class AvailabilityApiIntegrationTest {
                 "101", "枕澜大床房", "100.00");
         roomId = jdbcTemplate.queryForObject("SELECT id FROM room WHERE number = '101'", Long.class);
         adminToken = loginAdminToken();
+    }
+
+    @Test
+    void adminCalendarShowsOrderAndBlockStatesButHidesCancelledOrdersAndLiveLocks() throws Exception {
+        YearMonth month = YearMonth.now(BUSINESS_ZONE).plusMonths(1);
+        LocalDate checkIn = month.atDay(3);
+        insertOrder("QXTESTCAL0001", checkIn, checkIn.plusDays(2), "PENDING_CONFIRM");
+        insertOrder("QXTESTCAL0002", month.atDay(6), month.atDay(7), "CANCELLED");
+        jdbcTemplate.update(
+                "INSERT INTO room_block (room_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+                roomId, month.atDay(8), month.atDay(10), "日历测试封房");
+        long memberId = insertMember("13800000072");
+        insertBookingLock(memberId, month.atDay(12), month.atDay(13), "PENDING",
+                LocalDateTime.now(BUSINESS_ZONE).plusMinutes(10));
+
+        mockMvc.perform(get("/api/admin/room-calendar").param("month", month.toString()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/admin/room-calendar")
+                        .header("Authorization", bearer(adminToken))
+                        .param("month", "2026-13"))
+                .andExpect(status().isBadRequest());
+
+        String response = mockMvc.perform(get("/api/admin/room-calendar")
+                        .header("Authorization", bearer(adminToken))
+                        .param("month", month.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.month").value(month.toString()))
+                .andExpect(jsonPath("$.data.rooms.length()").value(1))
+                .andExpect(jsonPath("$.data.rooms[0].days.length()").value(month.lengthOfMonth()))
+                .andExpect(jsonPath("$.data.rooms[0].days[2].status").value("PENDING_CONFIRM"))
+                .andExpect(jsonPath("$.data.rooms[0].days[3].status").value("OCCUPIED"))
+                .andExpect(jsonPath("$.data.rooms[0].days[5].status").value("AVAILABLE"))
+                .andExpect(jsonPath("$.data.rooms[0].days[7].status").value("BLOCKED"))
+                .andExpect(jsonPath("$.data.rooms[0].days[11].status").value("AVAILABLE"))
+                .andReturn().getResponse().getContentAsString();
+
+        JsonNode days = objectMapper.readTree(response).path("data").path("rooms").get(0).path("days");
+        assertThat(days.get(2).path("order_id").asLong()).isPositive();
+        assertThat(days.get(3).path("order_id").asLong()).isEqualTo(days.get(2).path("order_id").asLong());
+        assertThat(days.get(5).has("order_id")).isFalse();
     }
 
     @Test

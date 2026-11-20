@@ -4,7 +4,7 @@
       <image class="profile-background" src="/assets/login-baijianlou-hero.webp" mode="aspectFill" />
       <view class="profile-gradient" />
       <view class="profile-main">
-        <image class="profile-avatar" src="/assets/my-default-avatar.svg" mode="aspectFill" />
+        <image class="profile-avatar" src="/assets/member-default-avatar.png" mode="aspectFill" />
         <view class="profile-copy">
           <view class="profile-identity">
             <text class="profile-name">{{nickname}}</text>

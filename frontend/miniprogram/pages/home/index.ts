@@ -13,7 +13,6 @@ interface GuideContent {
 
 interface HomePageData {
   today: string
-  storeAddress: string
   maxDate: string
   lastCheckInDate: string
   checkIn: string
@@ -68,7 +67,6 @@ const GUIDE_CONTENT: Record<string, GuideContent> = {
 Page({
   data: {
     today: '',
-    storeAddress: STORE_ADDRESS,
     maxDate: '',
     lastCheckInDate: '',
     checkIn: '',
