@@ -35,19 +35,19 @@ const GUIDE_CONTENT: Record<string, GuideContent> = {
   intro: {
     tag: '关于芊浔',
     title: '芊浔民宿',
-    body: `芊浔民宿位于${STORE_ADDRESS}，设有六间客房。选择入住与退房日期后，可查询整段行程的可订房间；床型、面积和设施请查看对应房间详情。`,
-    extra: `民宿地址：${STORE_ADDRESS}`,
+    body: `芊浔民宿位于${STORE_ADDRESS}，靠近百间楼片区，共有六间客房。房型、床型和设施请查看房间详情。`,
+    extra: `地址：${STORE_ADDRESS}`,
   },
   around: {
     tag: '古镇漫游',
-    title: '慢游南浔古镇',
-    body: '芊浔民宿位于南浔古镇内，可根据当天安排游览古镇景点。景点开放时间、路线及步行距离可能变化，出发前请查看景区公告或地图实时信息。',
-    extra: `导航搜索：${STORE_ADDRESS}`,
+    title: '百间楼周边',
+    body: '附近可游览百间楼、张静江故居和东大街，沿河感受古镇水乡风貌。文保建筑开放与售票信息以景区公告为准。',
+    extra: '南浔古镇东北片区',
   },
   traffic: {
     tag: '出行指南',
-    title: '芊浔民宿地址',
-    body: `民宿地址：${STORE_ADDRESS}\n可在地图应用中搜索该地址查看实时路线；停车和步行路线请以地图信息及现场指引为准。`,
+    title: '到店交通',
+    body: `导航搜索“${STORE_ADDRESS}”。乘高铁到湖州南浔站后，请按实时地图查询公交或打车路线；古镇内停车与步行路线以现场指引为准。`,
     extra: `联系电话：${STORE_CONTACT_PHONE_LABEL}`,
   },
   rooms: {
