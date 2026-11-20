@@ -1,164 +1,194 @@
 <script setup lang="ts">
-/** O04-O12 订单管理页面：录入第三方订单、维护资料并执行状态流转。 */
-import { onMounted, reactive, ref, watch } from 'vue'
+/** O04-O12 订单管理页面：多维度筛选、关键词实时搜索、8列明细展示、状态逐级流转及页内弹窗编辑。 */
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { channelApi } from '../../api/channels'
 import { creatorApi } from '../../api/creators'
 import { orderApi } from '../../api/orders'
 import { roomApi } from '../../api/rooms'
+import ExternalOrderCreateModal from '../../components/operations/ExternalOrderCreateModal.vue'
+import OrderDetailModal from '../../components/operations/OrderDetailModal.vue'
 import type { Channel, Creator, Room } from '../../types/catalog'
-import type {
-  CreateExternalOrderRequest,
-  OrderDetail,
-  OrderFilters,
-  OrderListItem,
-  OrderStatus,
-  UpdateOrderRequest,
-} from '../../types/orders'
-import { orderStatusLabels } from '../../types/orders'
+import type { OrderDetail, OrderFilters, OrderListItem, OrderStatus } from '../../types/orders'
+import { amountToCents } from '../../utils/operations'
+import '../../styles/operations.css'
 
-interface FilterForm {
+interface OrderFilterState {
   channel_id: string
-  room_id: string
   creator_id: string
   status: '' | OrderStatus
-  check_in_from: string
-  check_in_to: string
-  guest_name: string
-  phone: string
+  keyword: string
 }
 
-interface OrderForm {
-  channel_id: string
-  room_id: string
-  creator_id: string
-  platform_order_no: string
-  guest_name: string
-  phone: string
-  guest_count: string
-  check_in: string
-  check_out: string
-  status: Exclude<OrderStatus, 'CANCELLED'>
-  remark: string
-  paid_amount: string
-  platform_fee: string
-  platform_commission: string
-  expected_amount: string
-}
-
-const channels = ref<Channel[]>([])
 const route = useRoute()
 const router = useRouter()
+
+const channels = ref<Channel[]>([])
 const rooms = ref<Room[]>([])
 const creators = ref<Creator[]>([])
-const creatorCatalog = ref<Creator[]>([])
 const rows = ref<OrderListItem[]>([])
+const detailCache = ref<Record<number, OrderDetail>>({})
+
 const total = ref(0)
 const page = ref(1)
 const pageSize = ref(20)
 const loading = ref(false)
-const saving = ref(false)
 const errorMessage = ref('')
-const successMessage = ref('')
-const dialogError = ref('')
-const dialogOpen = ref(false)
-const detailOpen = ref(false)
-const detailLoading = ref(false)
-const detail = ref<OrderDetail | null>(null)
-const editingOrder = ref<OrderDetail | null>(null)
 const busyOrderIds = ref<number[]>([])
-const filters = reactive<FilterForm>(emptyFilters())
-const form = reactive<OrderForm>(emptyOrderForm())
+let loadSequence = 0
 
-const externalChannels = () => channels.value.filter((channel) => channel.id !== 1 && channel.enabled)
-const editableDates = () => editingOrder.value?.status === 'PENDING_CONFIRM'
-  || editingOrder.value?.status === 'PENDING_CHECKIN'
-const statusOptions: { value: Exclude<OrderStatus, 'CANCELLED'>; label: string }[] = [
-  { value: 'PENDING_CONFIRM', label: orderStatusLabels.PENDING_CONFIRM },
-  { value: 'PENDING_CHECKIN', label: orderStatusLabels.PENDING_CHECKIN },
-  { value: 'CHECKED_IN', label: orderStatusLabels.CHECKED_IN },
-  { value: 'COMPLETED', label: orderStatusLabels.COMPLETED },
-]
-
-onMounted(async () => {
-  await Promise.all([loadCatalogs(), loadOrders()])
-  await applyCalendarIntent()
+const filters = reactive<OrderFilterState>({
+  channel_id: '',
+  creator_id: '',
+  status: '',
+  keyword: '',
 })
 
-watch(() => form.channel_id, (channelId) => {
-  form.creator_id = ''
-  creators.value = creatorCatalog.value.filter((creator) => creator.channel_id === Number(channelId)
-    && creator.enabled)
+// 页内弹窗状态
+const createModalOpen = ref(false)
+const createPresetRoomId = ref<number | null>(null)
+const createPresetCheckIn = ref('')
+
+const detailModalOpen = ref(false)
+const activeOrderId = ref<number | null>(null)
+
+// Toast
+const toastMessage = ref('')
+let toastTimer: number | null = null
+
+const isClientFilterMode = computed(
+  () => filters.creator_id === 'NONE' || filters.keyword.trim().length > 0,
+)
+
+const displayRows = computed((): OrderListItem[] => {
+  const kw = filters.keyword.trim().toLowerCase()
+  return rows.value.filter((row) => {
+    if (filters.creator_id === 'NONE' && row.creator_id != null) return false
+    if (kw) {
+      const detail = detailCache.value[row.id]
+      const hit =
+        (row.order_no || '').toLowerCase().includes(kw)
+        || (detail?.platform_order_no || '').toLowerCase().includes(kw)
+        || (row.guest_name || '').toLowerCase().includes(kw)
+        || (row.phone || '').includes(kw)
+      if (!hit) return false
+    }
+    return true
+  })
 })
 
-watch(() => filters.channel_id, () => {
-  filters.creator_id = ''
-})
+const filteredCount = computed(() =>
+  isClientFilterMode.value ? displayRows.value.length : total.value,
+)
 
-function emptyFilters(): FilterForm {
-  return {
-    channel_id: '', room_id: '', creator_id: '', status: '',
-    check_in_from: '', check_in_to: '', guest_name: '', phone: '',
-  }
-}
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
-function emptyOrderForm(): OrderForm {
-  return {
-    channel_id: '', room_id: '', creator_id: '', platform_order_no: '', guest_name: '', phone: '',
-    guest_count: '', check_in: '', check_out: '', status: 'PENDING_CONFIRM', remark: '',
-    paid_amount: '', platform_fee: '0.00', platform_commission: '0.00', expected_amount: '',
-  }
+const statusBadgeMap: Record<OrderStatus, { label: string; cls: string }> = {
+  PENDING_CONFIRM: { label: '已预订(待确认)', cls: 'is-reserved' },
+  PENDING_CHECKIN: { label: '待入住', cls: 'is-pending' },
+  CHECKED_IN: { label: '已入住', cls: 'is-checked-in' },
+  COMPLETED: { label: '已退房(已完成)', cls: 'is-completed' },
+  CANCELLED: { label: '已取消', cls: 'is-cancelled' },
 }
 
 async function loadCatalogs(): Promise<void> {
   try {
     const [channelList, roomList, creatorList] = await Promise.all([
-      channelApi.list(), roomApi.list(), creatorApi.list({}),
+      channelApi.list(),
+      roomApi.list(),
+      creatorApi.list({}),
     ])
     channels.value = channelList
     rooms.value = roomList
-    creatorCatalog.value = creatorList
+    creators.value = creatorList
   } catch (error) {
-    errorMessage.value = messageOf(error, '订单筛选资料读取失败')
+    errorMessage.value = messageOf(error, '订单筛选基础资料读取失败')
   }
 }
 
-function queryFilters(): OrderFilters {
+function buildBaseFilters(reqPage: number, reqSize: number): OrderFilters {
+  const numericCreatorId =
+    filters.creator_id && filters.creator_id !== 'NONE' ? Number(filters.creator_id) : undefined
   return {
     channel_id: filters.channel_id ? Number(filters.channel_id) : undefined,
-    room_id: filters.room_id ? Number(filters.room_id) : undefined,
-    creator_id: filters.creator_id ? Number(filters.creator_id) : undefined,
+    creator_id: numericCreatorId,
     status: filters.status || undefined,
-    check_in_from: filters.check_in_from || undefined,
-    check_in_to: filters.check_in_to || undefined,
-    guest_name: filters.guest_name.trim() || undefined,
-    phone: filters.phone.trim() || undefined,
-    page: page.value,
-    size: pageSize.value,
+    page: reqPage,
+    size: reqSize,
   }
 }
 
 async function loadOrders(): Promise<void> {
+  const sequence = ++loadSequence
   loading.value = true
   errorMessage.value = ''
+
   try {
-    const result = await orderApi.list(queryFilters())
-    rows.value = result.list
-    total.value = result.total
+    let list: OrderListItem[] = []
+    let fetchedTotal = 0
+
+    if (isClientFilterMode.value) {
+      // 无达人筛选或关键词全字段实时匹配（含外部平台单号）时，拉取匹配集合以保证筛选结果完整
+      const firstPage = await orderApi.list(buildBaseFilters(1, 100))
+      if (sequence !== loadSequence) return
+      list = [...firstPage.list]
+      fetchedTotal = firstPage.total
+
+      const extraPages = Math.min(5, Math.ceil(fetchedTotal / 100))
+      if (extraPages > 1) {
+        const rest = await Promise.all(
+          Array.from({ length: extraPages - 1 }, (_, i) =>
+            orderApi.list(buildBaseFilters(i + 2, 100)),
+          ),
+        )
+        if (sequence !== loadSequence) return
+        for (const p of rest) list.push(...p.list)
+      }
+    } else {
+      const result = await orderApi.list(buildBaseFilters(page.value, pageSize.value))
+      if (sequence !== loadSequence) return
+      list = result.list
+      fetchedTotal = result.total
+    }
+
+    rows.value = list
+    total.value = fetchedTotal
+
+    // 并行补齐未缓存的订单详情（获取平台订单号与入住人数）
+    const missingIds = list.map((item) => item.id).filter((id) => !detailCache.value[id])
+    if (missingIds.length > 0) {
+      const settled = await Promise.allSettled(missingIds.map((id) => orderApi.detail(id)))
+      if (sequence !== loadSequence) return
+      const nextCache = { ...detailCache.value }
+      settled.forEach((entry, index) => {
+        if (entry.status === 'fulfilled') nextCache[missingIds[index]] = entry.value
+      })
+      detailCache.value = nextCache
+    }
   } catch (error) {
+    if (sequence !== loadSequence) return
     errorMessage.value = messageOf(error, '订单列表读取失败')
   } finally {
-    loading.value = false
+    if (sequence === loadSequence) loading.value = false
   }
 }
 
-function search(): void {
+function onSelectFilterChange(): void {
   page.value = 1
   void loadOrders()
 }
 
-function clearFilters(): void {
-  Object.assign(filters, emptyFilters())
+function clearKeyword(): void {
+  filters.keyword = ''
+  page.value = 1
+  void loadOrders()
+}
+
+function resetFilters(): void {
+  filters.channel_id = ''
+  filters.creator_id = ''
+  filters.status = ''
+  filters.keyword = ''
   page.value = 1
   void loadOrders()
 }
@@ -168,203 +198,50 @@ function changePage(nextPage: number): void {
   void loadOrders()
 }
 
-function beginCreate(prefill?: { roomId: number | null; checkIn: string; checkOut: string }): void {
-  detail.value = null
-  editingOrder.value = null
-  Object.assign(form, emptyOrderForm(), {
-    channel_id: String(externalChannels()[0]?.id || ''),
-    room_id: String(prefill?.roomId ?? rooms.value[0]?.id ?? ''),
-    check_in: prefill?.checkIn || '',
-    check_out: prefill?.checkOut || '',
-  })
-  dialogError.value = ''
-  errorMessage.value = ''
-  successMessage.value = ''
-  dialogOpen.value = true
+function onPageSizeChange(): void {
+  page.value = 1
+  void loadOrders()
 }
 
-function beginCreateFromPage(): void {
-  beginCreate()
+// 关键词输入时：若刚从分页模式进入关键词模式或退出关键词模式，重新拉取数据；已在全量模式则实时本地过滤
+watch(
+  () => filters.keyword.trim().length > 0,
+  (hasKeyword, prevHasKeyword) => {
+    if (hasKeyword !== prevHasKeyword) {
+      page.value = 1
+      void loadOrders()
+    }
+  },
+)
+
+function openCreateModal(prefill?: { roomId?: number | null; checkIn?: string }): void {
+  createPresetRoomId.value = prefill?.roomId ?? null
+  createPresetCheckIn.value = prefill?.checkIn || ''
+  createModalOpen.value = true
 }
 
-async function applyCalendarIntent(): Promise<void> {
-  const action = queryValue('calendar_action')
-  if (action === 'create') {
-    const requestedRoomId = Number(queryValue('room_id'))
-    const roomId = Number.isSafeInteger(requestedRoomId)
-      && rooms.value.some((room) => room.id === requestedRoomId)
-      ? requestedRoomId
-      : null
-    beginCreate({
-      roomId,
-      checkIn: queryValue('check_in') || '',
-      checkOut: queryValue('check_out') || '',
-    })
-  } else if (action === 'detail') {
-    const orderId = Number(queryValue('order_id'))
-    if (Number.isSafeInteger(orderId) && orderId > 0) await showDetail(orderId)
-  }
-  if (action === 'create' || action === 'detail') {
-    await router.replace({ path: route.path, query: {} })
-  }
+function openDetailModal(orderId: number): void {
+  activeOrderId.value = orderId
+  detailModalOpen.value = true
 }
 
-function queryValue(key: string): string | undefined {
-  const value = route.query[key]
-  return typeof value === 'string' ? value : undefined
-}
-
-async function beginEdit(row: OrderListItem): Promise<void> {
-  try {
-    const order = await orderApi.detail(row.id)
-    editingOrder.value = order
-    Object.assign(form, emptyOrderForm(), {
-      room_id: String(order.room_id),
-      guest_name: order.guest_name || '',
-      phone: order.phone || '',
-      guest_count: order.guest_count == null ? '' : String(order.guest_count),
-      check_in: order.check_in,
-      check_out: order.check_out,
-      remark: order.remark || '',
-    })
-    dialogError.value = ''
-    errorMessage.value = ''
-    dialogOpen.value = true
-  } catch (error) {
-    errorMessage.value = messageOf(error, '订单详情读取失败')
-  }
-}
-
-async function showDetail(row: OrderListItem | number): Promise<void> {
-  detailOpen.value = true
-  detailLoading.value = true
-  detail.value = null
-  try {
-    detail.value = await orderApi.detail(typeof row === 'number' ? row : row.id)
-  } catch (error) {
-    errorMessage.value = messageOf(error, '订单详情读取失败')
-    detailOpen.value = false
-  } finally {
-    detailLoading.value = false
-  }
-}
-
-function closeDialog(): void {
-  if (!saving.value) dialogOpen.value = false
-}
-
-async function saveOrder(): Promise<void> {
-  dialogError.value = ''
-  if (editingOrder.value) {
-    await updateOrder()
-    return
-  }
-  if (!form.channel_id || !form.room_id || !form.check_in || !form.check_out || !form.paid_amount) {
-    dialogError.value = '请填写渠道、房间、入住退房日期和实付金额'
-    return
-  }
-  if (form.check_out <= form.check_in) {
-    dialogError.value = '退房日期必须晚于入住日期'
-    return
-  }
-  if (![form.paid_amount, form.platform_fee, form.platform_commission, form.expected_amount]
-    .filter(Boolean).every(isMoneyString)) {
-    dialogError.value = '金额请输入非负数字，最多保留两位小数'
-    return
-  }
-  if (form.creator_id && !form.expected_amount) {
-    dialogError.value = '选择达人时必须填写预期收入'
-    return
-  }
-  if (form.guest_count && (!Number.isInteger(Number(form.guest_count)) || Number(form.guest_count) < 1)) {
-    dialogError.value = '入住人数须为正整数'
-    return
-  }
-
-  const request: CreateExternalOrderRequest = {
-    channel_id: Number(form.channel_id),
-    room_id: Number(form.room_id),
-    creator_id: form.creator_id ? Number(form.creator_id) : null,
-    platform_order_no: form.platform_order_no.trim() || null,
-    guest_name: form.guest_name.trim() || null,
-    phone: form.phone.trim() || null,
-    guest_count: form.guest_count ? Number(form.guest_count) : null,
-    check_in: form.check_in,
-    check_out: form.check_out,
-    status: form.status,
-    remark: form.remark.trim() || null,
-    amount: {
-      paid_amount: form.paid_amount.trim(),
-      platform_fee: form.platform_fee.trim() || '0.00',
-      platform_commission: form.platform_commission.trim() || '0.00',
-      expected_amount: form.creator_id ? form.expected_amount.trim() : null,
-    },
-  }
-  saving.value = true
-  try {
-    const created = await orderApi.create(request)
-    dialogOpen.value = false
-    successMessage.value = `订单 ${created.order_no} 已录入，到手金额 ¥${created.net_amount}`
-    page.value = 1
-    await loadOrders()
-  } catch (error) {
-    dialogError.value = messageOf(error, '订单录入失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function updateOrder(): Promise<void> {
-  const order = editingOrder.value
-  if (!order) return
-  if (editableDates() && form.check_out <= form.check_in) {
-    dialogError.value = '退房日期必须晚于入住日期'
-    return
-  }
-  if (form.guest_count && (!Number.isInteger(Number(form.guest_count)) || Number(form.guest_count) < 1)) {
-    dialogError.value = '入住人数须为正整数'
-    return
-  }
-  const request: UpdateOrderRequest = {
-    guest_name: form.guest_name.trim(),
-    phone: form.phone.trim(),
-    guest_count: form.guest_count ? Number(form.guest_count) : null,
-    remark: form.remark.trim(),
-  }
-  if (editableDates()) {
-    request.room_id = Number(form.room_id)
-    request.check_in = form.check_in
-    request.check_out = form.check_out
-  }
-  saving.value = true
-  try {
-    await orderApi.update(order.id, request)
-    dialogOpen.value = false
-    successMessage.value = '订单资料已更新'
-    await loadOrders()
-  } catch (error) {
-    dialogError.value = messageOf(error, '订单资料更新失败')
-  } finally {
-    saving.value = false
-  }
-}
-
-async function runAction(row: OrderListItem, action: 'confirm' | 'check-in' | 'check-out' | 'cancel'): Promise<void> {
-  let reason = ''
-  if (action === 'cancel') {
-    const input = window.prompt(`取消第三方订单 ${row.order_no}。可填写取消原因：`, '')
-    if (input === null) return
-    reason = input.trim()
-  }
+async function advanceStatus(row: OrderListItem, action: 'confirm' | 'check-in' | 'check-out'): Promise<void> {
   busyOrderIds.value = [...busyOrderIds.value, row.id]
   errorMessage.value = ''
-  successMessage.value = ''
   try {
-    if (action === 'confirm') await orderApi.confirm(row.id)
-    if (action === 'check-in') await orderApi.checkIn(row.id)
-    if (action === 'check-out') await orderApi.checkOut(row.id)
-    if (action === 'cancel') await orderApi.cancel(row.id, reason)
-    successMessage.value = action === 'cancel' ? '第三方订单已取消' : `订单已${actionLabel(action)}`
+    if (action === 'confirm') {
+      await orderApi.confirm(row.id)
+      showToast(`订单 ${row.order_no} 已确认，进入待入住`)
+    } else if (action === 'check-in') {
+      await orderApi.checkIn(row.id)
+      showToast(`订单 ${row.order_no} 已办理入住`)
+    } else {
+      await orderApi.checkOut(row.id)
+      showToast(`订单 ${row.order_no} 已办理退房完成`)
+    }
+    const nextCache = { ...detailCache.value }
+    delete nextCache[row.id]
+    detailCache.value = nextCache
     await loadOrders()
   } catch (error) {
     errorMessage.value = messageOf(error, '订单状态更新失败')
@@ -373,220 +250,387 @@ async function runAction(row: OrderListItem, action: 'confirm' | 'check-in' | 'c
   }
 }
 
-function actionLabel(action: 'confirm' | 'check-in' | 'check-out' | 'cancel'): string {
-  if (action === 'confirm') return '确认'
-  if (action === 'check-in') return '办理入住'
-  if (action === 'check-out') return '办理退房'
-  return '取消'
+function handleOrderCreated(message: string): void {
+  createModalOpen.value = false
+  showToast(message)
+  page.value = 1
+  void loadOrders()
 }
 
-function statusClass(status: OrderStatus): string {
-  if (status === 'CANCELLED') return 'is-disabled'
-  if (status === 'COMPLETED') return 'is-complete'
-  if (status === 'CHECKED_IN') return 'is-occupied'
-  return 'is-pending'
+function handleOrderUpdated(message: string): void {
+  const updatedId = activeOrderId.value
+  detailModalOpen.value = false
+  showToast(message)
+  if (updatedId != null) {
+    const nextCache = { ...detailCache.value }
+    delete nextCache[updatedId]
+    detailCache.value = nextCache
+  }
+  void loadOrders()
 }
 
 function channelName(channelId: number): string {
-  return channels.value.find((channel) => channel.id === channelId)?.name || '未知渠道'
+  return channels.value.find((ch) => ch.id === channelId)?.name || '未知来源'
+}
+
+function creatorName(creatorId: number | null): string {
+  if (creatorId == null) return ''
+  return creators.value.find((cr) => cr.id === creatorId)?.name || ''
 }
 
 function roomName(roomId: number): string {
-  const room = rooms.value.find((item) => item.id === roomId)
-  return room ? `${room.number} · ${room.name}` : `房间 ${roomId}`
+  return rooms.value.find((rm) => rm.id === roomId)?.name || ''
 }
 
-function filteredCreators(): Creator[] {
-  return filters.channel_id
-    ? creatorCatalog.value.filter((creator) => creator.channel_id === Number(filters.channel_id))
-    : creatorCatalog.value
+function platformOrderNo(orderId: number): string | null {
+  return detailCache.value[orderId]?.platform_order_no ?? null
 }
 
-function isMoneyString(value: string): boolean {
-  return /^\d{1,10}(\.\d{1,2})?$/.test(value.trim())
+function guestCount(orderId: number): number | null {
+  return detailCache.value[orderId]?.guest_count ?? null
 }
 
-function money(value: string | null): string {
-  return value == null ? '—' : `¥${value}`
+function hasExtraCommission(value: string): boolean {
+  return amountToCents(value) > 0
 }
+
+function showToast(message: string): void {
+  toastMessage.value = message
+  if (toastTimer != null) window.clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => {
+    toastMessage.value = ''
+  }, 2600)
+}
+
+function queryValue(key: string): string | undefined {
+  const value = route.query[key]
+  return typeof value === 'string' ? value : undefined
+}
+
+async function applyRouteIntent(): Promise<void> {
+  const action = queryValue('calendar_action')
+  if (action === 'create') {
+    const requestedRoomId = Number(queryValue('room_id'))
+    const roomId =
+      Number.isSafeInteger(requestedRoomId) && rooms.value.some((r) => r.id === requestedRoomId)
+        ? requestedRoomId
+        : null
+    openCreateModal({ roomId, checkIn: queryValue('check_in') || '' })
+  } else if (action === 'detail') {
+    const orderId = Number(queryValue('order_id'))
+    if (Number.isSafeInteger(orderId) && orderId > 0) openDetailModal(orderId)
+  }
+  if (action === 'create' || action === 'detail') {
+    await router.replace({ path: route.path, query: {} })
+  }
+}
+
+watch(
+  () => route.query.calendar_action,
+  (action) => {
+    if (action === 'create' || action === 'detail') void applyRouteIntent()
+  },
+)
 
 function messageOf(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback
 }
+
+onMounted(async () => {
+  await Promise.all([loadCatalogs(), loadOrders()])
+  await applyRouteIntent()
+})
+
+onBeforeUnmount(() => {
+  if (toastTimer != null) window.clearTimeout(toastTimer)
+})
 </script>
 
 <template>
-  <section class="catalog-page">
-    <div class="page-heading-row">
-      <div>
-        <p class="page-eyebrow">ORDER MANAGEMENT</p>
-        <h1>订单管理</h1>
-        <p class="page-description">统一查看七渠道订单；此处手工录入第三方订单，订单创建后金额快照不可修改。</p>
+  <section class="orders-proto-page">
+    <!-- 1. 顶部多维度筛选与关键词搜索栏 -->
+    <section class="orders-filter-card" aria-label="订单筛选与搜索">
+      <div class="orders-filter-controls">
+        <!-- ① 订单来源筛选 -->
+        <select
+          v-model="filters.channel_id"
+          aria-label="订单来源筛选"
+          class="orders-filter-select"
+          @change="onSelectFilterChange"
+        >
+          <option value="">全部订单来源</option>
+          <option v-for="ch in channels" :key="ch.id" :value="String(ch.id)">
+            来源：{{ ch.name }}
+          </option>
+        </select>
+
+        <!-- ② 合作达人筛选 -->
+        <select
+          v-model="filters.creator_id"
+          aria-label="合作达人筛选"
+          class="orders-filter-select"
+          @change="onSelectFilterChange"
+        >
+          <option value="">全部达人/主播</option>
+          <option value="NONE">无达人（自然流量）</option>
+          <option v-for="cr in creators" :key="cr.id" :value="String(cr.id)">
+            达人：{{ cr.name }}
+          </option>
+        </select>
+
+        <!-- ③ 订单状态筛选 -->
+        <select
+          v-model="filters.status"
+          aria-label="订单状态筛选"
+          class="orders-filter-select"
+          @change="onSelectFilterChange"
+        >
+          <option value="">全部订单状态</option>
+          <option value="PENDING_CONFIRM">已预订（待确认）</option>
+          <option value="PENDING_CHECKIN">待入住</option>
+          <option value="CHECKED_IN">已入住</option>
+          <option value="COMPLETED">已退房（已完成）</option>
+          <option value="CANCELLED">已取消</option>
+        </select>
+
+        <!-- ④ 关键词搜索输入框 -->
+        <div class="orders-search-box">
+          <input
+            v-model="filters.keyword"
+            type="text"
+            aria-label="搜索订单号、预订人或手机号"
+            placeholder="搜索订单号 / 预订人 / 手机号"
+            class="orders-search-input"
+          />
+          <button
+            v-if="filters.keyword"
+            type="button"
+            class="orders-search-clear"
+            title="清空搜索"
+            aria-label="清空搜索"
+            @click="clearKeyword"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- ⑤ 重置筛选按钮 -->
+        <button type="button" class="orders-reset-btn" :disabled="loading" @click="resetFilters">
+          重置筛选
+        </button>
       </div>
-      <button class="button button-primary" type="button" :disabled="rooms.length === 0 || externalChannels().length === 0" @click="beginCreateFromPage">
-        新增第三方订单
-      </button>
-    </div>
 
-    <div class="summary-strip">
-      <span>当前筛选订单<strong>{{ total }}</strong></span>
-      <span>页码<strong>{{ page }}</strong></span>
-    </div>
-
-    <form class="filter-card order-filter-card" @submit.prevent="search">
-      <label>渠道
-        <select v-model="filters.channel_id"><option value="">全部渠道</option><option v-for="item in channels" :key="item.id" :value="String(item.id)">{{ item.name }}</option></select>
-      </label>
-      <label>房间
-        <select v-model="filters.room_id"><option value="">全部房间</option><option v-for="item in rooms" :key="item.id" :value="String(item.id)">{{ item.number }} · {{ item.name }}</option></select>
-      </label>
-      <label>订单状态
-        <select v-model="filters.status"><option value="">全部状态</option><option v-for="item in Object.entries(orderStatusLabels)" :key="item[0]" :value="item[0]">{{ item[1] }}</option></select>
-      </label>
-      <label>达人
-        <select v-model="filters.creator_id"><option value="">全部达人</option><option v-for="creator in filteredCreators()" :key="creator.id" :value="String(creator.id)">{{ creator.name }}{{ creator.enabled ? '' : '（停用）' }}</option></select>
-      </label>
-      <label>入住从<input v-model="filters.check_in_from" type="date"></label>
-      <label>入住至<input v-model="filters.check_in_to" type="date"></label>
-      <label class="filter-name">预订人<input v-model="filters.guest_name" maxlength="80" placeholder="按姓名搜索"></label>
-      <label>手机号<input v-model="filters.phone" maxlength="20" placeholder="按手机号搜索"></label>
-      <div class="order-filter-actions">
-        <button class="button button-outline" type="submit" :disabled="loading">查询</button>
-        <button class="button button-quiet" type="button" :disabled="loading" @click="clearFilters">清除</button>
+      <div class="orders-filter-summary">
+        共筛选出 <span class="is-mono">{{ filteredCount }}</span> 笔订单
       </div>
-    </form>
+    </section>
 
-    <p v-if="successMessage" class="notice notice-success" role="status">{{ successMessage }}</p>
     <p v-if="errorMessage" class="notice notice-error" role="alert">{{ errorMessage }}</p>
 
-    <div class="table-card">
-      <div v-if="loading" class="table-state">正在读取订单…</div>
-      <div v-else-if="rows.length === 0" class="table-state"><strong>没有匹配的订单</strong><span>录入订单或调整筛选条件。</span></div>
-      <div v-else class="table-scroll">
-        <table class="data-table orders-table">
-          <thead><tr>
-            <th>订单与渠道</th><th>预订人</th><th>客房</th><th>住宿区间</th><th>状态</th><th>金额快照</th><th class="order-actions-heading">操作</th>
-          </tr></thead>
+    <!-- 2. 订单明细列表（8 列完整字段结构） -->
+    <section class="orders-table-card">
+      <div class="orders-table-scroll" :class="{ 'is-loading': loading }" :aria-busy="loading">
+        <table class="orders-proto-table">
+          <thead>
+            <tr>
+              <th class="col-left">订单编号与来源（含达人）</th>
+              <th class="col-left">房间与入离日期</th>
+              <th class="col-left">预订人与手机（含人数）</th>
+              <th class="col-right">实付金额</th>
+              <th class="col-right">手续费 / 达人提成 / 额外提成</th>
+              <th class="col-right">商家到手</th>
+              <th class="col-center">状态</th>
+              <th class="col-right col-actions">操作</th>
+            </tr>
+          </thead>
+
           <tbody>
-            <tr v-for="row in rows" :key="row.id">
-              <td><strong>{{ row.order_no }}</strong><small>{{ channelName(row.channel_id) }}</small></td>
-              <td><strong>{{ row.guest_name || '未填写' }}</strong><small>{{ row.phone || '无联系电话' }}</small></td>
-              <td>{{ row.room_number }}</td>
-              <td><strong>{{ row.check_in }} 至 {{ row.check_out }}</strong><small>{{ row.nights }} 晚</small></td>
-              <td><span class="status-pill" :class="statusClass(row.status)">{{ orderStatusLabels[row.status] }}</span></td>
-              <td><strong class="price-cell">{{ money(row.paid_amount) }}</strong><small>到手 {{ money(row.net_amount) }}</small></td>
-              <td class="row-actions order-actions">
-                <button class="button button-quiet" type="button" @click="showDetail(row)">详情</button>
-                <button class="button button-quiet" type="button" @click="beginEdit(row)">编辑</button>
-                <button v-if="row.status === 'PENDING_CONFIRM'" class="button button-quiet" type="button" :disabled="busyOrderIds.includes(row.id)" @click="runAction(row, 'confirm')">确认</button>
-                <button v-if="row.status === 'PENDING_CHECKIN'" class="button button-quiet" type="button" :disabled="busyOrderIds.includes(row.id)" @click="runAction(row, 'check-in')">入住</button>
-                <button v-if="row.status === 'CHECKED_IN'" class="button button-quiet" type="button" :disabled="busyOrderIds.includes(row.id)" @click="runAction(row, 'check-out')">退房</button>
-                <button v-if="row.channel_id !== 1 && ['PENDING_CONFIRM', 'PENDING_CHECKIN'].includes(row.status)" class="button button-quiet danger-action" type="button" :disabled="busyOrderIds.includes(row.id)" @click="runAction(row, 'cancel')">取消</button>
+            <tr v-if="loading && displayRows.length === 0">
+              <td colspan="8" class="orders-empty-td">正在读取订单数据…</td>
+            </tr>
+            <tr v-else-if="displayRows.length === 0">
+              <td colspan="8" class="orders-empty-td">暂无符合当前筛选条件的订单记录</td>
+            </tr>
+            <tr v-for="row in displayRows" :key="row.id" class="orders-data-row">
+              <!-- ① 订单编号与来源（含达人） -->
+              <td class="td-pad-lg">
+                <div class="order-no-text is-mono">{{ row.order_no }}</div>
+                <div v-if="platformOrderNo(row.id)" class="order-plat-no is-mono">
+                  平台单号：{{ platformOrderNo(row.id) }}
+                </div>
+                <div class="order-source-tags">
+                  <span class="order-channel-badge">{{ channelName(row.channel_id) }}</span>
+                  <span v-if="creatorName(row.creator_id)" class="order-creator-badge">
+                    达人：{{ creatorName(row.creator_id) }}
+                  </span>
+                </div>
+              </td>
+
+              <!-- ② 房间与入离日期 -->
+              <td>
+                <div class="order-room-row">
+                  <span class="order-room-num is-mono">{{ row.room_number }}</span>
+                  <strong class="order-room-name">{{ roomName(row.room_id) }}</strong>
+                </div>
+                <div class="order-dates-row is-mono">
+                  {{ row.check_in }} 至 {{ row.check_out }}（共 {{ row.nights }} 晚）
+                </div>
+              </td>
+
+              <!-- ③ 预订人与手机（含人数） -->
+              <td>
+                <div class="order-guest-row">
+                  <strong class="order-guest-name">{{ row.guest_name || '—' }}</strong>
+                  <span v-if="guestCount(row.id) != null" class="order-guest-pill">
+                    {{ guestCount(row.id) }}人入住
+                  </span>
+                </div>
+                <div class="order-phone-row is-mono">{{ row.phone || '未填手机号' }}</div>
+              </td>
+
+              <!-- ④ 实付金额 -->
+              <td class="col-right">
+                <span class="order-paid-text is-mono">¥{{ row.paid_amount }}</span>
+              </td>
+
+              <!-- ⑤ 手续费 / 达人提成 / 额外提成 -->
+              <td class="col-right">
+                <div class="order-fee-lines is-mono">
+                  <div>
+                    平台手续费：<span class="fee-val">¥{{ row.platform_fee }}</span>
+                  </div>
+                  <div>
+                    平台达人提成：<span class="fee-val">¥{{ row.platform_commission }}</span>
+                  </div>
+                  <div>
+                    达人额外提成：<span
+                      :class="hasExtraCommission(row.extra_commission) ? 'fee-val-amber' : 'fee-val'"
+                    >¥{{ row.extra_commission }}</span>
+                  </div>
+                </div>
+              </td>
+
+              <!-- ⑥ 商家到手 -->
+              <td class="col-right">
+                <span class="order-net-text is-mono">¥{{ row.net_amount }}</span>
+              </td>
+
+              <!-- ⑦ 状态 -->
+              <td class="col-center">
+                <span class="order-status-capsule" :class="statusBadgeMap[row.status].cls">
+                  {{ statusBadgeMap[row.status].label }}
+                </span>
+              </td>
+
+              <!-- ⑧ 操作 -->
+              <td class="col-right td-pad-lg td-nowrap">
+                <div class="order-action-group">
+                  <button
+                    v-if="row.status === 'PENDING_CONFIRM'"
+                    type="button"
+                    class="order-btn-action is-confirm"
+                    :disabled="busyOrderIds.includes(row.id)"
+                    @click="advanceStatus(row, 'confirm')"
+                  >
+                    确认订单
+                  </button>
+                  <button
+                    v-else-if="row.status === 'PENDING_CHECKIN'"
+                    type="button"
+                    class="order-btn-action is-checkin"
+                    :disabled="busyOrderIds.includes(row.id)"
+                    @click="advanceStatus(row, 'check-in')"
+                  >
+                    办理入住
+                  </button>
+                  <button
+                    v-else-if="row.status === 'CHECKED_IN'"
+                    type="button"
+                    class="order-btn-action is-checkout"
+                    :disabled="busyOrderIds.includes(row.id)"
+                    @click="advanceStatus(row, 'check-out')"
+                  >
+                    办理退房
+                  </button>
+
+                  <button
+                    type="button"
+                    class="order-btn-detail"
+                    @click="openDetailModal(row.id)"
+                  >
+                    详情/编辑
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
-      <footer class="order-pagination">
-        <span>共 {{ total }} 条</span>
-        <label>每页
-          <select v-model.number="pageSize" @change="page = 1; loadOrders()"><option :value="20">20 条</option><option :value="50">50 条</option><option :value="100">100 条</option></select>
-        </label>
-        <button class="button button-outline" type="button" :disabled="loading || page <= 1" @click="changePage(page - 1)">上一页</button>
-        <span>第 {{ page }} / {{ Math.max(1, Math.ceil(total / pageSize)) }} 页</span>
-        <button class="button button-outline" type="button" :disabled="loading || page >= Math.ceil(total / pageSize)" @click="changePage(page + 1)">下一页</button>
+
+      <!-- 分页条（非关键词/无达人客户端过滤模式时展示） -->
+      <footer v-if="!isClientFilterMode && total > 0" class="orders-pagination-bar">
+        <span class="orders-page-info">共 {{ total }} 条记录</span>
+        <div class="orders-page-controls">
+          <label class="orders-page-size">
+            每页
+            <select v-model.number="pageSize" @change="onPageSizeChange">
+              <option :value="20">20 条</option>
+              <option :value="50">50 条</option>
+              <option :value="100">100 条</option>
+            </select>
+          </label>
+          <button
+            type="button"
+            class="orders-page-btn"
+            :disabled="loading || page <= 1"
+            @click="changePage(page - 1)"
+          >
+            上一页
+          </button>
+          <span class="orders-page-num is-mono">{{ page }} / {{ totalPages }}</span>
+          <button
+            type="button"
+            class="orders-page-btn"
+            :disabled="loading || page >= totalPages"
+            @click="changePage(page + 1)"
+          >
+            下一页
+          </button>
+        </div>
       </footer>
-    </div>
+    </section>
 
-    <div v-if="dialogOpen" class="dialog-backdrop" @click.self="closeDialog">
-      <section class="form-dialog order-dialog" role="dialog" aria-modal="true" aria-labelledby="order-dialog-title">
-        <header class="dialog-header">
-          <div><p class="page-eyebrow">{{ editingOrder ? 'ORDER PROFILE' : 'EXTERNAL ORDER' }}</p><h2 id="order-dialog-title">{{ editingOrder ? '编辑订单资料' : '新增第三方订单' }}</h2></div>
-          <button class="icon-button" type="button" aria-label="关闭" @click="closeDialog">×</button>
-        </header>
-        <form class="catalog-form" @submit.prevent="saveOrder">
-          <p v-if="dialogError" class="notice notice-error" role="alert">{{ dialogError }}</p>
-          <div v-if="!editingOrder" class="form-grid">
-            <label>订单渠道
-              <select v-model="form.channel_id" required><option value="" disabled>选择外部渠道</option><option v-for="item in externalChannels()" :key="item.id" :value="String(item.id)">{{ item.name }}</option></select>
-            </label>
-            <label>初始状态
-              <select v-model="form.status"><option v-for="item in statusOptions" :key="item.value" :value="item.value">{{ item.label }}</option></select>
-            </label>
-            <label>客房
-              <select v-model="form.room_id" required><option value="" disabled>选择客房</option><option v-for="room in rooms" :key="room.id" :value="String(room.id)">{{ room.number }} · {{ room.name }}</option></select>
-            </label>
-            <label>达人（选填）
-              <select v-model="form.creator_id"><option value="">无达人</option><option v-for="creator in creators" :key="creator.id" :value="String(creator.id)">{{ creator.name }}</option></select>
-            </label>
-            <label>平台订单号（选填）<input v-model="form.platform_order_no" maxlength="100" placeholder="平台原始订单号"></label>
-            <label>入住人数（选填）<input v-model="form.guest_count" inputmode="numeric" placeholder="人数"></label>
-            <label>入住日期<input v-model="form.check_in" type="date" required></label>
-            <label>退房日期（不含）<input v-model="form.check_out" type="date" :min="form.check_in || undefined" required></label>
-            <label>预订人（选填）<input v-model="form.guest_name" maxlength="80" placeholder="姓名"></label>
-            <label>联系电话（选填）<input v-model="form.phone" maxlength="20" placeholder="手机号"></label>
-          </div>
-          <div v-else class="form-grid">
-            <label>预订人<input v-model="form.guest_name" maxlength="80" placeholder="姓名"></label>
-            <label>联系电话<input v-model="form.phone" maxlength="20" placeholder="手机号"></label>
-            <label>入住人数<input v-model="form.guest_count" inputmode="numeric" placeholder="人数"></label>
-            <label v-if="editableDates()">客房
-              <select v-model="form.room_id"><option v-for="room in rooms" :key="room.id" :value="String(room.id)">{{ room.number }} · {{ room.name }}</option></select>
-            </label>
-            <label v-if="editableDates()">入住日期<input v-model="form.check_in" type="date"></label>
-            <label v-if="editableDates()">退房日期（不含）<input v-model="form.check_out" type="date" :min="form.check_in || undefined"></label>
-          </div>
-          <div v-if="!editingOrder" class="amount-snapshot-block">
-            <h3>金额快照</h3>
-            <div class="form-grid">
-              <label>顾客实付金额<input v-model="form.paid_amount" inputmode="decimal" placeholder="0.00" required></label>
-              <label>平台手续费<input v-model="form.platform_fee" inputmode="decimal" placeholder="0.00"></label>
-              <label>平台达人提成<input v-model="form.platform_commission" inputmode="decimal" placeholder="无达人时系统按 0 保存"></label>
-              <label>预期收入<input v-model="form.expected_amount" inputmode="decimal" :disabled="!form.creator_id" :required="Boolean(form.creator_id)" placeholder="选择达人时必填"></label>
-            </div>
-            <p class="form-help">额外提成和商家到手金额由后端计算。订单创建后金额不可修改；录错时须按规则取消并重新录入。</p>
-          </div>
-          <label>备注<textarea v-model="form.remark" maxlength="500" rows="3" placeholder="选填"></textarea></label>
-          <p v-if="editingOrder" class="form-help">金额快照不可修改。{{ editableDates() ? '房间或日期只能调整为相同住宿晚数，并由后端重新校验房态。' : '当前状态只允许编辑联系人、人数和备注。' }}</p>
-          <footer class="dialog-actions">
-            <button class="button button-outline" type="button" :disabled="saving" @click="closeDialog">取消</button>
-            <button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '保存中…' : editingOrder ? '保存资料' : '创建订单' }}</button>
-          </footer>
-        </form>
-      </section>
-    </div>
+    <!-- 页内弹窗：创建第三方平台订单 -->
+    <ExternalOrderCreateModal
+      :open="createModalOpen"
+      :channels="channels"
+      :creators="creators"
+      :rooms="rooms"
+      :preset-room-id="createPresetRoomId"
+      :preset-check-in="createPresetCheckIn"
+      @close="createModalOpen = false"
+      @created="handleOrderCreated"
+    />
 
-    <div v-if="detailOpen" class="dialog-backdrop" @click.self="detailOpen = false">
-      <section class="form-dialog order-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="order-detail-title">
-        <header class="dialog-header">
-          <div><p class="page-eyebrow">ORDER DETAIL</p><h2 id="order-detail-title">订单详情</h2></div>
-          <button class="icon-button" type="button" aria-label="关闭" @click="detailOpen = false">×</button>
-        </header>
-        <div v-if="detailLoading" class="table-state">正在读取订单详情…</div>
-        <template v-else-if="detail">
-          <div class="order-detail-grid">
-            <div><small>系统订单号</small><strong>{{ detail.order_no }}</strong></div>
-            <div><small>平台订单号</small><strong>{{ detail.platform_order_no || '未填写' }}</strong></div>
-            <div><small>渠道 / 客房</small><strong>{{ detail.channel_name }} · {{ roomName(detail.room_id) }}</strong></div>
-            <div><small>订单状态</small><strong>{{ orderStatusLabels[detail.status] }}</strong></div>
-            <div><small>预订人 / 联系电话</small><strong>{{ detail.guest_name || '未填写' }} · {{ detail.phone || '未填写' }}</strong></div>
-            <div><small>入住人数 / 晚数</small><strong>{{ detail.guest_count ?? '未填写' }} 人 · {{ detail.nights }} 晚</strong></div>
-            <div><small>入住日期</small><strong>{{ detail.check_in }}</strong></div>
-            <div><small>退房日期（不含）</small><strong>{{ detail.check_out }}</strong></div>
-          </div>
-          <h3 class="detail-section-title">金额快照</h3>
-          <div class="order-detail-grid money-detail-grid">
-            <div><small>顾客实付金额</small><strong>{{ money(detail.paid_amount) }}</strong></div>
-            <div><small>平台手续费</small><strong>{{ money(detail.platform_fee) }}</strong></div>
-            <div><small>平台达人提成</small><strong>{{ money(detail.platform_commission) }}</strong></div>
-            <div><small>达人额外提成</small><strong>{{ money(detail.extra_commission) }}</strong></div>
-            <div><small>预期收入</small><strong>{{ money(detail.expected_amount) }}</strong></div>
-            <div><small>商家到手金额</small><strong>{{ money(detail.net_amount) }}</strong></div>
-          </div>
-          <div class="order-detail-note"><small>备注</small><p>{{ detail.remark || '无' }}</p></div>
-          <footer class="dialog-actions"><button class="button button-outline" type="button" @click="detailOpen = false">关闭</button></footer>
-        </template>
-      </section>
+    <!-- 页内弹窗：订单详情、资料编辑、状态流转与第三方取消 -->
+    <OrderDetailModal
+      :open="detailModalOpen"
+      :order-id="activeOrderId"
+      :rooms="rooms"
+      :creators="creators"
+      @close="detailModalOpen = false"
+      @updated="handleOrderUpdated"
+    />
+
+    <!-- 全局轻量 Toast -->
+    <div class="qx-toast-wrap" aria-live="polite">
+      <div class="qx-toast-box" :class="{ 'is-visible': Boolean(toastMessage) }">
+        <span class="qx-toast-dot"></span>
+        <span>{{ toastMessage }}</span>
+      </div>
     </div>
   </section>
 </template>

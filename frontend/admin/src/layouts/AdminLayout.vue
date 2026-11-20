@@ -8,7 +8,9 @@ import { formatChineseDate, shanghaiDate } from '../utils/operations'
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
-const isPrototypeShell = computed(() => route.path === '/home' || route.path === '/room-calendar')
+const isPrototypeShell = computed(() =>
+  route.path === '/home' || route.path === '/room-calendar' || route.path === '/orders',
+)
 const beijingDateLabel = formatChineseDate(shanghaiDate(new Date()))
 
 function logout(): void {

@@ -1094,6 +1094,292 @@
 .qx-toast-box.is-visible { opacity: 1; transform: translateY(0); }
 .qx-toast-dot { width: 8px; height: 8px; border-radius: 999px; background: #c49655; }
 
+/* ---------- 订单管理（对齐原型图 1:1） ---------- */
+.orders-proto-page { display: grid; gap: 16px; min-width: 0; }
+
+.orders-filter-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #e4e8e8;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(31, 36, 38, .04);
+}
+.orders-filter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.orders-filter-select {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid #e4e8e8;
+  border-radius: 12px;
+  color: #1f2426;
+  background: #f6f7f7;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease;
+}
+.orders-filter-select:focus { border-color: #337a8b; background: #ffffff; }
+
+.orders-search-box { position: relative; display: inline-flex; align-items: center; }
+.orders-search-input {
+  width: 240px;
+  min-height: 36px;
+  padding: 7px 30px 7px 14px;
+  border: 1px solid #e4e8e8;
+  border-radius: 12px;
+  color: #1f2426;
+  background: #f6f7f7;
+  font-size: 12px;
+  outline: none;
+  transition: border-color .15s ease, background .15s ease;
+}
+.orders-search-input:focus { border-color: #337a8b; background: #ffffff; }
+.orders-search-clear {
+  position: absolute;
+  right: 8px;
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  color: #6e777a;
+  background: transparent;
+}
+.orders-search-clear:hover { color: #1f2426; }
+.orders-search-clear svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.orders-reset-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e4e8e8;
+  border-radius: 12px;
+  color: #6e777a;
+  background: #ffffff;
+  font-size: 12px;
+  transition: background .15s ease, color .15s ease;
+}
+.orders-reset-btn:hover:not(:disabled) { color: #1f2426; background: #f6f7f7; }
+.orders-reset-btn:disabled { opacity: .55; cursor: wait; }
+
+.orders-filter-summary { color: #6e777a; font-size: 12px; white-space: nowrap; }
+.orders-filter-summary span { color: #337a8b; font-weight: 700; }
+
+/* 8 列订单明细表格 */
+.orders-table-card {
+  overflow: hidden;
+  border: 1px solid #e4e8e8;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(31, 36, 38, .04);
+}
+.orders-table-scroll { max-width: 100%; overflow-x: auto; transition: opacity .15s ease; }
+.orders-table-scroll.is-loading { opacity: .68; }
+
+.orders-proto-table {
+  width: 100%;
+  min-width: 1160px;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+.orders-proto-table thead tr {
+  border-bottom: 1px solid #e4e8e8;
+  background: #f6f7f7;
+  color: #6e777a;
+}
+.orders-proto-table th {
+  padding: 12px 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.orders-proto-table th:first-child { padding-left: 16px; }
+.orders-proto-table th:last-child { padding-right: 16px; }
+
+.orders-data-row {
+  border-bottom: 1px solid rgba(228, 232, 232, .72);
+  transition: background .12s ease;
+}
+.orders-data-row:last-child { border-bottom: 0; }
+.orders-data-row:hover { background: rgba(246, 247, 247, .5); }
+.orders-data-row td { padding: 14px 12px; vertical-align: middle; }
+.orders-data-row td.td-pad-lg:first-child { padding-left: 16px; }
+.orders-data-row td.td-pad-lg:last-child { padding-right: 16px; }
+.orders-data-row td.td-nowrap { white-space: nowrap; }
+
+.col-left { text-align: left; }
+.col-right { text-align: right; }
+.col-center { text-align: center; }
+
+.orders-empty-td {
+  padding: 48px 16px;
+  color: #6e777a;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ① 订单编号与来源（含达人） */
+.order-no-text { color: #1f2426; font-weight: 700; }
+.order-plat-no { margin-top: 2px; color: #6e777a; font-size: 10px; }
+.order-source-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.order-channel-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  color: #337a8b;
+  background: #edf5f7;
+  font-size: 10px;
+  font-weight: 600;
+}
+.order-creator-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid rgba(253, 230, 138, .85);
+  border-radius: 5px;
+  color: #92400e;
+  background: #fffbeb;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* ② 房间与入离日期 */
+.order-room-row { display: flex; align-items: center; gap: 6px; }
+.order-room-num {
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #ffffff;
+  background: #1f2426;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.order-room-name { color: #1f2426; font-weight: 600; }
+.order-dates-row { margin-top: 4px; color: #6e777a; font-size: 11px; }
+
+/* ③ 预订人与手机（含人数） */
+.order-guest-row { display: flex; align-items: center; gap: 6px; }
+.order-guest-name { color: #1f2426; font-weight: 600; }
+.order-guest-pill {
+  padding: 1px 6px;
+  border: 1px solid #e4e8e8;
+  border-radius: 5px;
+  color: #6e777a;
+  background: #f6f7f7;
+  font-size: 10px;
+  font-weight: 500;
+}
+.order-phone-row { margin-top: 4px; color: #6e777a; font-size: 11px; }
+
+/* ④ 实付金额 / ⑤ 三行费用 / ⑥ 商家到手 */
+.order-paid-text { color: #b83b2a; font-size: 14px; font-weight: 700; }
+.order-fee-lines { display: grid; gap: 2px; color: #6e777a; font-size: 11px; }
+.order-fee-lines .fee-val { color: #1f2426; font-weight: 500; }
+.order-fee-lines .fee-val-amber { color: #b45309; font-weight: 600; }
+.order-net-text { color: #2f6f5e; font-size: 14px; font-weight: 700; }
+
+/* ⑦ 订单状态胶囊 */
+.order-status-capsule {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.order-status-capsule.is-reserved { border-color: #fde68a; color: #92400e; background: #fffbeb; }
+.order-status-capsule.is-pending { border-color: #fed7aa; color: #9a3412; background: #fff7ed; }
+.order-status-capsule.is-checked-in { border-color: rgba(51, 122, 139, .26); color: #337a8b; background: #edf5f7; }
+.order-status-capsule.is-completed { border-color: rgba(47, 111, 94, .26); color: #2f6f5e; background: #eaf3f0; }
+.order-status-capsule.is-cancelled { border-color: #fecaca; color: #b83b2a; background: #fef2f2; }
+
+/* ⑧ 操作按钮组 */
+.order-action-group { display: inline-flex; align-items: center; gap: 6px; }
+.order-btn-action {
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  transition: opacity .15s ease, background .15s ease;
+}
+.order-btn-action.is-confirm { background: #337a8b; }
+.order-btn-action.is-confirm:hover:not(:disabled) { background: #265e6b; }
+.order-btn-action.is-checkin { background: #2f6f5e; }
+.order-btn-action.is-checkin:hover:not(:disabled) { opacity: .9; }
+.order-btn-action.is-checkout { background: #1f2426; }
+.order-btn-action.is-checkout:hover:not(:disabled) { opacity: .9; }
+.order-btn-action:disabled { opacity: .55; cursor: wait; }
+
+.order-btn-detail {
+  padding: 4px 10px;
+  border: 1px solid #e4e8e8;
+  border-radius: 8px;
+  color: #1f2426;
+  background: #ffffff;
+  font-size: 11px;
+  transition: background .15s ease;
+}
+.order-btn-detail:hover { background: #f6f7f7; }
+
+/* 分页底栏 */
+.orders-pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid #e4e8e8;
+  background: #fafbfb;
+  color: #6e777a;
+  font-size: 12px;
+}
+.orders-page-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.orders-page-size { display: inline-flex; align-items: center; gap: 6px; }
+.orders-page-size select {
+  padding: 4px 8px;
+  border: 1px solid #e4e8e8;
+  border-radius: 8px;
+  color: #1f2426;
+  background: #ffffff;
+  font-size: 12px;
+}
+.orders-page-btn {
+  padding: 5px 11px;
+  border: 1px solid #e4e8e8;
+  border-radius: 8px;
+  color: #1f2426;
+  background: #ffffff;
+  font-size: 12px;
+  transition: background .15s ease;
+}
+.orders-page-btn:hover:not(:disabled) { background: #f6f7f7; }
+.orders-page-btn:disabled { opacity: .45; cursor: not-allowed; }
+.orders-page-num { padding: 0 4px; color: #1f2426; font-weight: 600; }
+
 /* ---------- 经营支出与月报页面保留样式 ---------- */
 .operation-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
 .operation-toolbar .filter-card { flex: 1; }
