@@ -42,18 +42,6 @@ import static org.mockito.Mockito.verify;
 @AutoConfigureMockMvc
 class RefundApiIntegrationTest {
 
-    @org.springframework.test.context.bean.override.mockito.MockitoBean
-    private com.qianxun.homestay.modules.auth.service.WechatIdentityService testWechatIdentity;
-
-    @org.junit.jupiter.api.BeforeEach
-    void configureTestWechatIdentity() {
-        org.mockito.Mockito.lenient().when(testWechatIdentity.resolveOpenId(org.mockito.ArgumentMatchers.anyString()))
-                .thenAnswer(invocation -> "openid-" + invocation.<String>getArgument(0));
-        org.mockito.Mockito.lenient().when(testWechatIdentity.resolvePhone(org.mockito.ArgumentMatchers.anyString()))
-                .thenAnswer(invocation -> invocation.<String>getArgument(0));
-    }
-
-
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
     private static final String PHONE = "13800000041";
     private static final String ORDER_NO = "QX202611180041";
@@ -91,7 +79,6 @@ class RefundApiIntegrationTest {
 
     @BeforeEach
     void preparePaidOrder() throws Exception {
-        configureTestWechatIdentity();
         removeFailureConstraint();
         jdbcTemplate.update("DELETE FROM refunds");
         jdbcTemplate.update("DELETE FROM points_log");
@@ -362,7 +349,7 @@ class RefundApiIntegrationTest {
     private String loginMemberToken(String phone) throws Exception {
         String response = mockMvc.perform(post("/api/app/auth/login")
                         .contentType("application/json")
-                        .content("{\"login_code\":\"" + phone + "\",\"phone_code\":\"" + phone + "\"}"))
+                        .content("{\"phone\":\"" + phone + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).path("data").path("token").asText();

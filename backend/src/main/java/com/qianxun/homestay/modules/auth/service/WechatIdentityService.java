@@ -3,12 +3,6 @@ package com.qianxun.homestay.modules.auth.service;
 /** 验证微信登录凭证与手机号授权，并安全绑定会员 OpenID。 */
 public interface WechatIdentityService {
 
-    /** 通过微信登录凭证获取当前小程序的 OpenID。 */
-    String resolveOpenId(String loginCode);
-
-    /** 通过微信手机号授权凭证获取已验证手机号。 */
-    String resolvePhone(String phoneCode);
-
     /**
      * 使用小程序登录 code 和手机号授权 code 验证当前会员后绑定 OpenID。
      *

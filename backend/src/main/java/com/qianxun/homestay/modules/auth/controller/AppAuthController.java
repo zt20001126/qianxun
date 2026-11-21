@@ -28,14 +28,14 @@ public class AppAuthController {
     }
 
     /**
-     * A01：微信手机号授权登录并安全绑定会员。
+     * A01：手机号登录并在首次登录时自动创建会员。
      *
-     * @param request 微信身份和手机号授权凭证
+     * @param request 登录手机号
      * @return JWT 和会员资料
      */
     @PostMapping("/login")
     public ApiResponse<AppLoginVO> login(@Valid @RequestBody PhoneLoginRequest request) {
-        return ApiResponse.success(authService.loginWithWechat(request.getLoginCode(), request.getPhoneCode()));
+        return ApiResponse.success(authService.loginByPhone(request.getPhone()));
     }
 
     /**

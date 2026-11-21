@@ -52,7 +52,7 @@ powershell -ExecutionPolicy Bypass -File scripts/migrate_legacy_rooms.ps1 -Apply
 
 ## 微信小程序
 
-用微信开发者工具打开 `frontend/miniprogram`。开发调试地址配置在 `frontend/miniprogram/config.ts`；真机预览或发布需要配置可访问的 HTTPS API 域名，并在微信公众平台登记合法 request 域名。会员登录时授权微信手机号并绑定 OpenID，支付时校验微信身份，不再重复授权手机号。即使使用模拟支付，会员登录也需要微信 AppID、AppSecret 和手机号授权能力；旧会员令牌需重新登录。
+用微信开发者工具打开 `frontend/miniprogram`。开发调试地址配置在 `frontend/miniprogram/config.ts`；真机预览或发布需要配置可访问的 HTTPS API 域名，并在微信公众平台登记合法 request 域名。默认仍关闭真实微信支付；开启方式、私钥挂载和回调域名要求见部署说明。微信付款前会通过手机号授权核对已有会员并绑定 OpenID。
 
 ## 质量检查
 

@@ -24,13 +24,13 @@ public class AppWechatPaymentController {
         this.wechatPaymentService = wechatPaymentService;
     }
 
-    /** 验证当前微信身份与会员绑定后创建微信预支付。 */
+    /** 验证手机号授权和 OpenID 后创建微信预支付。 */
     @PostMapping("/{paymentNo}/wechat-prepay")
     public ApiResponse<WechatPrepayVO> prepay(
             @AuthenticationPrincipal AuthPrincipal principal,
             @PathVariable String paymentNo,
             @Valid @RequestBody WechatPrepayRequest request) {
         return ApiResponse.success(wechatPaymentService.createPrepay(
-                principal.id(), paymentNo, request.loginCode()));
+                principal.id(), paymentNo, request.loginCode(), request.phoneCode()));
     }
 }

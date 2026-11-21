@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
-import com.qianxun.homestay.modules.auth.service.WechatIdentityBindingService;
 import com.qianxun.homestay.modules.booking.entity.BookingLockEntity;
 import com.qianxun.homestay.modules.booking.enums.BookingLockStatus;
 import com.qianxun.homestay.modules.booking.mapper.BookingLockMapper;
@@ -56,10 +55,9 @@ class WechatPaymentServiceImplTest {
     private final BookingLockMapper bookingLockMapper = mock(BookingLockMapper.class);
     private final PaymentMapper paymentMapper = mock(PaymentMapper.class);
     private final WechatIdentityService identityService = mock(WechatIdentityService.class);
-    private final WechatIdentityBindingService identityBindingService = mock(WechatIdentityBindingService.class);
     private final WechatPaymentServiceImpl service = new WechatPaymentServiceImpl(
             bookingLockMapper, paymentMapper, paymentTransactionService,
-            identityService, identityBindingService, gateway, properties, refundService);
+            identityService, gateway, properties, refundService);
 
     @BeforeEach
     void configureMerchantIdentity() {
@@ -74,13 +72,12 @@ class WechatPaymentServiceImplTest {
         BookingLockEntity booking = pendingBooking(22L);
         when(paymentMapper.findByPaymentNo(PAYMENT_NO)).thenReturn(payment);
         when(bookingLockMapper.findById(booking.getId())).thenReturn(booking);
-        when(identityService.resolveOpenId("login-code")).thenReturn("wx-openid-022");
-        when(identityBindingService.requireBoundOpenId(22L, "wx-openid-022")).thenReturn("wx-openid-022");
+        when(identityService.verifyAndBindOpenId(22L, "login-code", "phone-code")).thenReturn("wx-openid-022");
         when(gateway.createPrepay(PAYMENT_NO, payment.getAmount(), "wx-openid-022", booking.getExpiresAt()))
                 .thenReturn(validPrepayResponse());
         when(paymentMapper.updateWechatPrepayId(payment.getId(), "prepay-001")).thenReturn(1);
 
-        var result = service.createPrepay(22L, PAYMENT_NO, "login-code");
+        var result = service.createPrepay(22L, PAYMENT_NO, "login-code", "phone-code");
 
         assertThat(result.appId()).isEqualTo(APP_ID);
         assertThat(result.packageValue()).isEqualTo("prepay_id=prepay-001");
@@ -95,27 +92,12 @@ class WechatPaymentServiceImplTest {
         when(paymentMapper.findByPaymentNo(PAYMENT_NO)).thenReturn(payment);
         when(bookingLockMapper.findById(booking.getId())).thenReturn(booking);
 
-        assertThatThrownBy(() -> service.createPrepay(22L, PAYMENT_NO, "login-code"))
+        assertThatThrownBy(() -> service.createPrepay(22L, PAYMENT_NO, "login-code", "phone-code"))
                 .isInstanceOf(BusinessException.class)
                 .extracting(exception -> ((BusinessException) exception).getStatus())
                 .isEqualTo(HttpStatus.NOT_FOUND);
 
-        verify(identityService, never()).resolveOpenId(any());
-        verify(gateway, never()).createPrepay(any(), any(), any(), any());
-    }
-
-    @Test
-    void refusesMismatchedWechatIdentityBeforeCallingPaymentProvider() {
-        properties.setEnabled(true);
-        PaymentEntity payment = pendingWechatPayment();
-        BookingLockEntity booking = pendingBooking(22L);
-        when(paymentMapper.findByPaymentNo(PAYMENT_NO)).thenReturn(payment);
-        when(bookingLockMapper.findById(booking.getId())).thenReturn(booking);
-        when(identityService.resolveOpenId("login-code")).thenReturn("other-openid");
-        when(identityBindingService.requireBoundOpenId(22L, "other-openid"))
-                .thenThrow(new BusinessException(HttpStatus.FORBIDDEN, "微信身份不一致"));
-        assertThatThrownBy(() -> service.createPrepay(22L, PAYMENT_NO, "login-code"))
-                .isInstanceOf(BusinessException.class);
+        verify(identityService, never()).verifyAndBindOpenId(any(), any(), any());
         verify(gateway, never()).createPrepay(any(), any(), any(), any());
     }
 
@@ -128,12 +110,12 @@ class WechatPaymentServiceImplTest {
         when(paymentMapper.findByPaymentNo(PAYMENT_NO)).thenReturn(payment);
         when(bookingLockMapper.findById(booking.getId())).thenReturn(booking);
 
-        assertThatThrownBy(() -> service.createPrepay(22L, PAYMENT_NO, "login-code"))
+        assertThatThrownBy(() -> service.createPrepay(22L, PAYMENT_NO, "login-code", "phone-code"))
                 .isInstanceOf(BusinessException.class)
                 .extracting(exception -> ((BusinessException) exception).getStatus())
                 .isEqualTo(HttpStatus.CONFLICT);
 
-        verify(identityService, never()).resolveOpenId(any());
+        verify(identityService, never()).verifyAndBindOpenId(any(), any(), any());
         verify(gateway, never()).createPrepay(any(), any(), any(), any());
     }
 
@@ -146,12 +128,11 @@ class WechatPaymentServiceImplTest {
         invalidResponse.setPackageVal("wrong-package");
         when(paymentMapper.findByPaymentNo(PAYMENT_NO)).thenReturn(payment);
         when(bookingLockMapper.findById(booking.getId())).thenReturn(booking);
-        when(identityService.resolveOpenId("login-code")).thenReturn("wx-openid-022");
-        when(identityBindingService.requireBoundOpenId(22L, "wx-openid-022")).thenReturn("wx-openid-022");
+        when(identityService.verifyAndBindOpenId(22L, "login-code", "phone-code")).thenReturn("wx-openid-022");
         when(gateway.createPrepay(PAYMENT_NO, payment.getAmount(), "wx-openid-022", booking.getExpiresAt()))
                 .thenReturn(invalidResponse);
 
-        assertThatThrownBy(() -> service.createPrepay(22L, PAYMENT_NO, "login-code"))
+        assertThatThrownBy(() -> service.createPrepay(22L, PAYMENT_NO, "login-code", "phone-code"))
                 .isInstanceOf(BusinessException.class)
                 .extracting(exception -> ((BusinessException) exception).getStatus())
                 .isEqualTo(HttpStatus.BAD_GATEWAY);

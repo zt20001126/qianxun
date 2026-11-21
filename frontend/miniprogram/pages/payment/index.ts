@@ -142,8 +142,13 @@ Page({
     }
   },
 
-  async onWechatPayTap() {
+  async onPhoneAuthorized(event: { detail: { code?: string } }) {
     if (this.data.paymentMethod !== 'WECHAT' || this.data.paying || this.data.checking) return
+    const phoneCode = event.detail.code
+    if (!phoneCode) {
+      wx.showToast({ title: '需要授权手机号后才能继续支付', icon: 'none' })
+      return
+    }
     this.setData({ paying: true, message: '' })
     try {
       const loginCode = await new Promise<string>((resolve, reject) => {
@@ -154,6 +159,7 @@ Page({
       })
       const payment = await createWechatPrepay(this.data.paymentNo, {
         login_code: loginCode,
+        phone_code: phoneCode,
       })
       await new Promise<void>((resolve, reject) => {
         wx.requestPayment({

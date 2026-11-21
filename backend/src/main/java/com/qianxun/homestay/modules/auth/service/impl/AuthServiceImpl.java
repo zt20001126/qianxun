@@ -1,48 +1,52 @@
 package com.qianxun.homestay.modules.auth.service.impl;
 
+import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.security.service.JwtService;
 import com.qianxun.homestay.modules.auth.service.AuthService;
-import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
-import com.qianxun.homestay.modules.auth.service.WechatIdentityBindingService;
 import com.qianxun.homestay.modules.auth.vo.AppLoginVO;
 import com.qianxun.homestay.modules.auth.vo.MemberVO;
 import com.qianxun.homestay.modules.member.entity.MemberEntity;
 import com.qianxun.homestay.modules.member.mapper.MemberMapper;
-import com.qianxun.homestay.common.exception.BusinessException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 小程序微信授权登录编排：验证微信身份、复用会员并签发令牌。
+ * 小程序手机号登录编排：固定资料、原子复用会员、读取会员并签发令牌。
  */
 @Service
 public class AuthServiceImpl implements AuthService {
 
     private final MemberMapper memberMapper;
     private final JwtService jwtService;
-    private final WechatIdentityService identityService;
-    private final WechatIdentityBindingService bindingService;
+    private final String defaultAvatar;
 
     public AuthServiceImpl(
             MemberMapper memberMapper,
             JwtService jwtService,
-            WechatIdentityService identityService,
-            WechatIdentityBindingService bindingService) {
+            @Value("${app.auth.default-avatar}") String defaultAvatar) {
         this.memberMapper = memberMapper;
         this.jwtService = jwtService;
-        this.identityService = identityService;
-        this.bindingService = bindingService;
+        this.defaultAvatar = defaultAvatar;
     }
 
     /**
-     * 微信验证与会员绑定成功后签发令牌，不以用户输入手机号作为身份证明。
+     * 手机号登录业务流程。
+     *
+     * <p>Step 1: 根据手机号末四位生成固定昵称。
+     * Step 2: 通过唯一手机号索引和单条 upsert 原子创建或同步会员头像、昵称。
+     * Step 3: 重新读取数据库会员并签发仅标识会员 ID 的 30 天 JWT。</p>
      */
     @Override
-    public AppLoginVO loginWithWechat(String loginCode, String phoneCode) {
-        String openid = identityService.resolveOpenId(loginCode);
-        String phone = identityService.resolvePhone(phoneCode);
-        MemberEntity member = bindingService.bindLoginIdentity(phone, openid);
+    @Transactional
+    public AppLoginVO loginByPhone(String phone) {
+        String nickname = phone.substring(phone.length() - 4);
+        memberMapper.upsertLoginProfile(phone, nickname, defaultAvatar);
+        MemberEntity member = memberMapper.findByPhone(phone);
+        if (member == null) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "会员资料初始化失败");
+        }
         return new AppLoginVO(jwtService.issueMemberToken(member.getId()),
                 jwtService.getMemberExpirationSeconds(), toMemberVO(member));
     }

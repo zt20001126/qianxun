@@ -18,9 +18,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtServiceImpl implements JwtService {
 
-    private static final String MEMBER_AUTH_VERSION_CLAIM = "member_auth_version";
-    private static final int MEMBER_AUTH_VERSION = 2;
-
     private final SecretKey signingKey;
     private final long memberExpirationSeconds;
     private final long adminExpirationSeconds;
@@ -86,10 +83,6 @@ public class JwtServiceImpl implements JwtService {
         Claims claims = Jwts.parser().verifyWith(signingKey).build()
                 .parseSignedClaims(token).getPayload();
         UserRole role = UserRole.valueOf(claims.get("role", String.class));
-        if (role == UserRole.MEMBER && !Integer.valueOf(MEMBER_AUTH_VERSION)
-                .equals(claims.get(MEMBER_AUTH_VERSION_CLAIM, Integer.class))) {
-            throw new JwtException("Member authentication version invalid");
-        }
         String identityClaim = role == UserRole.MEMBER ? "member_id" : "admin_id";
         Object identityValue = claims.get(identityClaim);
         if (identityValue == null) {
@@ -101,15 +94,13 @@ public class JwtServiceImpl implements JwtService {
     private String issueToken(Long identityId, UserRole role, long expirationSeconds) {
         Instant issuedAt = Instant.now();
         String identityClaim = role == UserRole.MEMBER ? "member_id" : "admin_id";
-        var builder = Jwts.builder()
+        return Jwts.builder()
                 .subject(identityId.toString())
                 .claim(identityClaim, identityId)
                 .claim("role", role.name())
                 .issuedAt(Date.from(issuedAt))
-                .expiration(Date.from(issuedAt.plusSeconds(expirationSeconds)));
-        if (role == UserRole.MEMBER) {
-            builder.claim(MEMBER_AUTH_VERSION_CLAIM, MEMBER_AUTH_VERSION);
-        }
-        return builder.signWith(signingKey).compact();
+                .expiration(Date.from(issuedAt.plusSeconds(expirationSeconds)))
+                .signWith(signingKey)
+                .compact();
     }
 }

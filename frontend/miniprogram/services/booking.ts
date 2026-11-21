@@ -37,7 +37,7 @@ export function mockPay(paymentNo: string): Promise<MockPayResult> {
 
 export function createWechatPrepay(
   paymentNo: string,
-  data: { login_code: string },
+  data: { login_code: string; phone_code: string },
 ): Promise<WechatPrepayResult> {
   return request<WechatPrepayResult>({
     url: `/api/app/payments/${encodeURIComponent(paymentNo)}/wechat-prepay`,

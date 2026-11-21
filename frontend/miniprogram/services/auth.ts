@@ -2,11 +2,11 @@
 import type { AppLoginResult, MemberProfile } from '../types/auth'
 import { request } from './request'
 
-export function login(loginCode: string, phoneCode: string): Promise<AppLoginResult> {
+export function login(phone: string): Promise<AppLoginResult> {
   return request<AppLoginResult>({
     url: '/api/app/auth/login',
     method: 'POST',
-    data: { login_code: loginCode, phone_code: phoneCode },
+    data: { phone },
     withAuth: false,
   })
 }
