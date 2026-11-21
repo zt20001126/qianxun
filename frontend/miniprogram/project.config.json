@@ -14,7 +14,7 @@
     ],
     "postcss": false,
     "compileWorklet": false,
-    "minified": false,
+    "minified": true,
     "uglifyFileName": false,
     "uploadWithSourceMap": true,
     "packNpmManually": false,
@@ -35,7 +35,10 @@
   "condition": {},
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "file", "value": "assets/member-default-avatar.png" },
+      { "type": "file", "value": "assets/login-baijianlou-hero.webp" }
+    ],
     "include": [
       { "type": "file", "value": "assets/login-baijianlou-hero.jpg" },
       { "type": "file", "value": "assets/decoration-baijianlou-houses.jpg" },
