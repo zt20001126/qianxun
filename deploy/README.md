@@ -21,6 +21,19 @@
 
 ## HTTPS 与上线边界
 
+### 宿主机 Nginx 接入 HTTPS（测试环境）
+
+以下示例针对 Ubuntu 宿主机已运行 Nginx、管理后台使用默认端口 8081 的情况。宿主机处理 HTTPS，转发到本机管理后台容器；容器继续提供页面并转发 `/api/`。若端口有调整，须同步修改 `nginx-https.conf.example` 的 `proxy_pass`。
+
+1. 将本仓库部署到服务器，在 `deploy/.env` 设置 `JWT_SECRET`，并设置 `ADMIN_BIND_ADDRESS=127.0.0.1`、`BACKEND_BIND_ADDRESS=127.0.0.1`，避免直接向公网开放容器端口。开发用数据库口令不得用于生产环境。
+2. 从仓库根目录运行 `docker compose --env-file deploy/.env -f deploy/docker-compose.yml up --build -d`，检查 `docker compose --env-file deploy/.env -f deploy/docker-compose.yml ps` 和 `curl http://127.0.0.1:8081/health`。
+3. 获取与访问地址匹配的可信证书，将完整证书链和私钥放在服务器安全位置。示例文件中的 `/etc/letsencrypt/live/111.229.107.194/` 仅为路径示意，必须改为证书实际路径；不要将证书私钥提交到仓库。IP 地址证书需要覆盖该 IP，域名证书需要使用对应域名访问。
+4. 将 `deploy/nginx-https.conf.example` 复制到 `/etc/nginx/sites-available/qianxun`，按实际证书路径、IP 或域名及端口修改。检查现有站点配置，避免同地址同端口的默认站点与其冲突；确认无需默认站点后，可移除 `/etc/nginx/sites-enabled/default` 这个链接，然后建立 `sudo ln -s /etc/nginx/sites-available/qianxun /etc/nginx/sites-enabled/qianxun`。修改前备份现有配置。
+5. 执行 `sudo nginx -t`；仅在检查成功后执行 `sudo systemctl reload nginx`。云防火墙需允许 TCP 80、443。随后从外部访问 `https://111.229.107.194/`，并检查后台登录及 `/api/` 请求。
+6. 配置并验证证书自动续期；续期后重载宿主机 Nginx 才能加载新证书。HTTP-01 验证使用示例中的 `/var/www/html` 验证目录；申请证书前需确保验证文件能通过 HTTP 访问。实际路径和验证方式以证书颁发机构说明为准。
+
+该示例只展示 HTTPS 链路，不包含管理后台公网访问限制和生产数据库加固。微信小程序仍须按微信要求配置合法域名，不能仅凭 IP 证书假定符合要求。
+
 Compose 暴露 HTTP 管理站点，供开发和内网验收使用。正式环境应在 TLS 反向代理或云负载均衡器后提供 HTTPS，并限制管理后台来源；不要把 MySQL 或后端直连端口开放到公网。设置 `APP_CORS_ALLOWED_ORIGINS` 为实际管理后台来源。配置域名、证书、微信合法域名和服务器防火墙后，才进行真机验收。
 
 第一期默认仍使用模拟支付。微信支付仅在 `WECHAT_PAY_ENABLED=true` 时启用，此时新交易只创建微信支付；关闭时新交易只走模拟支付。启用前须配置 `.env` 中的 AppID/AppSecret、商户号、商户证书序列号、APIv3 密钥和两个 HTTPS 回调地址，并将商户私钥放在 `WECHAT_PAY_KEY_DIR` 指定目录下（默认 `deploy/secrets/apiclient_key.pem`）。私钥目录已加入 Git 忽略规则，不要提交凭证。

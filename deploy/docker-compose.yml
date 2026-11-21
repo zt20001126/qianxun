@@ -52,7 +52,7 @@ services:
     volumes:
       - ${WECHAT_PAY_KEY_DIR:-./secrets}:/run/secrets/wechat:ro
     ports:
-      - "${BACKEND_HOST_PORT:-8080}:8080"
+      - "${BACKEND_BIND_ADDRESS:-0.0.0.0}:${BACKEND_HOST_PORT:-8080}:8080"
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health"]
       interval: 10s
@@ -73,7 +73,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - "${ADMIN_HTTP_PORT:-8081}:80"
+      - "${ADMIN_BIND_ADDRESS:-0.0.0.0}:${ADMIN_HTTP_PORT:-8081}:80"
 
 volumes:
   mysql_data:
