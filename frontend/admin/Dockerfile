@@ -1,7 +1,7 @@
 ARG DOCKER_REGISTRY_PREFIX=docker.io
 FROM ${DOCKER_REGISTRY_PREFIX}/library/node:22-alpine AS build
 WORKDIR /workspace
-ARG VITE_API_BASE_URL=/api
+ARG VITE_API_BASE_URL=/
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 COPY package.json package-lock.json ./
 RUN npm ci
