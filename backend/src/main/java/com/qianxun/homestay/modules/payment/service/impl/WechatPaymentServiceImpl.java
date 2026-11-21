@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.payment.service.impl;
 
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
+import com.qianxun.homestay.modules.auth.service.WechatIdentityBindingService;
 import com.qianxun.homestay.modules.booking.entity.BookingLockEntity;
 import com.qianxun.homestay.modules.booking.enums.BookingLockStatus;
 import com.qianxun.homestay.modules.booking.mapper.BookingLockMapper;
@@ -37,6 +38,7 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
     private final PaymentMapper paymentMapper;
     private final PaymentTransactionService paymentTransactionService;
     private final WechatIdentityService wechatIdentityService;
+    private final WechatIdentityBindingService identityBindingService;
     private final WechatPayGateway wechatPayGateway;
     private final WechatPayProperties properties;
     private final WechatRefundService wechatRefundService;
@@ -46,6 +48,7 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
             PaymentMapper paymentMapper,
             PaymentTransactionService paymentTransactionService,
             WechatIdentityService wechatIdentityService,
+            WechatIdentityBindingService identityBindingService,
             WechatPayGateway wechatPayGateway,
             WechatPayProperties properties,
             WechatRefundService wechatRefundService) {
@@ -53,13 +56,14 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
         this.paymentMapper = paymentMapper;
         this.paymentTransactionService = paymentTransactionService;
         this.wechatIdentityService = wechatIdentityService;
+        this.identityBindingService = identityBindingService;
         this.wechatPayGateway = wechatPayGateway;
         this.properties = properties;
         this.wechatRefundService = wechatRefundService;
     }
 
     @Override
-    public WechatPrepayVO createPrepay(Long memberId, String paymentNo, String loginCode, String phoneCode) {
+    public WechatPrepayVO createPrepay(Long memberId, String paymentNo, String loginCode) {
         requireEnabled();
         PaymentEntity payment = paymentMapper.findByPaymentNo(paymentNo);
         if (payment == null || payment.getPaymentMethod() != PaymentMethod.WECHAT) {
@@ -74,7 +78,7 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
             throw new BusinessException(HttpStatus.CONFLICT, "支付锁房已关闭或过期，请重新预订");
         }
 
-        String openid = wechatIdentityService.verifyAndBindOpenId(memberId, loginCode, phoneCode);
+        String openid = identityBindingService.requireBoundOpenId(memberId, wechatIdentityService.resolveOpenId(loginCode));
         PrepayWithRequestPaymentResponse response = wechatPayGateway.createPrepay(
                 paymentNo, payment.getAmount(), openid, booking.getExpiresAt());
         String packageValue = response.getPackageVal();

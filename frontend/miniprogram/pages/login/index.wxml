@@ -22,26 +22,10 @@
   <view class="login-card">
     <text class="card-title">手机号登录</text>
 
-    <view class="phone-field">
-      <qx-icon name="smartphone" size="32" />
-      <input
-        class="phone-input"
-        type="number"
-        maxlength="11"
-        value="{{phone}}"
-        placeholder="请输入手机号"
-        placeholder-class="placeholder"
-        confirm-type="done"
-        bindinput="onPhoneInput"
-        bindconfirm="onLoginTap"
-      />
-      <view wx:if="{{phone}}" class="phone-clear" bindtap="onClearPhoneTap">
-        <qx-icon name="x-circle" size="32" />
-      </view>
-    </view>
+    <text>请使用微信授权手机号登录</text>
 
     <text wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</text>
-    <button class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="onLoginTap">
+    <button class="login-button" loading="{{loading}}" disabled="{{loading || !agreedTerms}}" open-type="getPhoneNumber" bindgetphonenumber="onPhoneAuthorized">
       {{loading ? '正在登录…' : '登录'}}
     </button>
 

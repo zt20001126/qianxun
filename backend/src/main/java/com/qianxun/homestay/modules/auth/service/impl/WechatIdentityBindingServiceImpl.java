@@ -8,6 +8,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 /** 事务化绑定已由微信验证的会员身份。 */
 @Service
@@ -15,8 +16,34 @@ public class WechatIdentityBindingServiceImpl implements WechatIdentityBindingSe
 
     private final MemberMapper memberMapper;
 
+    @Value("${app.auth.default-avatar}")
+    private String defaultAvatar;
+
     public WechatIdentityBindingServiceImpl(MemberMapper memberMapper) {
         this.memberMapper = memberMapper;
+    }
+
+    @Override
+    @Transactional
+    public MemberEntity bindLoginIdentity(String phone, String openid) {
+        // 唯一手机号约束串行化预建会员与新用户的并发创建，禁止改写已有积分。
+        memberMapper.ensureExternalMember(phone, phone.substring(phone.length() - 4), defaultAvatar);
+        MemberEntity member = memberMapper.findByPhoneForUpdate(phone);
+        if (member == null) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "会员资料初始化失败");
+        }
+        bindVerifiedIdentity(member.getId(), phone, openid);
+        return memberMapper.findById(member.getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String requireBoundOpenId(Long memberId, String openid) {
+        MemberEntity member = memberMapper.findById(memberId);
+        if (member == null || member.getOpenid() == null || !member.getOpenid().equals(openid)) {
+            throw new BusinessException(HttpStatus.FORBIDDEN, "当前微信账号与会员绑定不一致，请联系管理员");
+        }
+        return member.getOpenid();
     }
 
     @Override

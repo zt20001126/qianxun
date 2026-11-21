@@ -7,7 +7,6 @@ import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
 import java.time.Instant;
 import java.util.Map;
-import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -20,7 +19,6 @@ public class WechatIdentityServiceImpl implements WechatIdentityService {
     private static final String CODE_SESSION_URL = "https://api.weixin.qq.com/sns/jscode2session";
     private static final String ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token";
     private static final String PHONE_NUMBER_URL = "https://api.weixin.qq.com/wxa/business/getuserphonenumber";
-    private static final Pattern PHONE_DIGITS = Pattern.compile("\\D");
 
     private final RestClient restClient;
     private final WechatPayProperties properties;
@@ -38,9 +36,12 @@ public class WechatIdentityServiceImpl implements WechatIdentityService {
 
     @Override
     public String verifyAndBindOpenId(Long memberId, String loginCode, String phoneCode) {
-        if (!properties.isEnabled()) {
-            throw new BusinessException(HttpStatus.CONFLICT, "微信支付当前未启用");
-        }
+        String openid = resolveOpenId(loginCode);
+        return bindingService.bindVerifiedIdentity(memberId, resolvePhone(phoneCode), openid);
+    }
+
+    @Override
+    public String resolveOpenId(String loginCode) {
         try {
             JsonNode session = restClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -53,8 +54,15 @@ public class WechatIdentityServiceImpl implements WechatIdentityService {
                     .retrieve()
                     .body(JsonNode.class);
             ensureWechatSuccess(session);
-            String openid = requiredText(session, "openid");
+            return requiredText(session, "openid");
+        } catch (RestClientException exception) {
+            throw new BusinessException(HttpStatus.BAD_GATEWAY, "暂时无法验证微信身份，请稍后重试");
+        }
+    }
 
+    @Override
+    public String resolvePhone(String phoneCode) {
+        try {
             JsonNode phoneResponse = restClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .scheme("https").host("api.weixin.qq.com").path("/wxa/business/getuserphonenumber")
@@ -65,10 +73,10 @@ public class WechatIdentityServiceImpl implements WechatIdentityService {
                     .body(JsonNode.class);
             ensureWechatSuccess(phoneResponse);
             String phone = requiredText(phoneResponse.path("phone_info"), "purePhoneNumber");
-            phone = PHONE_DIGITS.matcher(phone).replaceAll("");
-            return bindingService.bindVerifiedIdentity(memberId, phone, openid);
-        } catch (BusinessException exception) {
-            throw exception;
+            if (!phone.matches("^1[3-9]\\d{9}$")) {
+                throw new BusinessException(HttpStatus.BAD_GATEWAY, "微信返回的手机号格式无效");
+            }
+            return phone;
         } catch (RestClientException exception) {
             throw new BusinessException(HttpStatus.BAD_GATEWAY, "暂时无法验证微信身份，请稍后重试");
         }

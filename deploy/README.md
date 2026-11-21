@@ -40,7 +40,7 @@ Compose 暴露 HTTP 管理站点，供开发和内网验收使用。正式环境
 
 商户使用微信支付公钥模式时，需将微信支付公钥放在该目录，并在 `.env` 中同时设置 `WECHAT_PAY_PUBLIC_KEY_ID` 和 `WECHAT_PAY_PUBLIC_KEY_PATH=/run/secrets/wechat/pub_key.pem`。公钥 ID 和文件必须属于同一微信支付商户；二者只填一项会阻止后端启动。两项都未填写时沿用原有平台证书模式。商户私钥仍用于请求签名，不可用微信支付公钥替代。
 
-微信回调路径为 `/api/payment/wechat/notify/payment` 和 `/api/payment/wechat/notify/refund`。当前 Compose 仅供开发/验收使用，默认通过 HTTP 暴露后端；真实支付测试必须先在 TLS 反向代理或云负载均衡后提供公网 HTTPS 地址，并将小程序 request 合法域名、回调 URL 和商户平台配置为该地址。微信支付成功以服务端验签回调结算；退款在微信确认成功后才取消订单及返还积分。手机号登录本身仍不验证归属，只有支付前微信授权手机号与当前会员手机号匹配时才绑定 OpenID。
+微信回调路径为 `/api/payment/wechat/notify/payment` 和 `/api/payment/wechat/notify/refund`。当前 Compose 仅供开发/验收使用，默认通过 HTTP 暴露后端；真实支付测试必须先在 TLS 反向代理或云负载均衡后提供公网 HTTPS 地址，并将小程序 request 合法域名、回调 URL 和商户平台配置为该地址。微信支付成功以服务端验签回调结算；退款在微信确认成功后才取消订单及返还积分。会员登录时通过微信授权手机号绑定 OpenID，支付时校验当前微信身份；模拟支付模式仍需微信 AppID、AppSecret 及手机号授权能力完成登录。旧会员令牌将失效，需要重新登录。
 
 ## 数据库备份
 

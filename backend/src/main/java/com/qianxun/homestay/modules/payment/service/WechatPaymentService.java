@@ -11,10 +11,9 @@ public interface WechatPaymentService {
      * @param memberId 当前 JWT 会员 ID
      * @param paymentNo 商户支付单号
      * @param loginCode wx.login 凭证
-     * @param phoneCode 微信手机号授权凭证
      * @return wx.requestPayment 调起参数
      */
-    WechatPrepayVO createPrepay(Long memberId, String paymentNo, String loginCode, String phoneCode);
+    WechatPrepayVO createPrepay(Long memberId, String paymentNo, String loginCode);
 
     /** 验签、校验并幂等处理微信支付结果通知。 */
     void handlePaymentNotification(

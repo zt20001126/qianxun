@@ -34,6 +34,18 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @AutoConfigureMockMvc
 class CatalogApiIntegrationTest {
 
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    private com.qianxun.homestay.modules.auth.service.WechatIdentityService testWechatIdentity;
+
+    @org.junit.jupiter.api.BeforeEach
+    void configureTestWechatIdentity() {
+        org.mockito.Mockito.lenient().when(testWechatIdentity.resolveOpenId(org.mockito.ArgumentMatchers.anyString()))
+                .thenAnswer(invocation -> "openid-" + invocation.<String>getArgument(0));
+        org.mockito.Mockito.lenient().when(testWechatIdentity.resolvePhone(org.mockito.ArgumentMatchers.anyString()))
+                .thenAnswer(invocation -> invocation.<String>getArgument(0));
+    }
+
+
     private static final String ADMIN_USERNAME = "stage-two-admin";
     private static final String ADMIN_PASSWORD = "stage-two-password";
 
@@ -311,7 +323,7 @@ class CatalogApiIntegrationTest {
     private String loginMemberToken(String phone) throws Exception {
         String response = mockMvc.perform(post("/api/app/auth/login")
                         .contentType("application/json")
-                        .content("{\"phone\":\"" + phone + "\"}"))
+                        .content("{\"login_code\":\"" + phone + "\",\"phone_code\":\"" + phone + "\"}"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).path("data").path("token").asText();

@@ -14,7 +14,7 @@
     <view wx:if="{{status === 'CLOSED'}}" class="payment-state is-closed">支付已关闭</view>
     <view wx:elif="{{status === 'SUCCESS'}}" class="payment-state is-success">支付成功，正在确认订单…</view>
     <view wx:elif="{{message}}" class="payment-message">{{message}}</view>
-    <button wx:if="{{paymentMethod === 'WECHAT'}}" class="pay-button" open-type="getPhoneNumber" disabled="{{paying || checking || status === 'CLOSED' || status === 'SUCCESS'}}" bindgetphonenumber="onPhoneAuthorized">{{paying ? '正在发起支付…' : '微信支付'}}</button>
+    <button wx:if="{{paymentMethod === 'WECHAT'}}" class="pay-button" disabled="{{paying || checking || status === 'CLOSED' || status === 'SUCCESS'}}" bindtap="onWechatPayTap">{{paying ? '正在发起支付…' : '微信支付'}}</button>
     <button wx:else class="pay-button" disabled="{{paying || checking || status === 'CLOSED' || status === 'SUCCESS'}}" bindtap="onPayTap">{{paying ? '正在确认支付…' : '立即支付'}}</button>
     <button class="status-button" disabled="{{checking}}" bindtap="refreshPaymentState">{{checking ? '查询中…' : '查询支付状态'}}</button>
   </view>

@@ -1,10 +1,8 @@
-/** 芊浔民宿手机号登录页：输入校验、提交状态、登录后保存 JWT。 */
+/** 芊浔民宿微信手机号授权登录页。 */
 import { login } from '../../services/auth'
-import { isValidMainlandPhone } from '../../utils/phone'
 import { getValidToken, saveSession } from '../../utils/session'
 
 interface LoginPageData {
-  phone: string
   loading: boolean
   errorMessage: string
   agreedTerms: boolean
@@ -12,7 +10,6 @@ interface LoginPageData {
 
 Page({
   data: {
-    phone: '',
     loading: false,
     errorMessage: '',
     agreedTerms: false,
@@ -24,34 +21,31 @@ Page({
     }
   },
 
-  onPhoneInput(event: WechatMiniprogram.Input) {
-    const phone = event.detail.value.replace(/\D/g, '').slice(0, 11)
-    this.setData({ phone, errorMessage: '' })
-  },
-
-  onClearPhoneTap() {
-    this.setData({ phone: '', errorMessage: '' })
-  },
-
   onTermsToggle() {
     this.setData({ agreedTerms: !this.data.agreedTerms })
   },
 
-  async onLoginTap() {
+  async onPhoneAuthorized(event: { detail: { code?: string; errMsg?: string } }) {
     if (!this.data.agreedTerms) {
       wx.showToast({ title: '请先勾选同意用户协议与隐私协议', icon: 'none' })
       return
     }
 
-    const phone = this.data.phone.trim()
-    if (!isValidMainlandPhone(phone)) {
-      this.setData({ errorMessage: '请输入有效的 11 位中国大陆手机号' })
+    const phoneCode = event.detail.code
+    if (!phoneCode) {
+      // 仅记录微信返回的状态信息，不记录一次性授权凭证。
+      console.warn('手机号授权未完成:', event.detail.errMsg || '微信未返回状态信息')
+      this.setData({ errorMessage: '手机号授权未完成，请重试' })
       return
     }
 
     this.setData({ loading: true, errorMessage: '' })
     try {
-      const result = await login(phone)
+      const loginCode = await new Promise<string>((resolve, reject) => wx.login({
+        success: (result) => result.code ? resolve(result.code) : reject(new Error('获取微信登录凭证失败')),
+        fail: () => reject(new Error('获取微信登录凭证失败，请重试')),
+      }))
+      const result = await login(loginCode, phoneCode)
       saveSession(result)
       wx.switchTab({ url: '/pages/home/index' })
     } catch (error) {

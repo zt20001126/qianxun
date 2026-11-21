@@ -1,18 +1,22 @@
 package com.qianxun.homestay.modules.auth.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 /**
- * 小程序手机号登录请求；手机号由用户直接输入，本阶段不做归属验证。
+ * 小程序微信身份与手机号授权登录请求。
  */
 public class PhoneLoginRequest {
 
-    /** 中国大陆手机号字符串。 */
-    @NotBlank(message = "请输入手机号")
-    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "请输入有效的中国大陆手机号")
-    private String phone;
+    /** 微信登录一次性凭证。 */
+    @NotBlank @Size(max = 128)
+    private String loginCode;
+    /** 微信手机号授权一次性凭证。 */
+    @NotBlank @Size(max = 128)
+    private String phoneCode;
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public String getLoginCode() { return loginCode; }
+    public void setLoginCode(String loginCode) { this.loginCode = loginCode; }
+    public String getPhoneCode() { return phoneCode; }
+    public void setPhoneCode(String phoneCode) { this.phoneCode = phoneCode; }
 }
