@@ -391,6 +391,149 @@ class AdminOrderApiIntegrationTest {
                 .isEqualTo(1);
     }
 
+    /** 验证手机号归并、画像更新、订单备注归属和统计隔离。 */
+    @Test
+    void portraitGroupsOrdersByPhoneAndRejectsForeignOrderRemarks() throws Exception {
+        LocalDate date = LocalDate.now(BUSINESS_ZONE).plusDays(30);
+        String phoneA = "13800001231";
+        String phoneB = "13800001232";
+        long orderA = createPortraitOrder(date, "PORTRAIT-A", phoneA, "甲", "第一条备注", "COMPLETED", null);
+        long secondA = createPortraitOrder(date.plusDays(2), "PORTRAIT-B", phoneA, "乙", "第二条备注", "COMPLETED", null);
+        long orderB = createPortraitOrder(date.plusDays(4), "PORTRAIT-C", phoneB, "丙", "另一位备注", "PENDING_CONFIRM", null);
+        Long profileA = jdbcTemplate.queryForObject("SELECT id FROM booker_profile WHERE phone = ?", Long.class, phoneA);
+        Long profileB = jdbcTemplate.queryForObject("SELECT id FROM booker_profile WHERE phone = ?", Long.class, phoneB);
+        assertThat(profileA).isNotEqualTo(profileB);
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM booker_profile WHERE phone = ?", Integer.class, phoneA)).isEqualTo(1);
+        String payload = "{\"age\":32,\"party_type\":\"COUPLE\",\"inferred_region\":\"浙江\",\"tags\":[\"自驾\"],\"admin_remark\":\"甲备注\",\"order_remarks\":[{\"order_id\":" + orderA + ",\"remark\":\"修改备注\",\"admin_remark\":null}]}";
+        mockMvc.perform(put("/api/admin/portraits/{id}", profileA).header("Authorization", bearer(adminToken))
+                .contentType("application/json").content(payload)).andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/portraits").header("Authorization", bearer(adminToken)).param("phone", phoneA))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.list[0].age").value(32))
+                .andExpect(jsonPath("$.data.list[0].admin_remark").value("甲备注"))
+                .andExpect(jsonPath("$.data.list[0].completed_order_count").value(2))
+                .andExpect(jsonPath("$.data.list[0].cumulative_paid_amount").value("600.00"))
+                .andExpect(jsonPath("$.data.list[0].orders.length()").value(2));
+        String attack = "{\"age\":99,\"tags\":[],\"order_remarks\":[{\"order_id\":" + orderB + ",\"remark\":\"串改\"}]}";
+        mockMvc.perform(put("/api/admin/portraits/{id}", profileA).header("Authorization", bearer(adminToken))
+                .contentType("application/json").content(attack)).andExpect(status().isConflict());
+        assertThat(jdbcTemplate.queryForObject("SELECT remark FROM orders WHERE id = ?", String.class, orderB)).isEqualTo("另一位备注");
+        assertThat(jdbcTemplate.queryForObject("SELECT age FROM booker_profile WHERE id = ?", Integer.class, profileA)).isEqualTo(32);
+        assertThat(jdbcTemplate.queryForObject("SELECT remark FROM orders WHERE id = ?", String.class, secondA)).isEqualTo("第二条备注");
+    }
+
+    /** 新订单没有填写画像时，不应清空同手机号已有画像。 */
+    @Test
+    void emptyPortraitFromNewOrderDoesNotEraseExistingProfile() throws Exception {
+        LocalDate date = LocalDate.now(BUSINESS_ZONE).plusDays(40);
+        String phone = "13800001233";
+        createPortraitOrder(date, "PORTRAIT-D", phone, "甲", "备注", "PENDING_CONFIRM", "{\"age\":35,\"party_type\":\"SOLO\",\"inferred_region\":\"上海\",\"tags\":[\"自驾\"]}");
+        createPortraitOrder(date.plusDays(2), "PORTRAIT-E", phone, "乙", "备注2", "PENDING_CONFIRM", "{\"age\":null,\"party_type\":null,\"inferred_region\":null,\"tags\":[]}");
+        assertThat(jdbcTemplate.queryForObject("SELECT age FROM booker_profile WHERE phone = ?", Integer.class, phone)).isEqualTo(35);
+    }
+
+    /** 修改手机号时，旧手机号画像不能覆盖新手机号画像。 */
+    @Test
+    void changingOrderPhoneDoesNotCopyPreviousPortraitToAnotherCustomer() throws Exception {
+        LocalDate date = LocalDate.now(BUSINESS_ZONE).plusDays(50);
+        String phoneA = "13800001234";
+        String phoneB = "13800001235";
+        long orderA = createPortraitOrder(date, "PORTRAIT-F", phoneA, "甲", "甲备注", "PENDING_CONFIRM", "{\"age\":31,\"party_type\":\"SOLO\",\"inferred_region\":\"上海\",\"tags\":[\"自驾\"]}");
+        createPortraitOrder(date.plusDays(2), "PORTRAIT-G", phoneB, "乙", "乙备注", "PENDING_CONFIRM", "{\"age\":55,\"party_type\":\"COUPLE\",\"inferred_region\":\"浙江\",\"tags\":[\"晚到\"]}");
+        String body = "{\"phone\":\"" + phoneB + "\",\"booker_portrait\":{\"age\":31,\"party_type\":\"SOLO\",\"inferred_region\":\"上海\",\"tags\":[\"自驾\"]}}";
+        mockMvc.perform(put("/api/admin/orders/{id}", orderA).header("Authorization", bearer(adminToken))
+                .contentType("application/json").content(body)).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("SELECT age FROM booker_profile WHERE phone = ?", Integer.class, phoneB)).isEqualTo(55);
+    }
+
+    /** 同手机号新订单补充资料后，历史订单读取同一份更新后的画像。 */
+    @Test
+    void laterOrderMergesTagsAndSharesUpdatedProfile() throws Exception {
+        LocalDate date = LocalDate.now(BUSINESS_ZONE).plusDays(70);
+        String phone = "13800001236";
+        long first = createPortraitOrder(date, "PORTRAIT-H", phone, "甲", "备注1", "PENDING_CONFIRM", "{\"age\":20,\"party_type\":\"SOLO\",\"inferred_region\":\"上海\",\"tags\":[\"自驾\"]}");
+        long second = createPortraitOrder(date.plusDays(2), "PORTRAIT-I", phone, "乙", "备注2", "PENDING_CONFIRM", "{\"age\":30,\"tags\":[\"晚到\"]}");
+        for (long orderId : new long[]{first, second}) {
+            mockMvc.perform(get("/api/admin/orders/{id}", orderId).header("Authorization", bearer(adminToken)))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.data.booker_portrait.age").value(30))
+                    .andExpect(jsonPath("$.data.booker_portrait.party_type").value("SOLO"))
+                    .andExpect(jsonPath("$.data.booker_portrait.inferred_region").value("上海"))
+                    .andExpect(jsonPath("$.data.booker_portrait.tags", org.hamcrest.Matchers.containsInAnyOrder("自驾", "晚到")));
+        }
+    }
+
+    /** 画像修改需认证，混入其他顾客订单时整个事务必须回滚。 */
+    @Test
+    void portraitRejectsUnauthenticatedAccessAndRollsBackMixedOrderUpdates() throws Exception {
+        LocalDate date = LocalDate.now(BUSINESS_ZONE).plusDays(80);
+        String phone = "13800001237";
+        long own = createPortraitOrder(date, "PORTRAIT-J", phone, "甲", "原备注", "PENDING_CONFIRM", null);
+        long foreign = createPortraitOrder(date.plusDays(2), "PORTRAIT-K", "13800001238", "乙", "他人备注", "PENDING_CONFIRM", null);
+        Long profile = jdbcTemplate.queryForObject("SELECT id FROM booker_profile WHERE phone = ?", Long.class, phone);
+        mockMvc.perform(get("/api/admin/portraits")).andExpect(status().isUnauthorized());
+        String body = "{\"age\":40,\"tags\":[],\"order_remarks\":[{\"order_id\":" + own + ",\"remark\":\"已改\"},{\"order_id\":" + foreign + ",\"remark\":\"串改\"}]}";
+        mockMvc.perform(put("/api/admin/portraits/{id}", profile).header("Authorization", bearer(adminToken))
+                .contentType("application/json").content(body)).andExpect(status().isConflict());
+        assertThat(jdbcTemplate.queryForObject("SELECT remark FROM orders WHERE id = ?", String.class, own)).isEqualTo("原备注");
+        assertThat(jdbcTemplate.queryForObject("SELECT remark FROM orders WHERE id = ?", String.class, foreign)).isEqualTo("他人备注");
+        assertThat(jdbcTemplate.queryForObject("SELECT age FROM booker_profile WHERE id = ?", Integer.class, profile)).isNull();
+    }
+
+    /** 无手机号订单补充手机号后，其原画像应可继续读取。 */
+    @Test
+    void addingPhoneToOrderPreservesItsExistingPortrait() throws Exception {
+        LocalDate date = LocalDate.now(BUSINESS_ZONE).plusDays(90);
+        long order = createPortraitOrder(date, "PORTRAIT-L", null, "甲", "备注", "PENDING_CONFIRM", "{\"age\":25,\"tags\":[\"自驾\"]}");
+        mockMvc.perform(put("/api/admin/orders/{id}", order).header("Authorization", bearer(adminToken))
+                .contentType("application/json").content("{\"phone\":\"13800001239\"}"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/admin/orders/{id}", order).header("Authorization", bearer(adminToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.booker_portrait.age").value(25))
+                .andExpect(jsonPath("$.data.booker_portrait.tags[0]").value("自驾"));
+    }
+
+    /** 不同房间并发创建同手机号订单时，只产生一条画像并保留两次补充的标签。 */
+    @Test
+    void concurrentOrdersForSamePhoneShareProfileAndMergeTags() throws Exception {
+        LocalDate date = LocalDate.now(BUSINESS_ZONE).plusDays(100);
+        String phone = "13800001240";
+        CountDownLatch gate = new CountDownLatch(1);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            List<Callable<Integer>> calls = List.of(
+                    () -> createConcurrentPortraitOrder(gate, roomId, date, phone, "PORTRAIT-M", "自驾"),
+                    () -> createConcurrentPortraitOrder(gate, secondRoomId, date, phone, "PORTRAIT-N", "晚到"));
+            var first = pool.submit(calls.get(0));
+            var second = pool.submit(calls.get(1));
+            gate.countDown();
+            assertThat(first.get(30, TimeUnit.SECONDS)).isEqualTo(200);
+            assertThat(second.get(30, TimeUnit.SECONDS)).isEqualTo(200);
+        }
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM booker_profile WHERE phone = ?", Integer.class, phone)).isEqualTo(1);
+        mockMvc.perform(get("/api/admin/portraits").header("Authorization", bearer(adminToken)).param("phone", phone))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.list[0].orders.length()").value(2))
+                .andExpect(jsonPath("$.data.list[0].tags", org.hamcrest.Matchers.containsInAnyOrder("自驾", "晚到")));
+    }
+
+    private int createConcurrentPortraitOrder(CountDownLatch gate, long room, LocalDate date, String phone,
+            String platformNo, String tag) throws Exception {
+        String body = createRequest(room, date, date.plusDays(1), "PENDING_CONFIRM", platformNo, phone)
+                .replace("\"amount\":", "\"booker_portrait\":{\"tags\":[\"" + tag + "\"]},\"amount\":");
+        gate.await(10, TimeUnit.SECONDS);
+        return mockMvc.perform(post("/api/admin/orders").header("Authorization", bearer(adminToken))
+                .contentType("application/json").content(body)).andReturn().getResponse().getStatus();
+    }
+
+    private long createPortraitOrder(LocalDate date, String platformNo, String phone, String name, String remark,
+            String status, String portrait) throws Exception {
+        String body = createRequest(roomId, date, date.plusDays(1), status, platformNo, phone)
+                .replace("测试客人", name).replace("\"guest_count\":2,", "\"remark\":\"" + remark + "\",\"guest_count\":2,");
+        if (portrait != null) body = body.replace("\"amount\":", "\"booker_portrait\":" + portrait + ",\"amount\":");
+        String response = mockMvc.perform(post("/api/admin/orders").header("Authorization", bearer(adminToken))
+                .contentType("application/json").content(body)).andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(response).path("data").path("id").asLong();
+    }
+
     private String createAndReadOrderNo(long targetRoomId, LocalDate checkIn, LocalDate checkOut, String platformNo)
             throws Exception {
         String response = mockMvc.perform(post("/api/admin/orders")

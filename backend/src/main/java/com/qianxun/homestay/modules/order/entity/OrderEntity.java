@@ -34,6 +34,8 @@ public class OrderEntity {
     private OrderStatus status;
     /** 订单备注；取消原因等补充说明保存在此字段。 */
     private String remark;
+    /** 管理员在创建订单时填写的内部备注。 */
+    private String adminRemark;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -63,4 +65,6 @@ public class OrderEntity {
     public void setStatus(OrderStatus status) { this.status = status; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
+    public String getAdminRemark() { return adminRemark; }
+    public void setAdminRemark(String adminRemark) { this.adminRemark = adminRemark; }
 }

@@ -17,6 +17,7 @@ export const router = createRouter({
         { path: 'rooms', component: () => import('../views/rooms/index.vue'), meta: { title: '客房管理' } },
         { path: 'orders', component: () => import('../views/orders/index.vue'), meta: { title: '订单管理' } },
         { path: 'members', component: () => import('../views/members/index.vue'), meta: { title: '会员管理' } },
+        { path: 'portraits', component: () => import('../views/portraits/index.vue'), meta: { title: '顾客画像' } },
         { path: 'points', component: () => import('../views/points/index.vue'), meta: { title: '积分流水' } },
         { path: 'payments', component: () => import('../views/transactions/payments.vue'), meta: { title: '支付流水' } },
         { path: 'refunds', component: () => import('../views/transactions/refunds.vue'), meta: { title: '退款流水' } },

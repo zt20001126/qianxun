@@ -26,6 +26,8 @@ import com.qianxun.homestay.modules.order.service.OrderRewardService;
 import com.qianxun.homestay.modules.order.vo.OrderCreatedVO;
 import com.qianxun.homestay.modules.order.vo.OrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.OrderStatusVO;
+import com.qianxun.homestay.modules.portrait.dto.BookerPortraitSaveRequest;
+import com.qianxun.homestay.modules.portrait.service.BookerPortraitService;
 import com.qianxun.homestay.modules.room.entity.RoomEntity;
 import com.qianxun.homestay.modules.room.mapper.RoomMapper;
 import java.math.BigDecimal;
@@ -61,6 +63,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
     private final AvailabilityService availabilityService;
     private final OrderNoGenerator orderNoGenerator;
     private final OrderRewardService orderRewardService;
+    private final BookerPortraitService bookerPortraitService;
     private final OrderAmountCalculator amountCalculator = new OrderAmountCalculator();
     private final OrderStateMachine stateMachine = new OrderStateMachine();
 
@@ -72,7 +75,8 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             CreatorMapper creatorMapper,
             AvailabilityService availabilityService,
             OrderNoGenerator orderNoGenerator,
-            OrderRewardService orderRewardService) {
+            OrderRewardService orderRewardService,
+            BookerPortraitService bookerPortraitService) {
         this.orderMapper = orderMapper;
         this.orderAmountMapper = orderAmountMapper;
         this.roomMapper = roomMapper;
@@ -81,6 +85,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         this.availabilityService = availabilityService;
         this.orderNoGenerator = orderNoGenerator;
         this.orderRewardService = orderRewardService;
+        this.bookerPortraitService = bookerPortraitService;
     }
 
     @Override
@@ -121,12 +126,15 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         order.setCheckOut(request.checkOut());
         order.setStatus(request.status());
         order.setRemark(trimToNull(request.remark()));
+        order.setAdminRemark(trimToNull(request.adminRemark()));
 
         OrderAmountEntity amount = amountCalculator.calculate(request.amount(), null, creator != null);
         try {
             orderMapper.insert(order);
             amount.setOrderId(order.getId());
             orderAmountMapper.insert(amount);
+            bookerPortraitService.ensureProfileForOrder(order.getId(), order.getGuestName(), order.getPhone());
+            bookerPortraitService.saveForOrder(order.getId(), request.bookerPortrait());
         } catch (DataIntegrityViolationException exception) {
             throw new BusinessException(HttpStatus.CONFLICT, "平台订单号或订单编号已存在");
         }
@@ -179,6 +187,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             validateGuestCount(request.getGuestCount(), requireRoom(order.getRoomId()));
         }
 
+        String previousPhone = trimToNull(order.getPhone());
         order.setRoomId(roomId);
         order.setCheckIn(checkIn);
         order.setCheckOut(checkOut);
@@ -194,7 +203,15 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         if (request.getRemark() != null) {
             order.setRemark(trimToNull(request.getRemark()));
         }
+        if (request.getAdminRemark() != null) {
+            order.setAdminRemark(trimToNull(request.getAdminRemark()));
+        }
         orderMapper.updateEditableFields(order);
+        bookerPortraitService.reassignOrder(orderId, order.getGuestName(), order.getPhone());
+        // 联系电话切换后，表单仍可能携带原顾客画像，不能写入新手机号画像。
+        if (java.util.Objects.equals(previousPhone, trimToNull(order.getPhone()))) {
+            bookerPortraitService.saveForOrder(orderId, request.getBookerPortrait());
+        }
         if (order.getStatus() == OrderStatus.COMPLETED) {
             orderRewardService.rewardIfEligible(orderId);
         }
@@ -247,6 +264,14 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         return new OrderStatusVO(updated.getId(), updated.getStatus(), ApiTime.fromShanghai(updated.getUpdatedAt()));
     }
 
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public OrderStatusVO checkIn(Long orderId, BookerPortraitSaveRequest portraitRequest) {
+        OrderStatusVO updatedStatus = performAction(orderId, OrderAction.CHECK_IN, null);
+        bookerPortraitService.saveForOrder(orderId, portraitRequest);
+        return updatedStatus;
+    }
+
     private OrderDetailVO findDetailAfterWrite(Long orderId) {
         OrderViewEntity order = orderMapper.findViewById(orderId);
         if (order == null) {
@@ -256,7 +281,8 @@ public class OrderCommandServiceImpl implements OrderCommandService {
                 order.getId(), order.getOrderNo(), order.getPlatformOrderNo(), order.getRoomId(), order.getRoomNumber(),
                 order.getChannelId(), order.getChannelName(), order.getCreatorId(), order.getMemberId(),
                 order.getGuestName(), order.getPhone(), order.getGuestCount(), order.getCheckIn(), order.getCheckOut(),
-                order.getNights(), order.getStatus(), order.getRemark(), money(order.getPaidAmount()),
+                order.getNights(), order.getStatus(), order.getRemark(), order.getAdminRemark(),
+                bookerPortraitService.findForOrder(order.getId()), money(order.getPaidAmount()),
                 money(order.getPlatformFee()), money(order.getPlatformCommission()), money(order.getExtraCommission()),
                 nullableMoney(order.getExpectedAmount()), money(order.getNetAmount()),
                 ApiTime.fromShanghai(order.getCreatedAt()), ApiTime.fromShanghai(order.getUpdatedAt()));

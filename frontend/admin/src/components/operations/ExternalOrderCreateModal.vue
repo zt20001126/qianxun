@@ -2,9 +2,11 @@
 /** 页内弹窗：创建第三方平台订单（不含小程序，实时预览达人额外提成与商家到手金额）。 */
 import { computed, reactive, ref, watch } from 'vue'
 import AdminNoticeDialog from '../AdminNoticeDialog.vue'
+import BookerPortraitFields from './BookerPortraitFields.vue'
 import { orderApi } from '../../api/orders'
 import type { Channel, Creator, Room } from '../../types/catalog'
 import type { CreateExternalOrderRequest, OrderStatus } from '../../types/orders'
+import type { BookerPortraitInput } from '../../types/portraits'
 import { addDays, amountToCents, centsToAmount, isMoneyString, shanghaiDate } from '../../utils/operations'
 
 interface Props {
@@ -34,6 +36,8 @@ interface ExternalOrderForm {
   check_out: string
   status: Exclude<OrderStatus, 'CANCELLED'>
   remark: string
+  admin_remark: string
+  booker_portrait: BookerPortraitInput
   paid_amount: string
   platform_fee: string
   platform_commission: string
@@ -118,11 +122,17 @@ function emptyForm(): ExternalOrderForm {
     check_out: '',
     status: 'PENDING_CHECKIN',
     remark: '',
+    admin_remark: '',
+    booker_portrait: emptyPortrait(),
     paid_amount: '',
     platform_fee: '0.00',
     platform_commission: '0.00',
     expected_amount: '',
   }
+}
+
+function emptyPortrait(): BookerPortraitInput {
+  return { age: null, party_type: null, inferred_region: null, tags: [] }
 }
 
 function handleClose(): void {
@@ -168,6 +178,8 @@ async function submit(): Promise<void> {
     check_out: form.check_out,
     status: form.status,
     remark: form.remark.trim() || null,
+    admin_remark: form.admin_remark.trim() || null,
+    booker_portrait: form.booker_portrait,
     amount: {
       paid_amount: form.paid_amount.trim(),
       platform_fee: form.platform_fee.trim() || '0.00',
@@ -315,11 +327,17 @@ async function submit(): Promise<void> {
               <input v-model="form.platform_order_no" type="text" placeholder="如：DY99281723" />
             </label>
 
-            <label class="qx-field qx-span-2">
-              <span>订单备注</span>
+            <label class="qx-field">
+              <span>预订人下单备注</span>
               <input v-model="form.remark" type="text" placeholder="特殊需求说明" />
             </label>
+            <label class="qx-field">
+              <span>管理员备注</span>
+              <input v-model="form.admin_remark" type="text" placeholder="管理员内部记录" />
+            </label>
           </div>
+
+          <BookerPortraitFields v-model="form.booker_portrait" :reference-date="form.check_in" />
 
           <div class="qx-modal-footer qx-footer-end">
             <button type="button" class="qx-btn-ghost" :disabled="saving" @click="handleClose">取消</button>

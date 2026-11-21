@@ -2,10 +2,12 @@
 /** 页内弹窗：订单详情、资料编辑、状态流转（确认/入住/退房）与第三方订单取消。 */
 import { computed, reactive, ref, watch } from 'vue'
 import AdminNoticeDialog from '../AdminNoticeDialog.vue'
+import BookerPortraitFields from './BookerPortraitFields.vue'
 import { orderApi } from '../../api/orders'
 import type { Creator, Room } from '../../types/catalog'
 import type { OrderDetail, UpdateOrderRequest } from '../../types/orders'
 import { orderStatusLabels } from '../../types/orders'
+import type { BookerPortraitInput } from '../../types/portraits'
 import { dayDifference } from '../../utils/operations'
 
 interface Props {
@@ -37,6 +39,8 @@ const form = reactive({
   guest_name: '',
   phone: '',
   remark: '',
+  admin_remark: '',
+  booker_portrait: emptyPortrait(),
 })
 
 const canEditRoomDate = computed(() =>
@@ -91,6 +95,15 @@ async function fetchDetail(id: number): Promise<void> {
       guest_name: order.guest_name || '',
       phone: order.phone || '',
       remark: order.remark || '',
+      admin_remark: order.admin_remark || '',
+      booker_portrait: order.booker_portrait
+        ? {
+            age: order.booker_portrait.age,
+            party_type: order.booker_portrait.party_type,
+            inferred_region: order.booker_portrait.inferred_region,
+            tags: [...order.booker_portrait.tags],
+          }
+        : emptyPortrait(),
     })
   } catch (cause) {
     errorMessage.value = cause instanceof Error ? cause.message : '订单详情读取失败'
@@ -130,6 +143,8 @@ async function saveEdit(): Promise<void> {
     phone: form.phone.trim(),
     guest_count: form.guest_count ? Number(form.guest_count) : null,
     remark: form.remark.trim(),
+    admin_remark: form.admin_remark.trim(),
+    booker_portrait: form.booker_portrait,
   }
   if (canEditRoomDate.value) {
     request.room_id = Number(form.room_id)
@@ -158,7 +173,7 @@ async function runStatusAction(action: 'confirm' | 'check-in' | 'check-out'): Pr
       await orderApi.confirm(order.id)
       emit('updated', `订单 ${order.order_no} 已确认，进入待入住`)
     } else if (action === 'check-in') {
-      await orderApi.checkIn(order.id)
+      await orderApi.checkInWithPortrait(order.id, form.booker_portrait)
       emit('updated', `订单 ${order.order_no} 已办理入住`)
     } else {
       await orderApi.checkOut(order.id)
@@ -184,6 +199,10 @@ async function confirmCancelExternal(): Promise<void> {
   } finally {
     actionBusy.value = false
   }
+}
+
+function emptyPortrait(): BookerPortraitInput {
+  return { age: null, party_type: null, inferred_region: null, tags: [] }
 }
 </script>
 
@@ -286,11 +305,17 @@ async function confirmCancelExternal(): Promise<void> {
               <input v-model="form.phone" type="text" />
             </label>
 
-            <label class="qx-field qx-span-2">
-              <span>订单备注</span>
+            <label class="qx-field">
+              <span>预订人下单备注</span>
               <input v-model="form.remark" type="text" />
             </label>
+            <label class="qx-field">
+              <span>管理员备注</span>
+              <input v-model="form.admin_remark" type="text" />
+            </label>
           </div>
+
+          <BookerPortraitFields v-model="form.booker_portrait" :reference-date="detail.check_in" />
 
           <div v-if="cancelConfirmOpen" class="qx-cancel-confirm">
             <label class="qx-field">

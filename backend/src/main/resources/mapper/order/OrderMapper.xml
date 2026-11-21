@@ -16,6 +16,7 @@
         <result property="checkOut" column="check_out"/>
         <result property="status" column="status"/>
         <result property="remark" column="remark"/>
+        <result property="adminRemark" column="admin_remark"/>
     </resultMap>
 
     <resultMap id="orderViewResultMap" type="com.qianxun.homestay.modules.order.entity.OrderViewEntity">
@@ -36,6 +37,7 @@
         <result property="nights" column="nights"/>
         <result property="status" column="status"/>
         <result property="remark" column="remark"/>
+        <result property="adminRemark" column="admin_remark"/>
         <result property="paidAmount" column="paid_amount"/>
         <result property="roomAmount" column="room_amount"/>
         <result property="pointsUsed" column="points_used"/>
@@ -53,31 +55,31 @@
         o.id, o.order_no, o.platform_order_no, o.room_id, r.number AS room_number,
         o.channel_id, c.name AS channel_name, o.creator_id, o.member_id, o.guest_name, o.phone,
         o.guest_count, o.check_in, o.check_out, DATEDIFF(o.check_out, o.check_in) AS nights,
-        o.status, o.remark, a.paid_amount, a.platform_fee, a.platform_commission,
+        o.status, o.remark, o.admin_remark, a.paid_amount, a.platform_fee, a.platform_commission,
         a.extra_commission, a.expected_amount, a.net_amount, o.created_at, o.updated_at
     </sql>
 
     <select id="findById" resultMap="orderResultMap">
         SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
-               guest_name, phone, guest_count, check_in, check_out, status, remark
+               guest_name, phone, guest_count, check_in, check_out, status, remark, admin_remark
         FROM orders WHERE id = #{id}
     </select>
 
     <select id="findByIdForUpdate" resultMap="orderResultMap">
         SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
-               guest_name, phone, guest_count, check_in, check_out, status, remark
+               guest_name, phone, guest_count, check_in, check_out, status, remark, admin_remark
         FROM orders WHERE id = #{id} FOR UPDATE
     </select>
 
     <select id="findAppById" resultMap="orderResultMap">
         SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
-               guest_name, phone, guest_count, check_in, check_out, status, remark
+               guest_name, phone, guest_count, check_in, check_out, status, remark, admin_remark
         FROM orders WHERE id = #{id} AND member_id = #{memberId}
     </select>
 
     <select id="findAppByIdForUpdate" resultMap="orderResultMap">
         SELECT id, order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
-               guest_name, phone, guest_count, check_in, check_out, status, remark
+               guest_name, phone, guest_count, check_in, check_out, status, remark, admin_remark
         FROM orders WHERE id = #{id} AND member_id = #{memberId} FOR UPDATE
     </select>
 
@@ -171,17 +173,17 @@
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO orders (
             order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
-            guest_name, phone, guest_count, check_in, check_out, status, remark
+            guest_name, phone, guest_count, check_in, check_out, status, remark, admin_remark
         ) VALUES (
             #{orderNo}, #{platformOrderNo}, #{roomId}, #{channelId}, #{creatorId}, #{memberId},
-            #{guestName}, #{phone}, #{guestCount}, #{checkIn}, #{checkOut}, #{status}, #{remark}
+            #{guestName}, #{phone}, #{guestCount}, #{checkIn}, #{checkOut}, #{status}, #{remark}, #{adminRemark}
         )
     </insert>
 
     <update id="updateEditableFields">
         UPDATE orders
         SET room_id = #{roomId}, guest_name = #{guestName}, phone = #{phone}, guest_count = #{guestCount},
-            check_in = #{checkIn}, check_out = #{checkOut}, remark = #{remark}
+            check_in = #{checkIn}, check_out = #{checkOut}, remark = #{remark}, admin_remark = #{adminRemark}
         WHERE id = #{id}
     </update>
 

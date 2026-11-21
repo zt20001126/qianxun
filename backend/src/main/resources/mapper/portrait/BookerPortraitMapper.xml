@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.portrait.mapper.BookerPortraitMapper">
+    <resultMap id="profileResultMap" type="com.qianxun.homestay.modules.portrait.entity.BookerProfileEntity">
+        <id property="id" column="id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="identityKey" column="identity_key"/>
+        <result property="guestName" column="guest_name"/>
+        <result property="phone" column="phone"/>
+        <result property="age" column="age"/>
+        <result property="partyType" column="party_type"/>
+        <result property="inferredRegion" column="inferred_region"/>
+        <result property="tagsJson" column="tags"/>
+        <result property="adminRemark" column="admin_remark"/>
+    </resultMap>
+
+    <resultMap id="profileListResultMap" type="com.qianxun.homestay.modules.portrait.entity.BookerPortraitListEntity">
+        <id property="id" column="id"/>
+        <result property="guestName" column="guest_name"/>
+        <result property="phone" column="phone"/>
+        <result property="age" column="age"/>
+        <result property="partyType" column="party_type"/>
+        <result property="inferredRegion" column="inferred_region"/>
+        <result property="tagsJson" column="tags"/>
+        <result property="adminRemark" column="admin_remark"/>
+        <result property="member" column="member"/>
+        <result property="completedOrderCount" column="completed_order_count"/>
+        <result property="cumulativePaidAmount" column="cumulative_paid_amount"/>
+    </resultMap>
+
+    <resultMap id="portraitOrderResultMap" type="com.qianxun.homestay.modules.portrait.entity.BookerPortraitOrderEntity">
+        <id property="orderId" column="order_id"/>
+        <result property="profileId" column="profile_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="checkIn" column="check_in"/>
+        <result property="paidAmount" column="paid_amount"/>
+        <result property="status" column="status"/>
+        <result property="remark" column="remark"/>
+        <result property="adminRemark" column="admin_remark"/>
+    </resultMap>
+
+    <select id="findProfileByIdentityKey" resultMap="profileResultMap">
+        SELECT id, order_id, identity_key, guest_name, phone, age, party_type, inferred_region, tags, admin_remark
+        FROM booker_profile
+        WHERE identity_key = #{identityKey}
+    </select>
+
+    <insert id="upsertProfile">
+        INSERT INTO booker_profile (order_id, identity_key, guest_name, phone, age, party_type, inferred_region, tags)
+        VALUES (#{orderId}, #{identityKey}, #{guestName}, #{phone}, #{age}, #{partyType}, #{inferredRegion}, CAST(#{tagsJson} AS JSON))
+        ON DUPLICATE KEY UPDATE
+            id = LAST_INSERT_ID(id),
+            order_id = COALESCE(order_id, VALUES(order_id)),
+            guest_name = COALESCE(VALUES(guest_name), guest_name),
+            phone = COALESCE(VALUES(phone), phone)
+    </insert>
+
+    <select id="findProfileById" resultMap="profileResultMap">
+        SELECT id, order_id, identity_key, guest_name, phone, age, party_type, inferred_region, tags, admin_remark
+        FROM booker_profile
+        WHERE id = #{id}
+    </select>
+
+    <select id="findProfileByIdForUpdate" resultMap="profileResultMap">
+        SELECT id, order_id, identity_key, guest_name, phone, age, party_type, inferred_region, tags, admin_remark
+        FROM booker_profile WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="findProfileIdByOrderId" resultType="long">
+        SELECT profile.id
+        FROM orders AS order_row
+        INNER JOIN booker_profile AS profile
+            ON (profile.phone IS NOT NULL AND TRIM(order_row.phone) = profile.phone)
+            OR (profile.phone IS NULL AND profile.order_id = order_row.id)
+        WHERE order_row.id = #{orderId}
+        ORDER BY (profile.phone IS NOT NULL) DESC, profile.id
+        LIMIT 1
+    </select>
+
+    <select id="lockOrderIdForProfile" resultType="long">
+        SELECT order_row.id
+        FROM booker_profile AS profile
+        INNER JOIN orders AS order_row ON
+            (profile.phone IS NOT NULL AND TRIM(order_row.phone) = profile.phone)
+            OR (profile.phone IS NULL AND profile.order_id = order_row.id)
+        WHERE profile.id = #{profileId} AND order_row.id = #{orderId}
+        FOR UPDATE
+    </select>
+
+    <delete id="deleteProfile">
+        DELETE FROM booker_profile WHERE id = #{id}
+    </delete>
+
+    <update id="updateProfile">
+        UPDATE booker_profile
+        SET age = #{age}, party_type = #{partyType}, inferred_region = #{inferredRegion},
+            tags = CAST(#{tagsJson} AS JSON), admin_remark = #{adminRemark}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateProfileFromOrder">
+        UPDATE booker_profile
+        SET age = #{age}, party_type = #{partyType}, inferred_region = #{inferredRegion},
+            tags = CAST(#{tagsJson} AS JSON)
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateOrderRemarks">
+        UPDATE orders
+        SET remark = #{remark}, admin_remark = #{adminRemark}, updated_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{orderId}
+    </update>
+
+    <sql id="profileOrderCondition">
+        ((profile.phone IS NOT NULL AND TRIM(order_row.phone) = profile.phone)
+         OR (profile.phone IS NULL AND profile.order_id = order_row.id))
+    </sql>
+
+    <sql id="profileFilters">
+        <if test="query.guestName != null and query.guestName != ''">
+            AND COALESCE(profile.guest_name, '') LIKE CONCAT('%', #{query.guestName}, '%')
+        </if>
+        <if test="query.phone != null and query.phone != ''">
+            AND COALESCE(profile.phone, '') LIKE CONCAT('%', #{query.phone}, '%')
+        </if>
+    </sql>
+
+    <select id="findProfilePage" resultMap="profileListResultMap">
+        SELECT profile.id, profile.guest_name, profile.phone, profile.age, profile.party_type,
+               profile.inferred_region, profile.tags, profile.admin_remark, (member.id IS NOT NULL) AS member,
+               COALESCE(summary.completed_order_count, 0) AS completed_order_count,
+               COALESCE(summary.cumulative_paid_amount, 0.00) AS cumulative_paid_amount
+        FROM booker_profile AS profile
+        LEFT JOIN members AS member ON member.phone = profile.phone
+        LEFT JOIN (
+            SELECT profile.id AS profile_id, COUNT(order_row.id) AS completed_order_count,
+                   SUM(amount.paid_amount) AS cumulative_paid_amount
+            FROM booker_profile AS profile
+            INNER JOIN orders AS order_row ON <include refid="profileOrderCondition"/>
+            INNER JOIN order_amount AS amount ON amount.order_id = order_row.id
+            WHERE order_row.status = 'COMPLETED'
+            GROUP BY profile.id
+        ) AS summary ON summary.profile_id = profile.id
+        <where>
+            <include refid="profileFilters"/>
+            AND EXISTS (
+                SELECT 1 FROM orders AS order_row
+                WHERE <include refid="profileOrderCondition"/>
+            )
+        </where>
+        ORDER BY profile.updated_at DESC, profile.id DESC
+        LIMIT #{query.size} OFFSET #{offset}
+    </select>
+
+    <select id="countProfiles" resultType="long">
+        SELECT COUNT(*)
+        FROM booker_profile AS profile
+        <where>
+            <include refid="profileFilters"/>
+            AND EXISTS (
+                SELECT 1 FROM orders AS order_row
+                WHERE <include refid="profileOrderCondition"/>
+            )
+        </where>
+    </select>
+
+    <select id="findCompletedOrders" resultMap="portraitOrderResultMap">
+        SELECT profile.id AS profile_id, order_row.id AS order_id, order_row.order_no,
+               order_row.check_in, amount.paid_amount, order_row.status,
+               order_row.remark, order_row.admin_remark
+        FROM booker_profile AS profile
+        INNER JOIN orders AS order_row ON <include refid="profileOrderCondition"/>
+        INNER JOIN order_amount AS amount ON amount.order_id = order_row.id
+        WHERE order_row.status = 'COMPLETED'
+          AND profile.id IN
+          <foreach collection="profileIds" item="profileId" open="(" separator="," close=")">
+              #{profileId}
+          </foreach>
+        ORDER BY order_row.check_in DESC, order_row.id DESC
+    </select>
+
+    <select id="findPortraitOrders" resultMap="portraitOrderResultMap">
+        SELECT profile.id AS profile_id, order_row.id AS order_id, order_row.order_no,
+               order_row.check_in, order_row.status, order_row.remark, order_row.admin_remark
+        FROM booker_profile AS profile
+        INNER JOIN orders AS order_row ON <include refid="profileOrderCondition"/>
+        WHERE profile.id IN
+          <foreach collection="profileIds" item="profileId" open="(" separator="," close=")">
+              #{profileId}
+          </foreach>
+        ORDER BY order_row.created_at DESC, order_row.id DESC
+    </select>
+
+    <select id="findPortraitTags" resultType="com.qianxun.homestay.modules.portrait.entity.PortraitTagEntity">
+        SELECT id, name FROM portrait_tag WHERE enabled = 1 ORDER BY id
+    </select>
+
+    <select id="findPortraitTagByName" resultType="com.qianxun.homestay.modules.portrait.entity.PortraitTagEntity">
+        SELECT id, name FROM portrait_tag WHERE name = #{name} LIMIT 1
+    </select>
+
+    <insert id="upsertPortraitTag">
+        INSERT INTO portrait_tag (name) VALUES (#{name})
+        ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id), enabled = 1
+    </insert>
+</mapper>

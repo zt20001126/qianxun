@@ -42,6 +42,8 @@ public class OrderViewEntity {
     private OrderStatus status;
     /** 订单备注。 */
     private String remark;
+    /** 管理员在创建订单时填写的内部备注。 */
+    private String adminRemark;
     /** 订单实付金额快照，单位为元。 */
     private BigDecimal paidAmount;
     /** 积分抵扣前房费总额，由实付金额与抵扣流水还原。 */
@@ -99,6 +101,8 @@ public class OrderViewEntity {
     public void setStatus(OrderStatus status) { this.status = status; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
+    public String getAdminRemark() { return adminRemark; }
+    public void setAdminRemark(String adminRemark) { this.adminRemark = adminRemark; }
     public BigDecimal getPaidAmount() { return paidAmount; }
     public void setPaidAmount(BigDecimal paidAmount) { this.paidAmount = paidAmount; }
     public BigDecimal getRoomAmount() { return roomAmount; }

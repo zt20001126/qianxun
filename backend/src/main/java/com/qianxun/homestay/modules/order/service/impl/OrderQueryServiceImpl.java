@@ -9,6 +9,7 @@ import com.qianxun.homestay.modules.order.service.OrderQueryService;
 import com.qianxun.homestay.modules.order.vo.OrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.OrderListItemVO;
 import com.qianxun.homestay.modules.order.vo.OrderPageVO;
+import com.qianxun.homestay.modules.portrait.service.BookerPortraitService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -21,9 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderQueryServiceImpl implements OrderQueryService {
 
     private final OrderMapper orderMapper;
+    private final BookerPortraitService bookerPortraitService;
 
-    public OrderQueryServiceImpl(OrderMapper orderMapper) {
+    public OrderQueryServiceImpl(OrderMapper orderMapper, BookerPortraitService bookerPortraitService) {
         this.orderMapper = orderMapper;
+        this.bookerPortraitService = bookerPortraitService;
     }
 
     @Override
@@ -62,7 +65,8 @@ public class OrderQueryServiceImpl implements OrderQueryService {
                 order.getId(), order.getOrderNo(), order.getPlatformOrderNo(), order.getRoomId(), order.getRoomNumber(),
                 order.getChannelId(), order.getChannelName(), order.getCreatorId(), order.getMemberId(),
                 order.getGuestName(), order.getPhone(), order.getGuestCount(), order.getCheckIn(), order.getCheckOut(),
-                order.getNights(), order.getStatus(), order.getRemark(), money(order.getPaidAmount()),
+                order.getNights(), order.getStatus(), order.getRemark(), order.getAdminRemark(),
+                bookerPortraitService.findForOrder(order.getId()), money(order.getPaidAmount()),
                 money(order.getPlatformFee()), money(order.getPlatformCommission()), money(order.getExtraCommission()),
                 nullableMoney(order.getExpectedAmount()), money(order.getNetAmount()),
                 ApiTime.fromShanghai(order.getCreatedAt()), ApiTime.fromShanghai(order.getUpdatedAt()));

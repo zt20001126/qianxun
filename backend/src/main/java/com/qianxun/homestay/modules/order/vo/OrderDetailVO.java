@@ -1,6 +1,7 @@
 package com.qianxun.homestay.modules.order.vo;
 
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
+import com.qianxun.homestay.modules.portrait.vo.BookerPortraitVO;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 
@@ -40,6 +41,10 @@ public record OrderDetailVO(
         OrderStatus status,
         /** 订单备注，可能包含管理员追加的取消原因。 */
         String remark,
+        /** 管理员创建订单时填写的内部备注。 */
+        String adminRemark,
+        /** 预订人画像；尚未填写时为空。 */
+        BookerPortraitVO bookerPortrait,
         /** 订单实付金额快照，十进制字符串，单位为元。 */
         String paidAmount,
         /** 平台手续费快照，十进制字符串，单位为元。 */

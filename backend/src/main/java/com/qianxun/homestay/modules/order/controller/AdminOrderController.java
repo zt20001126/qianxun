@@ -9,6 +9,7 @@ import com.qianxun.homestay.modules.order.enums.OrderAction;
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.order.service.OrderCommandService;
 import com.qianxun.homestay.modules.order.service.OrderQueryService;
+import com.qianxun.homestay.modules.portrait.dto.BookerPortraitSaveRequest;
 import com.qianxun.homestay.modules.order.vo.OrderCreatedVO;
 import com.qianxun.homestay.modules.order.vo.OrderDetailVO;
 import com.qianxun.homestay.modules.order.vo.OrderPageVO;
@@ -83,8 +84,10 @@ public class AdminOrderController {
     }
 
     @PostMapping("/{id}/check-in")
-    public ApiResponse<OrderStatusVO> checkIn(@PathVariable Long id) {
-        return ApiResponse.success(orderCommandService.performAction(id, OrderAction.CHECK_IN, null));
+    public ApiResponse<OrderStatusVO> checkIn(
+            @PathVariable Long id,
+            @Valid @RequestBody(required = false) BookerPortraitSaveRequest portraitRequest) {
+        return ApiResponse.success(orderCommandService.checkIn(id, portraitRequest));
     }
 
     @PostMapping("/{id}/check-out")

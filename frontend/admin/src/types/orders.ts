@@ -1,4 +1,6 @@
-/** 订单接口类型与 V3.1 后台订单契约保持一致。 */
+import type { BookerPortrait, BookerPortraitInput } from './portraits'
+
+/** 订单接口类型与管理端订单扩展契约保持一致。 */
 export type OrderStatus =
   | 'PENDING_CONFIRM'
   | 'PENDING_CHECKIN'
@@ -41,6 +43,8 @@ export interface OrderDetail extends OrderListItem {
   member_id: number | null
   guest_count: number | null
   remark: string | null
+  admin_remark: string | null
+  booker_portrait: BookerPortrait | null
   created_at: string
   updated_at: string
 }
@@ -77,6 +81,8 @@ export interface CreateExternalOrderRequest {
   check_out: string
   status: Exclude<OrderStatus, 'CANCELLED'>
   remark: string | null
+  admin_remark: string | null
+  booker_portrait: BookerPortraitInput
   amount: {
     paid_amount: string
     platform_fee: string
@@ -90,6 +96,8 @@ export interface UpdateOrderRequest {
   phone?: string | null
   guest_count?: number | null
   remark?: string | null
+  admin_remark?: string | null
+  booker_portrait?: BookerPortraitInput
   room_id?: number
   check_in?: string
   check_out?: string

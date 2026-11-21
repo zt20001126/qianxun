@@ -1,6 +1,8 @@
 package com.qianxun.homestay.modules.order.dto;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.qianxun.homestay.modules.portrait.dto.BookerPortraitSaveRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
@@ -22,6 +24,12 @@ public class UpdateOrderRequest {
     /** 订单备注；如填写取消原因则追加在此字段。 */
     @Size(max = 500, message = "备注不能超过 500 个字符")
     private String remark;
+    /** 管理员录单备注；与预订人下单备注分开保存。 */
+    @Size(max = 500, message = "管理员备注不能超过 500 个字符")
+    private String adminRemark;
+    /** 可选更新的顾客画像，和订单资料在同一事务中保存。 */
+    @Valid
+    private BookerPortraitSaveRequest bookerPortrait;
     /** 调整后的客房编号，仅允许符合状态和库存规则的订单修改。 */
     @Positive(message = "房间编号不正确")
     private Long roomId;
@@ -46,6 +54,10 @@ public class UpdateOrderRequest {
     public void setGuestCount(Integer guestCount) { this.guestCount = guestCount; }
     public String getRemark() { return remark; }
     public void setRemark(String remark) { this.remark = remark; }
+    public String getAdminRemark() { return adminRemark; }
+    public void setAdminRemark(String adminRemark) { this.adminRemark = adminRemark; }
+    public BookerPortraitSaveRequest getBookerPortrait() { return bookerPortrait; }
+    public void setBookerPortrait(BookerPortraitSaveRequest bookerPortrait) { this.bookerPortrait = bookerPortrait; }
     public Long getRoomId() { return roomId; }
     public void setRoomId(Long roomId) { this.roomId = roomId; }
     public LocalDate getCheckIn() { return checkIn; }

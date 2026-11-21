@@ -1,6 +1,7 @@
 package com.qianxun.homestay.modules.order.dto;
 
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
+import com.qianxun.homestay.modules.portrait.dto.BookerPortraitSaveRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -32,5 +33,9 @@ public record CreateExternalOrderRequest(
         /** 订单备注。 */
         @Size(max = 500, message = "备注不能超过 500 个字符") String remark,
         /** 创建后不可编辑的金额快照输入。 */
-        @NotNull(message = "请填写订单金额") @Valid OrderAmountRequest amount) {
+        @NotNull(message = "请填写订单金额") @Valid OrderAmountRequest amount,
+        /** 管理员录入订单时填写的内部备注。 */
+        @Size(max = 500, message = "管理员备注不能超过 500 个字符") String adminRemark,
+        /** 第三方订单创建时可选填写的预订人画像。 */
+        @Valid BookerPortraitSaveRequest bookerPortrait) {
 }

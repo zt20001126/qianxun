@@ -13,6 +13,7 @@ import com.qianxun.homestay.modules.order.entity.OrderEntity;
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.order.mapper.OrderAmountMapper;
 import com.qianxun.homestay.modules.order.mapper.OrderMapper;
+import com.qianxun.homestay.modules.portrait.service.BookerPortraitService;
 import com.qianxun.homestay.modules.payment.domain.PaymentAttemptResult;
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
 import com.qianxun.homestay.modules.payment.enums.PaymentStatus;
@@ -49,6 +50,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     private final PaymentMapper paymentMapper;
     private final PointsBalanceService pointsBalanceService;
     private final RoomMapper roomMapper;
+    private final BookerPortraitService bookerPortraitService;
     private final Long miniProgramChannelId;
 
     public PaymentTransactionServiceImpl(
@@ -61,7 +63,8 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             PaymentMapper paymentMapper,
             PointsBalanceService pointsBalanceService,
             RoomMapper roomMapper,
-            @Value("${app.channel.mini-program-id}") Long miniProgramChannelId) {
+            @Value("${app.channel.mini-program-id}") Long miniProgramChannelId,
+            BookerPortraitService bookerPortraitService) {
         this.availabilityService = availabilityService;
         this.bookingLockMapper = bookingLockMapper;
         this.memberMapper = memberMapper;
@@ -71,6 +74,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         this.paymentMapper = paymentMapper;
         this.pointsBalanceService = pointsBalanceService;
         this.roomMapper = roomMapper;
+        this.bookerPortraitService = bookerPortraitService;
         this.miniProgramChannelId = miniProgramChannelId;
     }
 
@@ -186,6 +190,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "创建正式订单失败");
         }
         insertAmountSnapshot(order.getId(), payment.getAmount());
+        bookerPortraitService.ensureProfileForOrder(order.getId(), order.getGuestName(), order.getPhone());
         pointsBalanceService.consumeForPaidOrder(
                 memberId, booking.getPointsUsed(), booking.getDiscountAmount(), order.getId());
 

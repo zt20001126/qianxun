@@ -37,6 +37,7 @@ function openExternalOrder(): void {
         <RouterLink to="/rooms"><SidebarIcon name="room" />客房管理</RouterLink>
         <RouterLink to="/orders" class="sidebar-nav-primary"><SidebarIcon name="orders" />订单管理</RouterLink>
         <RouterLink to="/members" class="sidebar-nav-primary"><SidebarIcon name="members" />会员管理</RouterLink>
+        <RouterLink to="/portraits" class="sidebar-nav-primary"><SidebarIcon name="portraits" />顾客画像</RouterLink>
         <RouterLink to="/points"><SidebarIcon name="points" />积分流水</RouterLink>
         <RouterLink to="/payments"><SidebarIcon name="payments" />支付流水</RouterLink>
         <RouterLink to="/refunds"><SidebarIcon name="refunds" />退款流水</RouterLink>

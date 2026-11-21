@@ -1,5 +1,6 @@
 import { http } from './http'
 import type { ApiResponse } from '../types/api'
+import type { BookerPortraitInput } from '../types/portraits'
 import type {
   CreateExternalOrderRequest,
   OrderDetail,
@@ -43,6 +44,16 @@ export const orderApi = {
   async checkIn(id: number): Promise<{ id: number; status: OrderStatus; updated_at: string }> {
     const response = await http.post<ApiResponse<{ id: number; status: OrderStatus; updated_at: string }>>(
       `/api/admin/orders/${id}/check-in`,
+    )
+    return response.data.data
+  },
+
+  async checkInWithPortrait(
+    id: number,
+    bookerPortrait: BookerPortraitInput,
+  ): Promise<{ id: number; status: OrderStatus; updated_at: string }> {
+    const response = await http.post<ApiResponse<{ id: number; status: OrderStatus; updated_at: string }>>(
+      '/api/admin/orders/' + id + '/check-in', bookerPortrait,
     )
     return response.data.data
   },
