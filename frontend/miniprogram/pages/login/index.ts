@@ -2,6 +2,7 @@
 import { login } from '../../services/auth'
 import { isValidMainlandPhone } from '../../utils/phone'
 import { getValidToken, saveSession } from '../../utils/session'
+import { consumePendingInvitation } from '../../utils/invitation'
 
 interface LoginPageData {
   phone: string
@@ -20,6 +21,7 @@ Page({
 
   onShow() {
     if (getValidToken()) {
+      void consumePendingInvitation()
       wx.switchTab({ url: '/pages/home/index' })
     }
   },
@@ -53,6 +55,7 @@ Page({
     try {
       const result = await login(phone)
       saveSession(result)
+      void consumePendingInvitation()
       wx.switchTab({ url: '/pages/home/index' })
     } catch (error) {
       this.setData({ errorMessage: error instanceof Error ? error.message : '登录失败，请稍后重试' })

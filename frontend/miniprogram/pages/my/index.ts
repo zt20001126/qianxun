@@ -4,6 +4,7 @@ import type { AppMember } from '../../types/member'
 import { STORE_CONTACT_PHONE_LABEL } from '../../config'
 import { callBusinessPhone } from '../../utils/business-contact'
 import { clearSession, getSavedMember, getValidToken } from '../../utils/session'
+import { clearPendingInvitation } from '../../utils/invitation'
 
 interface MyPageData {
   nickname: string
@@ -98,7 +99,12 @@ Page({
     callBusinessPhone()
   },
 
+  onInvitationTap() {
+    wx.navigateTo({ url: '/pages/invitation/index' })
+  },
+
   onLogoutTap() {
+    clearPendingInvitation()
     clearSession()
     wx.reLaunch({ url: '/pages/login/index' })
   },

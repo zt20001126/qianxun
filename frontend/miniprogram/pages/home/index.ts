@@ -64,6 +64,8 @@ const GUIDE_CONTENT: Record<string, GuideContent> = {
   },
 }
 
+import { consumePendingInvitation } from '../../utils/invitation'
+
 Page({
   data: {
     today: '',
@@ -84,6 +86,10 @@ Page({
     guideVisible: false,
     guide: { tag: '', title: '', body: '', extra: '' },
   } as HomePageData,
+
+  onShow() {
+    void consumePendingInvitation()
+  },
 
   async onLoad() {
     const { today, lastSelectableDate, lastCheckInDate } = getBookingDateWindow()

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.invitation.mapper.InvitationMapper">
+    <select id="findCode" resultType="string">SELECT invite_code FROM members WHERE id = #{memberId}</select>
+    <update id="assignCode">UPDATE members SET invite_code = #{code} WHERE id = #{memberId} AND invite_code IS NULL</update>
+    <select id="findInviter" resultType="long">SELECT id FROM members WHERE invite_code = #{code}</select>
+    <insert id="insertRelation">
+        INSERT INTO member_invitation (inviter_member_id, invitee_member_id, created_at, updated_at)
+        VALUES (#{inviterId}, #{inviteeId}, #{now}, #{now})
+        ON DUPLICATE KEY UPDATE id = id
+    </insert>
+    <select id="count" resultType="long">SELECT COUNT(*) FROM member_invitation WHERE inviter_member_id = #{inviterId}</select>
+    <select id="findPage" resultType="com.qianxun.homestay.modules.invitation.entity.InvitationRecordEntity">
+        SELECT m.phone, i.created_at FROM member_invitation i JOIN members m ON m.id = i.invitee_member_id
+        WHERE i.inviter_member_id = #{inviterId} ORDER BY i.created_at DESC, i.id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+</mapper>

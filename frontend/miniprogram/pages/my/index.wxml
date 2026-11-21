@@ -19,6 +19,10 @@
       <view class="profile-arrow" />
     </view>
 
+    <view class="contact-card invitation-card" bindtap="onInvitationTap">
+      <view class="contact-main"><view class="contact-icon-box">✉</view><view class="contact-copy"><text class="contact-title">邀请好友</text><text class="contact-phone">邀请好友，共赴水乡</text></view></view>
+      <view class="contact-arrow" />
+    </view>
     <view class="contact-card" bindtap="onContactTap">
       <view class="contact-main">
         <view class="contact-icon-box">

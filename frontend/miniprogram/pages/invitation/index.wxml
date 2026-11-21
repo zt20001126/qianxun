@@ -1,0 +1,12 @@
+<view class="page">
+  <view class="hero"><image src="/assets/login-baijianlou-hero.jpg" mode="aspectFill"/><view class="hero-text"><text class="title">邀好友，共赴水乡</text><text class="subtitle">分享芊浔民宿，与你珍视的人相遇</text></view></view>
+  <button wx:if="{{code && !error}}" class="share" open-type="share">邀请好友</button>
+  <button wx:else class="share disabled" disabled>邀请好友</button>
+  <view class="card"><view class="heading"><text>已邀请好友</text><text class="count">{{total}} 人</text></view>
+    <view wx:if="{{loading}}" class="state">加载中…</view>
+    <view wx:elif="{{error}}" class="state" bindtap="load">{{error}}，点击重试</view>
+    <view wx:elif="{{!records.length}}" class="state">暂无邀请记录</view>
+    <view wx:for="{{records}}" wx:key="index" class="record"><text>{{item.masked_phone}}</text><text class="time">{{item.displayTime}}</text></view>
+    <view wx:if="{{loadingMore}}" class="state">加载中…</view>
+  </view>
+</view>

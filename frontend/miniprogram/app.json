@@ -11,6 +11,8 @@
     "pages/order-detail/index",
     "pages/member-center/index",
     "pages/my/index",
+    "pages/invitation/index",
+    "pages/invitation-entry/index",
     "pages/points-logs/index"
   ],
   "window": {
