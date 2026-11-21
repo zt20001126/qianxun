@@ -62,7 +62,7 @@ public class OrderQueryServiceImpl implements OrderQueryService {
 
     private OrderDetailVO toDetail(OrderViewEntity order) {
         return new OrderDetailVO(
-                order.getId(), order.getOrderNo(), order.getPlatformOrderNo(), order.getRoomId(), order.getRoomNumber(),
+                order.getId(), order.getOrderNo(), order.getPlatformOrderNo(), order.getPlatformOrderDate(), order.getRoomId(), order.getRoomNumber(),
                 order.getChannelId(), order.getChannelName(), order.getCreatorId(), order.getMemberId(),
                 order.getGuestName(), order.getPhone(), order.getGuestCount(), order.getCheckIn(), order.getCheckOut(),
                 order.getNights(), order.getStatus(), order.getRemark(), order.getAdminRemark(),

@@ -5,6 +5,7 @@
         <id property="id" column="id"/>
         <result property="orderNo" column="order_no"/>
         <result property="platformOrderNo" column="platform_order_no"/>
+        <result property="platformOrderDate" column="platform_order_date"/>
         <result property="roomId" column="room_id"/>
         <result property="channelId" column="channel_id"/>
         <result property="creatorId" column="creator_id"/>
@@ -23,6 +24,7 @@
         <id property="id" column="id"/>
         <result property="orderNo" column="order_no"/>
         <result property="platformOrderNo" column="platform_order_no"/>
+        <result property="platformOrderDate" column="platform_order_date"/>
         <result property="roomId" column="room_id"/>
         <result property="roomNumber" column="room_number"/>
         <result property="channelId" column="channel_id"/>
@@ -52,7 +54,7 @@
     </resultMap>
 
     <sql id="viewColumns">
-        o.id, o.order_no, o.platform_order_no, o.room_id, r.number AS room_number,
+        o.id, o.order_no, o.platform_order_no, o.platform_order_date, o.room_id, r.number AS room_number,
         o.channel_id, c.name AS channel_name, o.creator_id, o.member_id, o.guest_name, o.phone,
         o.guest_count, o.check_in, o.check_out, DATEDIFF(o.check_out, o.check_in) AS nights,
         o.status, o.remark, o.admin_remark, a.paid_amount, a.platform_fee, a.platform_commission,
@@ -97,6 +99,12 @@
             <if test="query.channelId != null">AND o.channel_id = #{query.channelId}</if>
             <if test="query.roomId != null">AND o.room_id = #{query.roomId}</if>
             <if test="query.creatorId != null">AND o.creator_id = #{query.creatorId}</if>
+            <if test="query.withoutCreator">AND o.creator_id IS NULL</if>
+            <if test="query.keyword != null and query.keyword.trim() != ''">
+                AND (o.order_no LIKE CONCAT('%', #{query.keyword}, '%')
+                  OR o.guest_name LIKE CONCAT('%', #{query.keyword}, '%')
+                  OR o.phone LIKE CONCAT('%', #{query.keyword}, '%'))
+            </if>
             <if test="query.status != null">AND o.status = #{query.status}</if>
             <if test="query.checkInFrom != null">AND o.check_in &gt;= #{query.checkInFrom}</if>
             <if test="query.checkInTo != null">AND o.check_in &lt;= #{query.checkInTo}</if>
@@ -172,10 +180,10 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO orders (
-            order_no, platform_order_no, room_id, channel_id, creator_id, member_id,
+            order_no, platform_order_no, platform_order_date, room_id, channel_id, creator_id, member_id,
             guest_name, phone, guest_count, check_in, check_out, status, remark, admin_remark
         ) VALUES (
-            #{orderNo}, #{platformOrderNo}, #{roomId}, #{channelId}, #{creatorId}, #{memberId},
+            #{orderNo}, #{platformOrderNo}, #{platformOrderDate}, #{roomId}, #{channelId}, #{creatorId}, #{memberId},
             #{guestName}, #{phone}, #{guestCount}, #{checkIn}, #{checkOut}, #{status}, #{remark}, #{adminRemark}
         )
     </insert>

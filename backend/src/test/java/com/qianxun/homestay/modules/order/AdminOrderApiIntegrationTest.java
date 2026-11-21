@@ -97,6 +97,28 @@ class AdminOrderApiIntegrationTest {
     }
 
     @Test
+    void externalOrderDateAndCombinedFiltersArePersisted() throws Exception {
+        LocalDate checkIn = LocalDate.now(BUSINESS_ZONE).plusDays(12);
+        String body = createRequest(roomId, checkIn, checkIn.plusDays(1), "PENDING_CONFIRM", "FILTER-1", "13800000001");
+        body = body.substring(0, body.length() - 1) + ",\"platform_order_date\":\"2026-01-02\"}";
+        String response = mockMvc.perform(post("/api/admin/orders").header("Authorization", bearer(adminToken))
+                        .contentType("application/json").content(body))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        long id = objectMapper.readTree(response).path("data").path("id").asLong();
+        mockMvc.perform(get("/api/admin/orders/{id}", id).header("Authorization", bearer(adminToken)))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.platform_order_date").value("2026-01-02"));
+        mockMvc.perform(get("/api/admin/orders").header("Authorization", bearer(adminToken))
+                        .param("room_id", String.valueOf(roomId)).param("channel_id", "2")
+                        .param("status", "PENDING_CONFIRM").param("without_creator", "true")
+                        .param("check_in_from", checkIn.toString()).param("check_in_to", checkIn.toString())
+                        .param("keyword", "13800000001").param("size", "10"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(1));
+        mockMvc.perform(get("/api/admin/orders").header("Authorization", bearer(adminToken))
+                        .param("keyword", "no-such-order"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.total").value(0));
+    }
+
+    @Test
     void orderLifecycleKeepsMoneySnapshotAndRewardsOnce() throws Exception {
         LocalDate today = LocalDate.now(BUSINESS_ZONE);
         LocalDate checkIn = today.plusDays(8);

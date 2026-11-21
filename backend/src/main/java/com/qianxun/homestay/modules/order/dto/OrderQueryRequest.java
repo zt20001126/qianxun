@@ -26,5 +26,9 @@ public record OrderQueryRequest(
         /** 查询页码，从 1 开始。 */
         @Min(1) int page,
         /** 每页记录数，最大为 100。 */
-        @Min(1) @Max(100) int size) {
+        @Min(1) @Max(100) int size,
+        /** 订单号、预订人或手机号关键词。 */
+        String keyword,
+        /** 仅筛选无达人订单。 */
+        boolean withoutCreator) {
 }

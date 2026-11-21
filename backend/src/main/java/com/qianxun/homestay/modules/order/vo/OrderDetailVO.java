@@ -13,6 +13,8 @@ public record OrderDetailVO(
         String orderNo,
         /** 第三方平台订单编号；小程序订单为空。 */
         String platformOrderNo,
+        /** 第三方平台原始下单日期。 */
+        LocalDate platformOrderDate,
         /** 关联客房编号。 */
         Long roomId,
         /** 关联客房的展示房号。 */

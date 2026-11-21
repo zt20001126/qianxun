@@ -19,6 +19,8 @@ interface OrderFilterState {
   creator_id: string
   status: '' | OrderStatus
   keyword: string
+  room_id: string
+  check_in: string
 }
 
 const route = useRoute()
@@ -32,7 +34,7 @@ const detailCache = ref<Record<number, OrderDetail>>({})
 
 const total = ref(0)
 const page = ref(1)
-const pageSize = ref(20)
+const pageSize = ref(10)
 const loading = ref(false)
 const errorMessage = ref('')
 const busyOrderIds = ref<number[]>([])
@@ -43,6 +45,8 @@ const filters = reactive<OrderFilterState>({
   creator_id: '',
   status: '',
   keyword: '',
+  room_id: '',
+  check_in: '',
 })
 
 // 页内弹窗状态
@@ -56,30 +60,8 @@ const activeOrderId = ref<number | null>(null)
 // 操作成功弹窗
 const successMessage = ref('')
 
-const isClientFilterMode = computed(
-  () => filters.creator_id === 'NONE' || filters.keyword.trim().length > 0,
-)
-
-const displayRows = computed((): OrderListItem[] => {
-  const kw = filters.keyword.trim().toLowerCase()
-  return rows.value.filter((row) => {
-    if (filters.creator_id === 'NONE' && row.creator_id != null) return false
-    if (kw) {
-      const detail = detailCache.value[row.id]
-      const hit =
-        (row.order_no || '').toLowerCase().includes(kw)
-        || (detail?.platform_order_no || '').toLowerCase().includes(kw)
-        || (row.guest_name || '').toLowerCase().includes(kw)
-        || (row.phone || '').includes(kw)
-      if (!hit) return false
-    }
-    return true
-  })
-})
-
-const filteredCount = computed(() =>
-  isClientFilterMode.value ? displayRows.value.length : total.value,
-)
+const displayRows = computed(() => rows.value)
+const filteredCount = computed(() => total.value)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
@@ -113,6 +95,11 @@ function buildBaseFilters(reqPage: number, reqSize: number): OrderFilters {
     channel_id: filters.channel_id ? Number(filters.channel_id) : undefined,
     creator_id: numericCreatorId,
     status: filters.status || undefined,
+    room_id: filters.room_id ? Number(filters.room_id) : undefined,
+    check_in_from: filters.check_in || undefined,
+    check_in_to: filters.check_in || undefined,
+    keyword: filters.keyword.trim() || undefined,
+    without_creator: filters.creator_id === 'NONE',
     page: reqPage,
     size: reqSize,
   }
@@ -124,35 +111,11 @@ async function loadOrders(): Promise<void> {
   errorMessage.value = ''
 
   try {
-    let list: OrderListItem[] = []
-    let fetchedTotal = 0
-
-    if (isClientFilterMode.value) {
-      // 无达人筛选或关键词全字段实时匹配（含外部平台单号）时，拉取匹配集合以保证筛选结果完整
-      const firstPage = await orderApi.list(buildBaseFilters(1, 100))
-      if (sequence !== loadSequence) return
-      list = [...firstPage.list]
-      fetchedTotal = firstPage.total
-
-      const extraPages = Math.min(5, Math.ceil(fetchedTotal / 100))
-      if (extraPages > 1) {
-        const rest = await Promise.all(
-          Array.from({ length: extraPages - 1 }, (_, i) =>
-            orderApi.list(buildBaseFilters(i + 2, 100)),
-          ),
-        )
-        if (sequence !== loadSequence) return
-        for (const p of rest) list.push(...p.list)
-      }
-    } else {
-      const result = await orderApi.list(buildBaseFilters(page.value, pageSize.value))
-      if (sequence !== loadSequence) return
-      list = result.list
-      fetchedTotal = result.total
-    }
-
+    const result = await orderApi.list(buildBaseFilters(page.value, pageSize.value))
+    if (sequence !== loadSequence) return
+    const list = result.list
     rows.value = list
-    total.value = fetchedTotal
+    total.value = result.total
 
     // 并行补齐未缓存的订单详情（获取平台订单号与入住人数）
     const missingIds = list.map((item) => item.id).filter((id) => !detailCache.value[id])
@@ -189,6 +152,8 @@ function resetFilters(): void {
   filters.creator_id = ''
   filters.status = ''
   filters.keyword = ''
+  filters.room_id = ''
+  filters.check_in = ''
   page.value = 1
   void loadOrders()
 }
@@ -203,16 +168,11 @@ function onPageSizeChange(): void {
   void loadOrders()
 }
 
-// 关键词输入时：若刚从分页模式进入关键词模式或退出关键词模式，重新拉取数据；已在全量模式则实时本地过滤
-watch(
-  () => filters.keyword.trim().length > 0,
-  (hasKeyword, prevHasKeyword) => {
-    if (hasKeyword !== prevHasKeyword) {
-      page.value = 1
-      void loadOrders()
-    }
-  },
-)
+// 关键词变化后稍作等待，避免连续输入产生过多请求。
+watch(() => filters.keyword, (_value, _oldValue, onCleanup) => {
+  const timer = setTimeout(() => { page.value = 1; void loadOrders() }, 300)
+  onCleanup(() => clearTimeout(timer))
+})
 
 function openCreateModal(prefill?: { roomId?: number | null; checkIn?: string }): void {
   createPresetRoomId.value = prefill?.roomId ?? null
@@ -386,6 +346,11 @@ onMounted(async () => {
           <option value="CANCELLED">已取消</option>
         </select>
 
+        <select v-model="filters.room_id" aria-label="房间筛选" class="orders-filter-select" @change="onSelectFilterChange">
+          <option value="">全部房间</option>
+          <option v-for="room in rooms" :key="room.id" :value="String(room.id)">{{ room.number }} · {{ room.name }}</option>
+        </select>
+        <input v-model="filters.check_in" type="date" aria-label="入住日期筛选" class="orders-filter-select" @change="onSelectFilterChange" />
         <!-- ④ 关键词搜索输入框 -->
         <div class="orders-search-box">
           <input
@@ -564,13 +529,14 @@ onMounted(async () => {
         </table>
       </div>
 
-      <!-- 分页条（非关键词/无达人客户端过滤模式时展示） -->
-      <footer v-if="!isClientFilterMode && total > 0" class="orders-pagination-bar">
+      <!-- 订单分页 -->
+      <footer v-if="total > 0" class="orders-pagination-bar">
         <span class="orders-page-info">共 {{ total }} 条记录</span>
         <div class="orders-page-controls">
           <label class="orders-page-size">
             每页
             <select v-model.number="pageSize" @change="onPageSizeChange">
+              <option :value="10">10 条</option>
               <option :value="20">20 条</option>
               <option :value="50">50 条</option>
               <option :value="100">100 条</option>

@@ -39,6 +39,7 @@ export interface OrderListItem {
 
 export interface OrderDetail extends OrderListItem {
   platform_order_no: string | null
+  platform_order_date: string | null
   channel_name: string
   member_id: number | null
   guest_count: number | null
@@ -57,6 +58,8 @@ export interface OrderPage {
 }
 
 export interface OrderFilters {
+  keyword?: string
+  without_creator?: boolean
   channel_id?: number
   room_id?: number
   creator_id?: number
@@ -74,6 +77,7 @@ export interface CreateExternalOrderRequest {
   room_id: number
   creator_id: number | null
   platform_order_no: string | null
+  platform_order_date: string | null
   guest_name: string | null
   phone: string | null
   guest_count: number | null

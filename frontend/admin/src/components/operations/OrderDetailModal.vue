@@ -271,6 +271,8 @@ function emptyPortrait(): BookerPortraitInput {
           </div>
 
           <div class="qx-form-grid-2">
+            <div class="qx-field"><span>系统创建时间</span><span>{{ detail.created_at }}</span></div>
+            <div class="qx-field"><span>第三方平台原始下单日期</span><span>{{ detail.platform_order_date || '—' }}</span></div>
             <label class="qx-field">
               <span>房间 {{ canEditRoomDate ? '' : '(当前状态锁定)' }}</span>
               <select v-model="form.room_id" :disabled="!canEditRoomDate">

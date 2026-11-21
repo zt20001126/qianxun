@@ -55,11 +55,13 @@ public class AdminOrderController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInTo,
             @RequestParam(name = "guest_name", required = false) String guestName,
             @RequestParam(name = "phone", required = false) String phone,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "without_creator", defaultValue = "false") boolean withoutCreator,
             @RequestParam(name = "page", defaultValue = "1") @Min(1) int page,
             @RequestParam(name = "size", defaultValue = "20") @Min(1) @Max(100) int size) {
         return ApiResponse.success(orderQueryService.findOrders(new OrderQueryRequest(
                 channelId, roomId, creatorId, status, checkInFrom, checkInTo,
-                guestName, phone, page, size)));
+                guestName, phone, page, size, keyword, withoutCreator)));
     }
 
     @GetMapping("/{id}")

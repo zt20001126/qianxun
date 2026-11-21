@@ -12,6 +12,8 @@ public class OrderEntity {
     private String orderNo;
     /** 第三方平台订单编号；小程序订单为空。 */
     private String platformOrderNo;
+    /** 第三方平台原始下单日期。 */
+    private LocalDate platformOrderDate;
     /** 订单关联客房编号。 */
     private Long roomId;
     /** 订单来源渠道编号。 */
@@ -41,6 +43,8 @@ public class OrderEntity {
     public void setId(Long id) { this.id = id; }
     public String getOrderNo() { return orderNo; }
     public void setOrderNo(String orderNo) { this.orderNo = orderNo; }
+    public LocalDate getPlatformOrderDate() { return platformOrderDate; }
+    public void setPlatformOrderDate(LocalDate platformOrderDate) { this.platformOrderDate = platformOrderDate; }
     public String getPlatformOrderNo() { return platformOrderNo; }
     public void setPlatformOrderNo(String platformOrderNo) { this.platformOrderNo = platformOrderNo; }
     public Long getRoomId() { return roomId; }

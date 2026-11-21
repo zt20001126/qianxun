@@ -115,6 +115,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         OrderEntity order = new OrderEntity();
         order.setOrderNo(orderNoGenerator.nextOrderNo());
         order.setPlatformOrderNo(platformOrderNo);
+        order.setPlatformOrderDate(request.platformOrderDate());
         order.setRoomId(request.roomId());
         order.setChannelId(request.channelId());
         order.setCreatorId(creator == null ? null : creator.getId());
@@ -278,7 +279,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "订单保存后读取失败");
         }
         return new OrderDetailVO(
-                order.getId(), order.getOrderNo(), order.getPlatformOrderNo(), order.getRoomId(), order.getRoomNumber(),
+                order.getId(), order.getOrderNo(), order.getPlatformOrderNo(), order.getPlatformOrderDate(), order.getRoomId(), order.getRoomNumber(),
                 order.getChannelId(), order.getChannelName(), order.getCreatorId(), order.getMemberId(),
                 order.getGuestName(), order.getPhone(), order.getGuestCount(), order.getCheckIn(), order.getCheckOut(),
                 order.getNights(), order.getStatus(), order.getRemark(), order.getAdminRemark(),

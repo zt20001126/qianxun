@@ -29,6 +29,7 @@ interface ExternalOrderForm {
   room_id: string
   creator_id: string
   platform_order_no: string
+  platform_order_date: string
   guest_name: string
   phone: string
   guest_count: string
@@ -115,6 +116,7 @@ function emptyForm(): ExternalOrderForm {
     room_id: '',
     creator_id: '',
     platform_order_no: '',
+    platform_order_date: shanghaiDate(),
     guest_name: '',
     phone: '',
     guest_count: '2',
@@ -171,6 +173,7 @@ async function submit(): Promise<void> {
     room_id: Number(form.room_id),
     creator_id: form.creator_id ? Number(form.creator_id) : null,
     platform_order_no: form.platform_order_no.trim() || null,
+    platform_order_date: form.platform_order_date || null,
     guest_name: form.guest_name.trim() || null,
     phone: form.phone.trim() || null,
     guest_count: form.guest_count ? Number(form.guest_count) : null,
@@ -327,6 +330,10 @@ async function submit(): Promise<void> {
               <input v-model="form.platform_order_no" type="text" placeholder="如：DY99281723" />
             </label>
 
+            <label class="qx-field">
+              <span>第三方平台原始下单日期（选填）</span>
+              <input v-model="form.platform_order_date" type="date" />
+            </label>
             <label class="qx-field">
               <span>预订人下单备注</span>
               <input v-model="form.remark" type="text" placeholder="特殊需求说明" />

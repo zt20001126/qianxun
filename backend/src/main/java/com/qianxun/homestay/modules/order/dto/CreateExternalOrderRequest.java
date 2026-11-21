@@ -37,5 +37,7 @@ public record CreateExternalOrderRequest(
         /** 管理员录入订单时填写的内部备注。 */
         @Size(max = 500, message = "管理员备注不能超过 500 个字符") String adminRemark,
         /** 第三方订单创建时可选填写的预订人画像。 */
-        @Valid BookerPortraitSaveRequest bookerPortrait) {
+        @Valid BookerPortraitSaveRequest bookerPortrait,
+        /** 第三方平台原始下单日期，可为空。 */
+        LocalDate platformOrderDate) {
 }
