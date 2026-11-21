@@ -19,6 +19,10 @@ public class WechatPayProperties {
     private String merchantSerialNumber = "";
     /** 商户 API 私钥文件路径。 */
     private String privateKeyPath = "";
+    /** 微信支付公钥 ID；与公钥路径同时配置时使用公钥验签。 */
+    private String publicKeyId = "";
+    /** 微信支付公钥文件路径。 */
+    private String publicKeyPath = "";
     /** 微信支付 APIv3 密钥。 */
     private String apiV3Key = "";
     /** 支付结果通知完整 HTTPS 地址。 */
@@ -38,6 +42,10 @@ public class WechatPayProperties {
     public void setMerchantSerialNumber(String merchantSerialNumber) { this.merchantSerialNumber = merchantSerialNumber; }
     public String getPrivateKeyPath() { return privateKeyPath; }
     public void setPrivateKeyPath(String privateKeyPath) { this.privateKeyPath = privateKeyPath; }
+    public String getPublicKeyId() { return publicKeyId; }
+    public void setPublicKeyId(String publicKeyId) { this.publicKeyId = publicKeyId; }
+    public String getPublicKeyPath() { return publicKeyPath; }
+    public void setPublicKeyPath(String publicKeyPath) { this.publicKeyPath = publicKeyPath; }
     public String getApiV3Key() { return apiV3Key; }
     public void setApiV3Key(String apiV3Key) { this.apiV3Key = apiV3Key; }
     public String getPaymentNotifyUrl() { return paymentNotifyUrl; }
@@ -53,6 +61,10 @@ public class WechatPayProperties {
         require(merchantSerialNumber, "WECHAT_PAY_MERCHANT_SERIAL");
         require(privateKeyPath, "WECHAT_PAY_PRIVATE_KEY_PATH");
         require(apiV3Key, "WECHAT_PAY_API_V3_KEY");
+        if (!publicKeyId.isBlank() || !publicKeyPath.isBlank()) {
+            require(publicKeyId, "WECHAT_PAY_PUBLIC_KEY_ID");
+            require(publicKeyPath, "WECHAT_PAY_PUBLIC_KEY_PATH");
+        }
         requireHttpsUrl(paymentNotifyUrl, "WECHAT_PAY_NOTIFY_URL");
         requireHttpsUrl(refundNotifyUrl, "WECHAT_REFUND_NOTIFY_URL");
     }

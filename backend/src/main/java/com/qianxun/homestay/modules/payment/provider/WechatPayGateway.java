@@ -3,6 +3,7 @@ package com.qianxun.homestay.modules.payment.provider;
 import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
 import com.wechat.pay.java.core.Config;
 import com.wechat.pay.java.core.RSAAutoCertificateConfig;
+import com.wechat.pay.java.core.RSAPublicKeyConfig;
 import com.wechat.pay.java.core.notification.NotificationParser;
 import com.wechat.pay.java.core.notification.RequestParam;
 import com.wechat.pay.java.service.payments.jsapi.JsapiServiceExtension;
@@ -129,12 +130,22 @@ public class WechatPayGateway {
 
     private ClientBundle buildClients() {
         properties.validateEnabledConfiguration();
-        Config config = new RSAAutoCertificateConfig.Builder()
-                .merchantId(properties.getMerchantId())
-                .privateKeyFromPath(properties.getPrivateKeyPath())
-                .merchantSerialNumber(properties.getMerchantSerialNumber())
-                .apiV3Key(properties.getApiV3Key())
-                .build();
+        // 公钥商户不能下载平台证书；同时使用公钥验签支付应答与回调。
+        Config config = properties.getPublicKeyId().isBlank()
+                ? new RSAAutoCertificateConfig.Builder()
+                        .merchantId(properties.getMerchantId())
+                        .privateKeyFromPath(properties.getPrivateKeyPath())
+                        .merchantSerialNumber(properties.getMerchantSerialNumber())
+                        .apiV3Key(properties.getApiV3Key())
+                        .build()
+                : new RSAPublicKeyConfig.Builder()
+                        .merchantId(properties.getMerchantId())
+                        .privateKeyFromPath(properties.getPrivateKeyPath())
+                        .merchantSerialNumber(properties.getMerchantSerialNumber())
+                        .apiV3Key(properties.getApiV3Key())
+                        .publicKeyId(properties.getPublicKeyId())
+                        .publicKeyFromPath(properties.getPublicKeyPath())
+                        .build();
         return new ClientBundle(
                 new JsapiServiceExtension.Builder().config(config).build(),
                 new RefundService.Builder().config(config).build(),
