@@ -1,0 +1,15 @@
+<view class="agreement-page">
+  <view class="agreement-header">
+    <text class="agreement-title">{{title}}</text>
+    <text class="agreement-date">{{updatedAt}}</text>
+  </view>
+  <view class="agreement-body">
+    <view wx:for="{{sections}}" wx:key="title" class="agreement-section">
+      <text class="section-title">{{item.title}}</text>
+      <text wx:for="{{item.paragraphs}}" wx:for-item="paragraph" wx:key="*this" class="section-paragraph">{{paragraph}}</text>
+    </view>
+    <view class="agreement-contact">
+      <text>联系经营者：185-5753 1002</text>
+    </view>
+  </view>
+</view>

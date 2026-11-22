@@ -1,0 +1,67 @@
+.agreement-page {
+  min-height: 100vh;
+  padding: 32rpx 32rpx calc(56rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: #faf7f2;
+}
+
+.agreement-header,
+.agreement-body {
+  border: 2rpx solid #eee5db;
+  border-radius: 24rpx;
+  background: #fff;
+}
+
+.agreement-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+  padding: 32rpx;
+}
+
+.agreement-title {
+  color: #512a18;
+  font-family: "Songti SC", "Noto Serif SC", serif;
+  font-size: 38rpx;
+  font-weight: 700;
+}
+
+.agreement-date {
+  color: #7a726b;
+  font-size: 22rpx;
+}
+
+.agreement-body {
+  padding: 32rpx;
+}
+
+.agreement-section {
+  margin-bottom: 34rpx;
+}
+
+.section-title {
+  display: block;
+  margin-bottom: 14rpx;
+  color: #512a18;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.section-paragraph {
+  display: block;
+  margin-bottom: 16rpx;
+  color: #39332f;
+  font-size: 26rpx;
+  line-height: 1.9;
+  text-align: justify;
+}
+
+.agreement-contact {
+  padding-top: 24rpx;
+  border-top: 2rpx solid #f1ebe4;
+  color: #7a726b;
+  font-size: 24rpx;
+  line-height: 1.8;
+}

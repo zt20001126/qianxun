@@ -45,15 +45,15 @@
       {{loading ? '正在登录…' : '登录'}}
     </button>
 
-    <view class="terms-row" bindtap="onTermsToggle">
-      <view class="terms-checkbox {{agreedTerms ? 'terms-checkbox-checked' : ''}}">
+    <view class="terms-row">
+      <view class="terms-checkbox {{agreedTerms ? 'terms-checkbox-checked' : ''}}" bindtap="onTermsToggle">
         <text wx:if="{{agreedTerms}}" class="terms-check">✓</text>
       </view>
-      <view class="terms-copy">
+      <view class="terms-copy" bindtap="onTermsToggle">
         <text>我已阅读并同意</text>
-        <text class="terms-link">《用户协议》</text>
+        <text class="terms-link" data-type="user" catchtap="onAgreementTap">《用户协议》</text>
         <text>和</text>
-        <text class="terms-link">《隐私协议》</text>
+        <text class="terms-link" data-type="privacy" catchtap="onAgreementTap">《隐私协议》</text>
       </view>
     </view>
 

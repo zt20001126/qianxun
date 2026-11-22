@@ -39,6 +39,11 @@ Page({
     this.setData({ agreedTerms: !this.data.agreedTerms })
   },
 
+  onAgreementTap(event: WechatMiniprogram.TouchEvent) {
+    const type = event.currentTarget.dataset.type === 'privacy' ? 'privacy' : 'user'
+    wx.navigateTo({ url: `/pages/agreement/index?type=${type}` })
+  },
+
   async onLoginTap() {
     if (!this.data.agreedTerms) {
       wx.showToast({ title: '请先勾选同意用户协议与隐私协议', icon: 'none' })
