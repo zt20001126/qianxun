@@ -25,7 +25,8 @@
 
       <view class="order-card-body">
         <view class="product-cover">
-          <image src="/assets/my-mall-orders.svg" mode="aspectFit" />
+          <image wx:if="{{item.product_image}}" src="{{item.product_image}}" mode="aspectFill" />
+          <image wx:else src="/assets/my-mall-orders.svg" mode="aspectFit" />
         </view>
         <view class="order-copy">
           <view class="order-title-row">

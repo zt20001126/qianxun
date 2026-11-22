@@ -125,7 +125,7 @@ public class MallOrderServiceImpl implements MallOrderService {
     }
 
     private MallOrderVO toVO(MallOrderEntity order) {
-        return new MallOrderVO(order.getId(), order.getOrderNo(), order.getMemberId(), order.getProductName(),
+        return new MallOrderVO(order.getId(), order.getOrderNo(), order.getMemberId(), order.getProductName(), order.getProductImage(),
                 order.getQuantity(), order.getTotalAmount().setScale(2).toPlainString(),
                 order.getPaidAmount().setScale(2).toPlainString(), order.getPointsUsed(), order.getRecipientName(),
                 order.getRecipientPhone(), order.getShippingAddress(), order.getStatus(), order.getExpressCompany(),
@@ -134,7 +134,7 @@ public class MallOrderServiceImpl implements MallOrderService {
     }
 
     private AppMallOrderDetailVO toAppDetailVO(MallOrderEntity order) {
-        return new AppMallOrderDetailVO(order.getId(), order.getOrderNo(), order.getProductName(), order.getQuantity(),
+        return new AppMallOrderDetailVO(order.getId(), order.getOrderNo(), order.getProductName(), order.getProductImage(), order.getQuantity(),
                 order.getTotalAmount().setScale(2).toPlainString(), order.getPaidAmount().setScale(2).toPlainString(),
                 order.getPointsUsed(), order.getRecipientName(), order.getRecipientPhone(), order.getShippingAddress(),
                 order.getStatus(), order.getExpressCompany(), order.getTrackingNo(), ApiTime.fromShanghai(order.getPaidAt()),

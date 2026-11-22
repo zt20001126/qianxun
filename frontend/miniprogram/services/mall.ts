@@ -13,6 +13,7 @@ export interface MallOrder {
   id: number
   order_no: string
   product_name: string
+  product_image: string | null
   quantity: number
   paid_amount: string
   status: 'PENDING_SHIPMENT' | 'SHIPPED' | 'COMPLETED' | 'REFUNDED'

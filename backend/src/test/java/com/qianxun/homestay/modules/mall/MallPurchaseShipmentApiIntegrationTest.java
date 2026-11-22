@@ -131,6 +131,7 @@ class MallPurchaseShipmentApiIntegrationTest {
                 .andExpect(jsonPath("$.data.list[0].id").value(orderId))
                 .andExpect(jsonPath("$.data.list[0].order_no").value(orderNo))
                 .andExpect(jsonPath("$.data.list[0].product_name").value("初始蚕丝被"))
+                .andExpect(jsonPath("$.data.list[0].product_image").value("https://example.test/mall-product.webp"))
                 .andExpect(jsonPath("$.data.list[0].paid_amount").value("199.00"))
                 .andExpect(jsonPath("$.data.list[0].status").value("PENDING_SHIPMENT"));
         mockMvc.perform(get("/api/app/mall/orders/{id}", orderId).header("Authorization", memberToken))
@@ -138,6 +139,7 @@ class MallPurchaseShipmentApiIntegrationTest {
                 .andExpect(jsonPath("$.data.order_no").value(orderNo))
                 .andExpect(jsonPath("$.data.member_id").doesNotExist())
                 .andExpect(jsonPath("$.data.product_name").value("初始蚕丝被"))
+                .andExpect(jsonPath("$.data.product_image").value("https://example.test/mall-product.webp"))
                 .andExpect(jsonPath("$.data.quantity").value(1))
                 .andExpect(jsonPath("$.data.total_amount").value("199.00"))
                 .andExpect(jsonPath("$.data.points_used").value(0))

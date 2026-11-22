@@ -7,6 +7,7 @@ public record AppMallOrderDetailVO(
         /** 商城订单内部标识，仅用于后续退款等本人操作。 */ Long id,
         /** 对外展示的商城订单号。 */ String orderNo,
         /** 支付成功时保存的商品名称快照。 */ String productName,
+        /** 当前商品的第一张图片地址，未配置图片时为空。 */ String productImage,
         /** 购买数量。 */ Integer quantity,
         /** 商品原价总额，单位元。 */ String totalAmount,
         /** 积分抵扣后的实际支付金额，单位元。 */ String paidAmount,

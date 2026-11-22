@@ -8,6 +8,7 @@ public record MallOrderVO(
         /** 对外订单号。 */ String orderNo,
         /** 下单会员编号。 */ Long memberId,
         /** 商品名称快照。 */ String productName,
+        /** 当前商品第一张图片地址，未配置图片时为空。 */ String productImage,
         /** 商品数量。 */ Integer quantity,
         /** 商品总额，单位元。 */ String totalAmount,
         /** 实付金额，单位元。 */ String paidAmount,

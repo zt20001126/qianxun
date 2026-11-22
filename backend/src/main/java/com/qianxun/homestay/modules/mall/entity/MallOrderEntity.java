@@ -15,6 +15,8 @@ public class MallOrderEntity {
     private Long productId;
     /** 商品名称快照。 */
     private String productName;
+    /** 当前商品第一张图片地址，仅用于订单列表展示，不写入订单快照。 */
+    private String productImage;
     /** 购买数量。 */
     private Integer quantity;
     /** 商品总额。 */
@@ -55,6 +57,8 @@ public class MallOrderEntity {
     public void setProductId(Long value) { this.productId = value; }
     public String getProductName() { return productName; }
     public void setProductName(String value) { this.productName = value; }
+    public String getProductImage() { return productImage; }
+    public void setProductImage(String value) { this.productImage = value; }
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer value) { this.quantity = value; }
     public BigDecimal getTotalAmount() { return totalAmount; }
