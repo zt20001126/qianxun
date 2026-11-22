@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.mall.mapper.MallPaymentMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO mall_payment (payment_no, member_id, product_id, product_name, quantity, total_amount,
+            points_used, amount, recipient_name, recipient_phone, shipping_address, payment_method, status, expires_at)
+        VALUES (#{paymentNo}, #{memberId}, #{productId}, #{productName}, #{quantity}, #{totalAmount},
+            #{pointsUsed}, #{amount}, #{recipientName}, #{recipientPhone}, #{shippingAddress}, #{paymentMethod}, #{status}, #{expiresAt})
+    </insert>
+    <select id="findByPaymentNo" resultType="com.qianxun.homestay.modules.mall.entity.MallPaymentEntity">
+        SELECT * FROM mall_payment WHERE payment_no = #{paymentNo}
+    </select>
+    <select id="findByPaymentNoForUpdate" resultType="com.qianxun.homestay.modules.mall.entity.MallPaymentEntity">
+        SELECT * FROM mall_payment WHERE payment_no = #{paymentNo} FOR UPDATE
+    </select>
+    <select id="findByOrderIdForUpdate" resultType="com.qianxun.homestay.modules.mall.entity.MallPaymentEntity">
+        SELECT * FROM mall_payment WHERE mall_order_id = #{orderId} FOR UPDATE
+    </select>
+    <select id="findByOrderId" resultType="com.qianxun.homestay.modules.mall.entity.MallPaymentEntity">
+        SELECT * FROM mall_payment WHERE mall_order_id = #{orderId}
+    </select>
+    <update id="markSuccess">
+        UPDATE mall_payment SET status = 'SUCCESS', mall_order_id = #{orderId}, transaction_id = #{transactionId}, paid_at = #{paidAt}
+        WHERE id = #{id} AND status = 'PENDING'
+    </update>
+    <update id="markClosed">UPDATE mall_payment SET status = 'CLOSED' WHERE id = #{id} AND status = 'PENDING'</update>
+    <update id="updateWechatPrepayId">
+        UPDATE mall_payment SET wechat_prepay_id = #{prepayId}
+        WHERE id = #{id} AND status = 'PENDING' AND wechat_prepay_id = '__CREATING__'
+    </update>
+    <update id="claimWechatPrepay">
+        UPDATE mall_payment SET wechat_prepay_id = '__CREATING__'
+        WHERE id = #{id} AND status = 'PENDING' AND payment_method = 'WECHAT' AND expires_at &gt; #{now}
+          AND (wechat_prepay_id IS NULL OR wechat_prepay_id != '__CREATING__')
+    </update>
+    <select id="findExpiredIds" resultType="long">
+        SELECT id FROM mall_payment WHERE status = 'PENDING' AND expires_at &lt;= #{now}
+        ORDER BY updated_at, id LIMIT #{limit}
+    </select>
+    <select id="findById" resultType="com.qianxun.homestay.modules.mall.entity.MallPaymentEntity">
+        SELECT * FROM mall_payment WHERE id = #{id}
+    </select>
+    <select id="findByIdForUpdate" resultType="com.qianxun.homestay.modules.mall.entity.MallPaymentEntity">
+        SELECT * FROM mall_payment WHERE id = #{id} FOR UPDATE
+    </select>
+    <update id="touchPending">UPDATE mall_payment SET updated_at = CURRENT_TIMESTAMP(3) WHERE id = #{id} AND status = 'PENDING'</update>
+</mapper>

@@ -220,7 +220,12 @@
 
     <select id="findMaxOrderSequence" resultType="long">
         SELECT COALESCE(MAX(CAST(SUBSTRING(order_no, 11) AS UNSIGNED)), 0)
-        FROM orders WHERE order_no LIKE #{orderNoPattern}
+        FROM orders WHERE order_no LIKE #{orderNoPattern} FOR UPDATE
+    </select>
+
+    <select id="findMaxMallOrderSequence" resultType="long">
+        SELECT COALESCE(MAX(CAST(SUBSTRING(order_no, 11) AS UNSIGNED)), 0)
+        FROM mall_order WHERE order_no LIKE #{orderNoPattern} FOR UPDATE
     </select>
 
 </mapper>

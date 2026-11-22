@@ -21,6 +21,12 @@ public class MemberEntity {
     private Integer growthPoints;
     /** 当前可用积分。 */
     private Integer points;
+    /** 最近一次支付成功的收货人姓名。 */
+    private String defaultRecipientName;
+    /** 最近一次支付成功的收货手机号。 */
+    private String defaultRecipientPhone;
+    /** 最近一次支付成功的收货地址。 */
+    private String defaultShippingAddress;
     /** 会员记录创建时间。 */
     private LocalDateTime createdAt;
     /** 会员记录更新时间。 */
@@ -40,6 +46,12 @@ public class MemberEntity {
     public void setGrowthPoints(Integer growthPoints) { this.growthPoints = growthPoints; }
     public Integer getPoints() { return points; }
     public void setPoints(Integer points) { this.points = points; }
+    public String getDefaultRecipientName() { return defaultRecipientName; }
+    public void setDefaultRecipientName(String value) { this.defaultRecipientName = value; }
+    public String getDefaultRecipientPhone() { return defaultRecipientPhone; }
+    public void setDefaultRecipientPhone(String value) { this.defaultRecipientPhone = value; }
+    public String getDefaultShippingAddress() { return defaultShippingAddress; }
+    public void setDefaultShippingAddress(String value) { this.defaultShippingAddress = value; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

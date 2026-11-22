@@ -16,11 +16,20 @@
           </view>
         </view>
       </view>
-      <view class="profile-arrow" />
+      <image class="profile-watermark" src="/assets/my-crown.svg" mode="aspectFit" />
     </view>
 
+    <view class="contact-list">
+    <view class="contact-card" bindtap="onRoomOrdersTap">
+      <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-room-orders.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">房间订单</text><text class="contact-phone">查看房间预订记录</text></view></view>
+      <view class="contact-arrow" />
+    </view>
+    <view class="contact-card" bindtap="onMallOrdersTap">
+      <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-mall-orders.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">商城订单</text><text class="contact-phone">查看商品购买记录</text></view></view>
+      <view class="contact-arrow" />
+    </view>
     <view class="contact-card invitation-card" bindtap="onInvitationTap">
-      <view class="contact-main"><view class="contact-icon-box">✉</view><view class="contact-copy"><text class="contact-title">邀请好友</text><text class="contact-phone">邀请好友，共赴水乡</text></view></view>
+      <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-invitation.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">邀请好友</text><text class="contact-phone">邀请好友，共赴水乡</text></view></view>
       <view class="contact-arrow" />
     </view>
     <view class="contact-card" bindtap="onContactTap">
@@ -36,6 +45,7 @@
       <view class="contact-arrow" />
     </view>
 
-    <button class="logout-button" bindtap="onLogoutTap">退出登录</button>
+    </view>
+    <button class="logout-button" bindtap="onLogoutTap"><image class="logout-icon" src="/assets/my-logout.svg" mode="aspectFit" /><text>退出登录</text></button>
   </view>
 </view>

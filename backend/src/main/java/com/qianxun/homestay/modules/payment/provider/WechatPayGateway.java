@@ -46,10 +46,16 @@ public class WechatPayGateway {
     /** 创建小程序预支付并返回已签名的调起参数。 */
     public PrepayWithRequestPaymentResponse createPrepay(
             String paymentNo, BigDecimal amount, String openid, LocalDateTime expiresAt) {
+        return createPrepay(paymentNo, amount, openid, expiresAt, "芊浔民宿住宿费");
+    }
+
+    /** 创建带业务说明的微信预支付。 */
+    public PrepayWithRequestPaymentResponse createPrepay(
+            String paymentNo, BigDecimal amount, String openid, LocalDateTime expiresAt, String description) {
         PrepayRequest request = new PrepayRequest();
         request.setAppid(properties.getAppId());
         request.setMchid(properties.getMerchantId());
-        request.setDescription("芊浔民宿住宿费");
+        request.setDescription(description);
         request.setOutTradeNo(paymentNo);
         request.setTimeExpire(expiresAt.atZone(BUSINESS_ZONE).toOffsetDateTime().format(WECHAT_TIME_FORMAT));
         request.setNotifyUrl(properties.getPaymentNotifyUrl());

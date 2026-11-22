@@ -63,4 +63,7 @@ public interface OrderMapper {
 
     Long findMaxOrderSequence(@Param("orderNoPattern") String orderNoPattern);
 
+    /** 查询商城订单中同一日期已经使用的最大流水号。 */
+    Long findMaxMallOrderSequence(@Param("orderNoPattern") String orderNoPattern);
+
 }

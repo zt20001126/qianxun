@@ -5,6 +5,7 @@ import com.qianxun.homestay.modules.availability.service.AvailabilityService;
 import com.qianxun.homestay.modules.booking.mapper.BookingLockMapper;
 import com.qianxun.homestay.modules.member.entity.MemberEntity;
 import com.qianxun.homestay.modules.member.mapper.MemberMapper;
+import com.qianxun.homestay.modules.mall.mapper.MallPaymentReservationMapper;
 import com.qianxun.homestay.modules.points.domain.PointsRedemptionCalculator;
 import com.qianxun.homestay.modules.points.domain.PointsRedemptionQuote;
 import com.qianxun.homestay.modules.points.dto.PointsPreviewRequest;
@@ -29,6 +30,7 @@ public class PointsBalanceServiceImpl implements PointsBalanceService {
 
     private final AvailabilityService availabilityService;
     private final BookingLockMapper bookingLockMapper;
+    private final MallPaymentReservationMapper mallPaymentReservationMapper;
     private final MemberMapper memberMapper;
     private final PointsLogMapper pointsLogMapper;
     private final PointsRedemptionCalculator calculator;
@@ -36,11 +38,13 @@ public class PointsBalanceServiceImpl implements PointsBalanceService {
     public PointsBalanceServiceImpl(
             AvailabilityService availabilityService,
             BookingLockMapper bookingLockMapper,
+            MallPaymentReservationMapper mallPaymentReservationMapper,
             MemberMapper memberMapper,
             PointsLogMapper pointsLogMapper,
             PointsRedemptionCalculator calculator) {
         this.availabilityService = availabilityService;
         this.bookingLockMapper = bookingLockMapper;
+        this.mallPaymentReservationMapper = mallPaymentReservationMapper;
         this.memberMapper = memberMapper;
         this.pointsLogMapper = pointsLogMapper;
         this.calculator = calculator;
@@ -159,9 +163,11 @@ public class PointsBalanceServiceImpl implements PointsBalanceService {
 
     private PointsRedemptionQuote calculateForMember(
             MemberEntity member, BigDecimal roomAmount, Integer pointsUsed, LocalDateTime now) {
-        int reservedPoints = bookingLockMapper.sumReservedPoints(member.getId(), now);
+        // 微信超时但渠道结果未确认时继续保留预占，避免不同业务重复使用积分。
+        long reservedPoints = (long) bookingLockMapper.sumReservedPoints(member.getId(), now)
+                + mallPaymentReservationMapper.sumReservedPoints(member.getId(), now);
         int balance = member.getPoints() == null ? 0 : member.getPoints();
-        int availablePoints = Math.max(0, balance - reservedPoints);
+        int availablePoints = (int) Math.max(0L, (long) balance - reservedPoints);
         return calculator.calculate(roomAmount, member.getGrowthPoints(), availablePoints, pointsUsed);
     }
 

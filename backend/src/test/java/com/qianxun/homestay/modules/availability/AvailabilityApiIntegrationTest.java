@@ -159,7 +159,17 @@ class AvailabilityApiIntegrationTest {
                 .andExpect(jsonPath("$.data.unavailable_dates").isArray())
                 .andReturn().getResponse().getContentAsString();
         JsonNode unavailableDates = objectMapper.readTree(response).path("data").path("unavailable_dates");
-        assertThat(unavailableDates.toString())
+        String combinedDates = unavailableDates.toString();
+        String finalMonth = firstNight.plusDays(6).toString().substring(0, 7);
+        if (!month.equals(finalMonth)) {
+            // 可订日历按月返回；测试日期跨月时同时读取下一月，验证有效和过期锁房。
+            String nextResponse = mockMvc.perform(get("/api/app/rooms/{id}/availability", roomId).param("month", finalMonth))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.month").value(finalMonth))
+                    .andReturn().getResponse().getContentAsString();
+            combinedDates += objectMapper.readTree(nextResponse).path("data").path("unavailable_dates").toString();
+        }
+        assertThat(combinedDates)
                 .contains(firstNight.toString())
                 .contains(firstNight.plusDays(1).toString())
                 .contains(firstNight.plusDays(4).toString())

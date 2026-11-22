@@ -9,6 +9,9 @@
         <result property="avatar" column="avatar"/>
         <result property="growthPoints" column="growth_points"/>
         <result property="points" column="points"/>
+        <result property="defaultRecipientName" column="default_recipient_name"/>
+        <result property="defaultRecipientPhone" column="default_recipient_phone"/>
+        <result property="defaultShippingAddress" column="default_shipping_address"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -61,11 +64,22 @@
         UPDATE members SET points = #{points}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = #{id}
     </update>
 
+    <update id="updateDefaultShipping">
+        UPDATE members SET default_recipient_name = #{name}, default_recipient_phone = #{phone},
+            default_shipping_address = #{address}, updated_at = CURRENT_TIMESTAMP(3) WHERE id = #{id}
+    </update>
+
     <select id="findById" resultMap="MemberResultMap">
         SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at
         FROM members
         WHERE id = #{id}
         LIMIT 1
+    </select>
+
+    <select id="findByIdWithShipping" resultMap="MemberResultMap">
+        SELECT id, phone, openid, nickname, avatar, growth_points, points, created_at, updated_at,
+               default_recipient_name, default_recipient_phone, default_shipping_address
+        FROM members WHERE id = #{id} LIMIT 1
     </select>
 
     <select id="findByOpenid" resultMap="MemberResultMap">

@@ -207,7 +207,7 @@ Page({
   },
 
   onOrdersTap() {
-    wx.switchTab({ url: '/pages/orders/index' })
+    wx.redirectTo({ url: '/pages/orders/index' })
   },
 
   onCancelTap() {

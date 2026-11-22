@@ -13,6 +13,8 @@ public class PointsLogEntity {
     private Long memberId;
     /** 关联订单编号；与订单无关的流水为空。 */
     private Long orderId;
+    /** 关联商城订单编号。 */
+    private Long mallOrderId;
     /** 积分流水业务类型。 */
     private PointsLogType type;
     /** 本次变更的可用积分数量，可正可负。 */
@@ -38,6 +40,8 @@ public class PointsLogEntity {
     public void setMemberId(Long memberId) { this.memberId = memberId; }
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
+    public Long getMallOrderId() { return mallOrderId; }
+    public void setMallOrderId(Long mallOrderId) { this.mallOrderId = mallOrderId; }
     public PointsLogType getType() { return type; }
     public void setType(PointsLogType type) { this.type = type; }
     public Integer getPoints() { return points; }

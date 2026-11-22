@@ -5,6 +5,7 @@
         <id property="id" column="id"/>
         <result property="memberId" column="member_id"/>
         <result property="orderId" column="order_id"/>
+        <result property="mallOrderId" column="mall_order_id"/>
         <result property="type" column="type"/>
         <result property="points" column="points"/>
         <result property="growthPoints" column="growth_points"/>
@@ -17,7 +18,7 @@
     </resultMap>
 
     <select id="findByRefNo" resultMap="pointsLogResultMap">
-        SELECT id, member_id, order_id, type, points, growth_points, balance_after,
+        SELECT id, member_id, order_id, mall_order_id, type, points, growth_points, balance_after,
                amount, discount_amount, ref_no, remark, created_at
         FROM points_log WHERE ref_no = #{refNo}
     </select>
@@ -31,7 +32,7 @@
     </sql>
 
     <select id="findPage" resultMap="pointsLogResultMap">
-        SELECT id, member_id, order_id, type, points, growth_points, balance_after,
+        SELECT id, member_id, order_id, mall_order_id, type, points, growth_points, balance_after,
                amount, discount_amount, ref_no, remark, created_at
         FROM points_log
         <include refid="pointsLogFilters"/>
@@ -50,10 +51,10 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO points_log (
-            member_id, order_id, type, points, growth_points, balance_after, amount,
+            member_id, order_id, mall_order_id, type, points, growth_points, balance_after, amount,
             discount_amount, ref_no, remark
         ) VALUES (
-            #{memberId}, #{orderId}, #{type}, #{points}, #{growthPoints}, #{balanceAfter}, #{amount},
+            #{memberId}, #{orderId}, #{mallOrderId}, #{type}, #{points}, #{growthPoints}, #{balanceAfter}, #{amount},
             #{discountAmount}, #{refNo}, #{remark}
         )
     </insert>

@@ -13,6 +13,8 @@ import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import com.qianxun.homestay.modules.booking.entity.BookingLockEntity;
 import com.qianxun.homestay.modules.booking.enums.BookingLockStatus;
 import com.qianxun.homestay.modules.booking.mapper.BookingLockMapper;
+import com.qianxun.homestay.modules.mall.service.MallPaymentService;
+import com.qianxun.homestay.modules.mall.service.MallWechatRefundService;
 import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
 import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
@@ -55,9 +57,11 @@ class WechatPaymentServiceImplTest {
     private final BookingLockMapper bookingLockMapper = mock(BookingLockMapper.class);
     private final PaymentMapper paymentMapper = mock(PaymentMapper.class);
     private final WechatIdentityService identityService = mock(WechatIdentityService.class);
+    private final MallPaymentService mallPaymentService = mock(MallPaymentService.class);
+    private final MallWechatRefundService mallRefundService = mock(MallWechatRefundService.class);
     private final WechatPaymentServiceImpl service = new WechatPaymentServiceImpl(
             bookingLockMapper, paymentMapper, paymentTransactionService,
-            identityService, gateway, properties, refundService);
+            identityService, gateway, properties, refundService, mallPaymentService, mallRefundService);
 
     @BeforeEach
     void configureMerchantIdentity() {
@@ -152,6 +156,17 @@ class WechatPaymentServiceImplTest {
     }
 
     @Test
+    void signedMallPaymentIsDispatchedAfterValidation() {
+        Transaction transaction = validPayment();
+        transaction.setOutTradeNo("M12345");
+        when(gateway.parsePaymentNotification(any(RequestParam.class))).thenReturn(transaction);
+        service.handlePaymentNotification("serial", "timestamp", "nonce", "signature", "raw-body");
+        verify(mallPaymentService).settleWechat("M12345", "wx-transaction-001", new BigDecimal("123.45"),
+                LocalDateTime.of(2026, 11, 20, 13, 12, 13), "wx-openid-001");
+        verify(paymentTransactionService, never()).settleWechatPayment(any(), any(), any(), any(), any());
+    }
+
+    @Test
     void invalidPaymentNotificationFieldsNeverSettleAnOrder() {
         List<Consumer<Transaction>> invalidCases = List.of(
                 transaction -> transaction.setAppid("another-app"),
@@ -217,6 +232,18 @@ class WechatPaymentServiceImplTest {
 
         verify(refundService).completeRefund(REFUND_NO, PAYMENT_NO, "wx-transaction-001",
                 new BigDecimal("123.45"), new BigDecimal("123.45"), "wx-refund-001");
+    }
+
+    @Test
+    void successfulMallRefundIsDispatchedAfterValidation() {
+        RefundNotification notification = validRefund();
+        notification.setOutRefundNo("MR-TEST-001");
+        notification.setOutTradeNo("M-TEST-001");
+        when(gateway.parseRefundNotification(any(RequestParam.class))).thenReturn(notification);
+        service.handleRefundNotification("serial", "timestamp", "nonce", "signature", "raw-body");
+        verify(mallRefundService).complete("MR-TEST-001", "M-TEST-001", "wx-transaction-001",
+                new BigDecimal("123.45"), new BigDecimal("123.45"), "wx-refund-001");
+        verify(refundService, never()).completeRefund(any(), any(), any(), any(), any(), any());
     }
 
     @Test

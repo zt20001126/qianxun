@@ -1,0 +1,14 @@
+<view class="order-page">
+  <view class="order-heading">商城订单（{{total}}）</view>
+  <view wx:if="{{error}}" class="order-state"><text>{{error}}</text><button class="retry" bindtap="onRetry">重新加载</button></view>
+  <view wx:elif="{{!loading && orders.length === 0}}" class="order-state">暂无商城订单</view>
+  <view wx:for="{{orders}}" wx:key="id" class="order-card">
+    <view class="order-top"><text>订单号：{{item.order_no}}</text><text class="order-status">{{item.status_label}}</text></view>
+    <view class="order-name">{{item.product_name}} × {{item.quantity}}</view>
+    <view wx:if="{{item.tracking_no}}" class="order-express">{{item.express_company}} {{item.tracking_no}}</view>
+    <view class="order-total">实付 <text>¥{{item.paid_amount}}</text></view>
+    <button wx:if="{{item.status === 'PENDING_SHIPMENT'}}" class="refund-button" data-id="{{item.id}}" disabled="{{refundingId !== 0}}" bindtap="onRefund">申请退款</button>
+    <view wx:elif="{{item.status === 'SHIPPED'}}" class="order-express">如需退款，请联系商家</view>
+  </view>
+  <view wx:if="{{loading}}" class="order-state">正在加载订单…</view>
+</view>

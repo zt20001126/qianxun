@@ -103,6 +103,14 @@ Page({
     wx.navigateTo({ url: '/pages/invitation/index' })
   },
 
+  onRoomOrdersTap() {
+    wx.navigateTo({ url: '/pages/orders/index' })
+  },
+
+  onMallOrdersTap() {
+    wx.navigateTo({ url: '/pages/mall-orders/index' })
+  },
+
   onLogoutTap() {
     clearPendingInvitation()
     clearSession()

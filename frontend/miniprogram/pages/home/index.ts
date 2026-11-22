@@ -179,7 +179,7 @@ Page({
   noop() {},
 
   onMyOrdersTap() {
-    wx.switchTab({ url: '/pages/orders/index' })
+    wx.navigateTo({ url: '/pages/orders/index' })
   },
 
   onLogoutTap() {

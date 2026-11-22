@@ -50,7 +50,11 @@
         FROM booking_lock
         WHERE member_id = #{memberId}
           AND status = 'PENDING'
-          AND expires_at &gt; #{now}
+          AND (expires_at &gt; #{now} OR EXISTS (
+              SELECT 1 FROM payments p
+              WHERE p.booking_id = booking_lock.id
+                AND p.payment_method = 'WECHAT' AND p.status = 'PENDING'
+          ))
     </select>
 
     <update id="updateStatus">

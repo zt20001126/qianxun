@@ -47,6 +47,10 @@ public interface MemberMapper {
     /** 在会员行锁内写入抵扣后的可用积分余额。 */
     int updatePointsBalance(@Param("id") Long id, @Param("points") int points);
 
+    /** 支付成功后保存最近一次商城收货信息。 */
+    int updateDefaultShipping(@Param("id") Long id, @Param("name") String name,
+            @Param("phone") String phone, @Param("address") String address);
+
     /**
      * 按 JWT 中的会员 ID 读取当前会员。
      *
@@ -54,6 +58,9 @@ public interface MemberMapper {
      * @return 会员实体；不存在时为空
      */
     MemberEntity findById(@Param("id") Long id);
+
+    /** 读取当前会员保存的默认收货信息。 */
+    MemberEntity findByIdWithShipping(@Param("id") Long id);
 
     /** 按小程序 OpenID 查询会员，用于拒绝跨会员重复绑定。 */
     MemberEntity findByOpenid(@Param("openid") String openid);

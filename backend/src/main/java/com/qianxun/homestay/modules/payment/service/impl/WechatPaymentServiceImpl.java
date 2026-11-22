@@ -5,6 +5,8 @@ import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import com.qianxun.homestay.modules.booking.entity.BookingLockEntity;
 import com.qianxun.homestay.modules.booking.enums.BookingLockStatus;
 import com.qianxun.homestay.modules.booking.mapper.BookingLockMapper;
+import com.qianxun.homestay.modules.mall.service.MallPaymentService;
+import com.qianxun.homestay.modules.mall.service.MallWechatRefundService;
 import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
 import com.qianxun.homestay.modules.payment.entity.PaymentEntity;
 import com.qianxun.homestay.modules.payment.enums.PaymentMethod;
@@ -40,6 +42,8 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
     private final WechatPayGateway wechatPayGateway;
     private final WechatPayProperties properties;
     private final WechatRefundService wechatRefundService;
+    private final MallPaymentService mallPaymentService;
+    private final MallWechatRefundService mallRefundService;
 
     public WechatPaymentServiceImpl(
             BookingLockMapper bookingLockMapper,
@@ -48,7 +52,9 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
             WechatIdentityService wechatIdentityService,
             WechatPayGateway wechatPayGateway,
             WechatPayProperties properties,
-            WechatRefundService wechatRefundService) {
+            WechatRefundService wechatRefundService,
+            MallPaymentService mallPaymentService,
+            MallWechatRefundService mallRefundService) {
         this.bookingLockMapper = bookingLockMapper;
         this.paymentMapper = paymentMapper;
         this.paymentTransactionService = paymentTransactionService;
@@ -56,6 +62,8 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
         this.wechatPayGateway = wechatPayGateway;
         this.properties = properties;
         this.wechatRefundService = wechatRefundService;
+        this.mallPaymentService = mallPaymentService;
+        this.mallRefundService = mallRefundService;
     }
 
     @Override
@@ -116,9 +124,14 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
         } catch (DateTimeParseException exception) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "微信支付通知成功时间格式无效");
         }
-        paymentTransactionService.settleWechatPayment(
-                transaction.getOutTradeNo(), transaction.getTransactionId(), amount, paidAt,
-                transaction.getPayer().getOpenid());
+        // 商城单号以 M 开头，住宿单号为 UUID 十六进制；验签和商户校验在分流前完成。
+        if (transaction.getOutTradeNo().startsWith("M")) {
+            mallPaymentService.settleWechat(transaction.getOutTradeNo(), transaction.getTransactionId(), amount, paidAt,
+                    transaction.getPayer().getOpenid());
+        } else {
+            paymentTransactionService.settleWechatPayment(transaction.getOutTradeNo(), transaction.getTransactionId(),
+                    amount, paidAt, transaction.getPayer().getOpenid());
+        }
     }
 
     @Override
@@ -134,7 +147,11 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
             if (notification.getOutRefundNo() == null || notification.getOutRefundNo().isBlank()) {
                 throw new BusinessException(HttpStatus.BAD_REQUEST, "微信退款通知缺少退款单号");
             }
-            wechatRefundService.failRefund(notification.getOutRefundNo(), "微信退款状态：" + refundStatus);
+            if (notification.getOutRefundNo().startsWith("MR")) {
+                mallRefundService.fail(notification.getOutRefundNo());
+            } else {
+                wechatRefundService.failRefund(notification.getOutRefundNo(), "微信退款状态：" + refundStatus);
+            }
             return;
         }
         if (!"SUCCESS".equals(refundStatus)) {
@@ -147,10 +164,15 @@ public class WechatPaymentServiceImpl implements WechatPaymentService {
                 || notification.getTransactionId() == null || notification.getOutTradeNo() == null) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "微信退款通知金额无效");
         }
-        wechatRefundService.completeRefund(
-                notification.getOutRefundNo(), notification.getOutTradeNo(), notification.getTransactionId(),
-                BigDecimal.valueOf(notification.getAmount().getRefund(), 2),
-                BigDecimal.valueOf(notification.getAmount().getTotal(), 2), notification.getRefundId());
+        if (notification.getOutRefundNo().startsWith("MR")) {
+            mallRefundService.complete(notification.getOutRefundNo(), notification.getOutTradeNo(), notification.getTransactionId(),
+                    BigDecimal.valueOf(notification.getAmount().getRefund(), 2),
+                    BigDecimal.valueOf(notification.getAmount().getTotal(), 2), notification.getRefundId());
+        } else {
+            wechatRefundService.completeRefund(notification.getOutRefundNo(), notification.getOutTradeNo(), notification.getTransactionId(),
+                    BigDecimal.valueOf(notification.getAmount().getRefund(), 2),
+                    BigDecimal.valueOf(notification.getAmount().getTotal(), 2), notification.getRefundId());
+        }
     }
 
     private RequestParam requestParam(String serial, String timestamp, String nonce, String signature, String body) {

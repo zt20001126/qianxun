@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.mall.mapper.MallOrderMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO mall_order (order_no, member_id, product_id, product_name, quantity, total_amount, paid_amount,
+            points_used, recipient_name, recipient_phone, shipping_address, status, paid_at)
+        VALUES (#{orderNo}, #{memberId}, #{productId}, #{productName}, #{quantity}, #{totalAmount}, #{paidAmount},
+            #{pointsUsed}, #{recipientName}, #{recipientPhone}, #{shippingAddress}, #{status}, #{paidAt})
+    </insert>
+    <select id="findPage" resultType="com.qianxun.homestay.modules.mall.entity.MallOrderEntity">
+        SELECT * FROM mall_order ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="count" resultType="long">SELECT COUNT(*) FROM mall_order</select>
+    <select id="findMemberPage" resultType="com.qianxun.homestay.modules.mall.entity.MallOrderEntity">
+        SELECT * FROM mall_order WHERE member_id = #{memberId} ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="countMember" resultType="long">SELECT COUNT(*) FROM mall_order WHERE member_id = #{memberId}</select>
+    <select id="findById" resultType="com.qianxun.homestay.modules.mall.entity.MallOrderEntity">
+        SELECT * FROM mall_order WHERE id = #{id}
+    </select>
+    <select id="findByIdForUpdate" resultType="com.qianxun.homestay.modules.mall.entity.MallOrderEntity">
+        SELECT * FROM mall_order WHERE id = #{id} FOR UPDATE
+    </select>
+    <select id="hasPendingRefund" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM mall_refund WHERE mall_order_id = #{id} AND status = 'PENDING')
+    </select>
+    <update id="markShipped">
+        UPDATE mall_order SET status = 'SHIPPED', express_company = #{company}, tracking_no = #{trackingNo},
+            shipped_at = CURRENT_TIMESTAMP(3) WHERE id = #{id} AND status = 'PENDING_SHIPMENT'
+    </update>
+    <update id="markCompleted">
+        UPDATE mall_order SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP(3)
+        WHERE id = #{id} AND status = 'SHIPPED'
+    </update>
+    <update id="markRefunded">UPDATE mall_order SET status = 'REFUNDED' WHERE id = #{id} AND status = 'PENDING_SHIPMENT'</update>
+</mapper>

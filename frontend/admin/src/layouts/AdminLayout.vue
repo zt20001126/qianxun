@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** 后台壳层，集中提供模块导航、管理员身份和退出入口。 */
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SidebarIcon from '../components/SidebarIcon.vue'
 import { useAuthStore } from '../stores/auth'
@@ -9,6 +9,7 @@ import { formatChineseDate, shanghaiDate } from '../utils/operations'
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const mallExpanded = ref(route.path.startsWith('/mall-'))
 const isPrototypeShell = computed(() =>
   route.path === '/home' || route.path === '/room-calendar' || route.path === '/orders',
 )
@@ -35,6 +36,15 @@ function openExternalOrder(): void {
         <RouterLink to="/home" class="sidebar-nav-primary"><SidebarIcon name="overview" />经营总览</RouterLink>
         <RouterLink to="/room-calendar" class="sidebar-nav-primary"><SidebarIcon name="calendar" />房态日历</RouterLink>
         <RouterLink to="/rooms"><SidebarIcon name="room" />客房管理</RouterLink>
+        <div class="mall-navigation">
+          <button class="mall-toggle" type="button" :aria-expanded="mallExpanded" @click="mallExpanded = !mallExpanded">
+            <SidebarIcon name="orders" />商城管理 <span>{{ mallExpanded ? '▾' : '▸' }}</span>
+          </button>
+          <div v-if="mallExpanded" class="mall-children">
+            <RouterLink to="/mall-products">商品管理</RouterLink>
+            <RouterLink to="/mall-orders">商品订单</RouterLink>
+          </div>
+        </div>
         <RouterLink to="/orders" class="sidebar-nav-primary"><SidebarIcon name="orders" />订单管理</RouterLink>
         <RouterLink to="/members" class="sidebar-nav-primary"><SidebarIcon name="members" />会员管理</RouterLink>
         <RouterLink to="/portraits" class="sidebar-nav-primary"><SidebarIcon name="portraits" />顾客画像</RouterLink>
@@ -73,3 +83,10 @@ function openExternalOrder(): void {
     </div>
   </div>
 </template>
+
+<style scoped>
+.mall-toggle { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 45px; padding: 0 12px; border: 0; border-radius: 11px; background: transparent; color: var(--qx-primary-dark); font-size: 14px; font-weight: 600; cursor: pointer; text-align: left; }
+.mall-toggle span { margin-left: auto; }
+.mall-toggle:hover { background: #f3f7f7; }
+.mall-children { padding-left: 24px; }
+</style>

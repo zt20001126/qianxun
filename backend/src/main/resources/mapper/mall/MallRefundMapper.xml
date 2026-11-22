@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.mall.mapper.MallRefundMapper">
+    <select id="findSuccessfulNo" resultType="string">
+        SELECT refund_no FROM mall_refund WHERE mall_order_id = #{orderId} AND status = 'SUCCESS' ORDER BY id DESC LIMIT 1
+    </select>
+    <insert id="insertSuccess">
+        INSERT INTO mall_refund (mall_order_id, mall_payment_id, refund_no, amount, status, refunded_at)
+        VALUES (#{orderId}, #{paymentId}, #{refundNo}, #{amount}, 'SUCCESS', #{refundedAt})
+    </insert>
+    <select id="findLatest" resultType="com.qianxun.homestay.modules.mall.entity.MallRefundEntity">
+        SELECT * FROM mall_refund WHERE mall_order_id = #{orderId} ORDER BY id DESC LIMIT 1
+    </select>
+    <select id="findByNo" resultType="com.qianxun.homestay.modules.mall.entity.MallRefundEntity">
+        SELECT * FROM mall_refund WHERE refund_no = #{refundNo}
+    </select>
+    <select id="findByNoForUpdate" resultType="com.qianxun.homestay.modules.mall.entity.MallRefundEntity">
+        SELECT * FROM mall_refund WHERE refund_no = #{refundNo} FOR UPDATE
+    </select>
+    <insert id="insertPending" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO mall_refund (mall_order_id, mall_payment_id, refund_no, amount, status)
+        VALUES (#{mallOrderId}, #{mallPaymentId}, #{refundNo}, #{amount}, 'PENDING')
+    </insert>
+    <update id="markSuccess">
+        UPDATE mall_refund SET status = 'SUCCESS', wechat_refund_id = #{wechatRefundId}, refunded_at = #{refundedAt}
+        WHERE id = #{id} AND status = 'PENDING'
+    </update>
+    <update id="markFailed">UPDATE mall_refund SET status = 'FAILED' WHERE id = #{id} AND status = 'PENDING'</update>
+</mapper>

@@ -29,6 +29,7 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 /** 创建带价格快照的临时预订，并串行占用客房与会员积分额度。 */
 @Service
@@ -63,7 +64,8 @@ public class BookingLockServiceImpl implements BookingLockService {
     }
 
     @Override
-    @Transactional
+    // 等待会员锁后必须读取最新已提交的商城与住宿预占，避免可重复读旧快照导致积分超占。
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public PrepayVO prepay(Long memberId, PrepayRequest request) {
         availabilityService.validateMiniProgramRange(request.checkIn(), request.checkOut());
 
