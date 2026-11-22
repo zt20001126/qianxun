@@ -74,6 +74,7 @@ app:
     recipients: ${MAIL_NOTIFICATION_RECIPIENTS:}
     sender-name: ${MAIL_SENDER_NAME:芊浔民宿}
     from-email: ${SMTP_FROM_EMAIL:}
+    daily-room-status-cron: ${MAIL_DAILY_ROOM_STATUS_CRON:0 0 10,18 * * *}
 
 booking:
   payment-timeout-scan-interval-ms: ${BOOKING_PAYMENT_TIMEOUT_SCAN_INTERVAL_MS:30000}

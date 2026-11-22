@@ -4,6 +4,7 @@ import com.qianxun.homestay.modules.order.dto.OrderQueryRequest;
 import com.qianxun.homestay.modules.order.entity.OrderEntity;
 import com.qianxun.homestay.modules.order.entity.OrderViewEntity;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -45,6 +46,17 @@ public interface OrderMapper {
 
     /** 查询按 member_id 归属指定会员的订单摘要。 */
     List<OrderViewEntity> findMemberOrders(@Param("memberId") Long memberId);
+
+    /**
+     * 查询在指定日期范围内发生入住、续住或退房的有效住宿订单，供每日房态邮件使用。
+     *
+     * @param startDate 邮件覆盖的首日
+     * @param endDate 邮件覆盖的末日（含）
+     * @return 含客房、渠道及预订信息的订单列表
+     */
+    List<OrderViewEntity> findForDailyRoomStatus(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate);
 
     int insert(OrderEntity order);
 

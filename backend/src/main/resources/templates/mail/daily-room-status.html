@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三日房态安排</title>
+</head>
+<body style="margin:0;background:#fbf5ef;color:#292522;font-family:'Microsoft YaHei',Arial,sans-serif;">
+<div style="max-width:1280px;margin:0 auto;padding:24px 12px;">
+    <div style="padding:24px;border-radius:12px;background:#512a18;color:#fffaf4;">
+        <div style="font-size:24px;font-weight:700;">芊浔民宿 · 三日房态安排</div>
+        <div style="margin-top:8px;font-size:14px;color:#f5e5d6;" th:text="'统计起始日：' + ${generatedAt}">统计起始日</div>
+    </div>
+    <p style="margin:18px 0;color:#6c625c;font-size:14px;line-height:1.7;">每个日期均列出全部房间；同一房间在同日退房并入住时会分两行展示。订单状态为当前实际状态，取消订单不纳入安排。</p>
+    <section th:each="day : ${days}" style="margin-top:24px;border:1px solid #eadbd0;border-radius:12px;overflow:hidden;background:#fffcf9;">
+        <div style="padding:15px 18px;background:#f5e5d6;color:#512a18;font-size:18px;font-weight:700;" th:text="${day.dayName} + ' · ' + ${day.date}">今日 · 2026-11-22</div>
+        <div style="overflow-x:auto;">
+            <table role="presentation" style="width:100%;min-width:1180px;border-collapse:collapse;font-size:13px;line-height:1.5;">
+                <thead><tr style="background:#fff7f1;color:#512a18;">
+                    <th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">房间</th><th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">房态</th><th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">订单状态</th><th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">预订人 / 电话</th><th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">入住 - 退房 / 晚数</th><th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">订单 / 渠道 / 人数</th><th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">客户备注</th><th style="padding:10px;text-align:left;border-bottom:1px solid #eadbd0;">管理员备注</th>
+                </tr></thead>
+                <tbody><tr th:each="row : ${day.rows}">
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;"><strong th:text="${row.roomNumber}">101</strong><br><span style="color:#7d726b;" th:text="${row.roomName}">房型</span></td>
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;"><span th:text="${row.roomStatus}">入住</span></td>
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;" th:text="${row.orderStatus}">待入住</td>
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;" th:text="${row.guestName} + ' / ' + ${row.phone}">张三 / 13800000000</td>
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;" th:text="${row.checkIn + ' - ' + row.checkOut + ' / ' + (row.totalNights == null ? '—' : row.totalNights + '晚')}">日期 / 晚数</td>
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;" th:text="${row.orderNo + ' / ' + row.channelName + ' / ' + (row.guestCount == null ? '—' : row.guestCount + '人')}">订单</td>
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;white-space:pre-wrap;" th:text="${row.remark}">—</td>
+                    <td style="padding:11px 10px;vertical-align:top;border-bottom:1px solid #f0e6df;white-space:pre-wrap;" th:text="${row.adminRemark}">—</td>
+                </tr></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+</body>
+</html>

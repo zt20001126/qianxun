@@ -178,6 +178,18 @@
         ORDER BY o.created_at DESC, o.id DESC
     </select>
 
+    <select id="findForDailyRoomStatus" resultMap="orderViewResultMap">
+        SELECT <include refid="viewColumns"/>
+        FROM orders o
+        INNER JOIN room r ON r.id = o.room_id
+        INNER JOIN channels c ON c.id = o.channel_id
+        INNER JOIN order_amount a ON a.order_id = o.id
+        WHERE o.status &lt;&gt; 'CANCELLED'
+          AND o.check_in &lt;= #{endDate}
+          AND o.check_out &gt;= #{startDate}
+        ORDER BY r.floor, r.number, o.check_in, o.check_out, o.id
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO orders (
             order_no, platform_order_no, platform_order_date, room_id, channel_id, creator_id, member_id,
