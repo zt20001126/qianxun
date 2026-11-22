@@ -23,12 +23,12 @@
 
 ### 宿主机 Nginx 接入 HTTPS（测试环境）
 
-以下示例针对 Ubuntu 宿主机已运行 Nginx、管理后台使用默认端口 8081 的情况。宿主机处理 HTTPS，转发到本机管理后台容器；容器继续提供页面并转发 `/api/`。若端口有调整，须同步修改 `nginx-https.conf.example` 的 `proxy_pass`。
+以下示例针对 Ubuntu 宿主机已运行 Nginx、管理后台使用默认端口 8081 的情况。宿主机处理 HTTPS，转发到本机管理后台容器；容器继续提供页面并转发 `/api/`。若端口有调整，须同步修改 `nginx.qianxun.https.conf.example` 的 `proxy_pass`。
 
 1. 将本仓库部署到服务器，在 `deploy/.env` 设置 `JWT_SECRET`、`APP_CORS_ALLOWED_ORIGINS=https://111.229.107.194`（使用域名时改为实际 HTTPS 来源，不带路径或末尾斜杠），并设置 `ADMIN_BIND_ADDRESS=127.0.0.1`、`BACKEND_BIND_ADDRESS=127.0.0.1`，避免直接向公网开放容器端口。开发用数据库口令不得用于生产环境。
 2. 从仓库根目录运行 `docker compose --env-file deploy/.env -f deploy/docker-compose.yml up --build -d`，检查 `docker compose --env-file deploy/.env -f deploy/docker-compose.yml ps` 和 `curl http://127.0.0.1:8081/health`。
 3. 获取与访问地址匹配的可信证书，将完整证书链和私钥放在服务器安全位置。示例文件中的 `/etc/letsencrypt/live/111.229.107.194/` 仅为路径示意，必须改为证书实际路径；不要将证书私钥提交到仓库。IP 地址证书需要覆盖该 IP，域名证书需要使用对应域名访问。
-4. 将 `deploy/nginx-https.conf.example` 复制到 `/etc/nginx/sites-available/qianxun`，按实际证书路径、IP 或域名及端口修改。检查现有站点配置，避免同地址同端口的默认站点与其冲突；确认无需默认站点后，可移除 `/etc/nginx/sites-enabled/default` 这个链接，然后建立 `sudo ln -s /etc/nginx/sites-available/qianxun /etc/nginx/sites-enabled/qianxun`。修改前备份现有配置。
+4. 将 `deploy/nginx.qianxun.https.conf.example` 复制到 `/etc/nginx/sites-available/qianxun`，按实际证书路径、IP 或域名及端口修改。检查现有站点配置，避免同地址同端口的默认站点与其冲突；确认无需默认站点后，可移除 `/etc/nginx/sites-enabled/default` 这个链接，然后建立 `sudo ln -s /etc/nginx/sites-available/qianxun /etc/nginx/sites-enabled/qianxun`。修改前备份现有配置。
 5. 执行 `sudo nginx -t`；仅在检查成功后执行 `sudo systemctl reload nginx`。云防火墙需允许 TCP 80、443。随后从外部访问 `https://111.229.107.194/`，并检查后台登录及 `/api/` 请求。
 6. 配置并验证证书自动续期；续期后重载宿主机 Nginx 才能加载新证书。HTTP-01 验证使用示例中的 `/var/www/html` 验证目录；申请证书前需确保验证文件能通过 HTTP 访问。实际路径和验证方式以证书颁发机构说明为准。
 
