@@ -36,6 +36,7 @@ const total = ref(0)
 const page = ref(1)
 const pageSize = ref(10)
 const loading = ref(false)
+const exporting = ref(false)
 const errorMessage = ref('')
 const busyOrderIds = ref<number[]>([])
 let loadSequence = 0
@@ -156,6 +157,27 @@ function resetFilters(): void {
   filters.check_in = ''
   page.value = 1
   void loadOrders()
+}
+
+async function exportAllOrders(): Promise<void> {
+  exporting.value = true
+  errorMessage.value = ''
+  try {
+    const file = await orderApi.exportAll()
+    const url = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = url
+    const exportDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date())
+    link.download = `订单详情_${exportDate}.xlsx`
+    link.click()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch (error) {
+    errorMessage.value = messageOf(error, '订单 Excel 导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 function changePage(nextPage: number): void {
@@ -383,6 +405,9 @@ onMounted(async () => {
 
       <div class="orders-filter-summary">
         共筛选出 <span class="is-mono">{{ filteredCount }}</span> 笔订单
+        <button type="button" class="orders-reset-btn" :disabled="exporting" @click="exportAllOrders">
+          {{ exporting ? '正在导出…' : '导出全部订单 Excel' }}
+        </button>
       </div>
     </section>
 

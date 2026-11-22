@@ -27,8 +27,10 @@
         <result property="platformOrderDate" column="platform_order_date"/>
         <result property="roomId" column="room_id"/>
         <result property="roomNumber" column="room_number"/>
+        <result property="roomName" column="room_name"/>
         <result property="channelId" column="channel_id"/>
         <result property="channelName" column="channel_name"/>
+        <result property="creatorName" column="creator_name"/>
         <result property="creatorId" column="creator_id"/>
         <result property="memberId" column="member_id"/>
         <result property="guestName" column="guest_name"/>
@@ -54,8 +56,8 @@
     </resultMap>
 
     <sql id="viewColumns">
-        o.id, o.order_no, o.platform_order_no, o.platform_order_date, o.room_id, r.number AS room_number,
-        o.channel_id, c.name AS channel_name, o.creator_id, o.member_id, o.guest_name, o.phone,
+        o.id, o.order_no, o.platform_order_no, o.platform_order_date, o.room_id, r.number AS room_number, r.name AS room_name,
+        o.channel_id, c.name AS channel_name, o.creator_id, cr.name AS creator_name, o.member_id, o.guest_name, o.phone,
         o.guest_count, o.check_in, o.check_out, DATEDIFF(o.check_out, o.check_in) AS nights,
         o.status, o.remark, o.admin_remark, a.paid_amount, a.platform_fee, a.platform_commission,
         a.extra_commission, a.expected_amount, a.net_amount, o.created_at, o.updated_at
@@ -90,6 +92,7 @@
         FROM orders o
         INNER JOIN room r ON r.id = o.room_id
         INNER JOIN channels c ON c.id = o.channel_id
+        LEFT JOIN creators cr ON cr.id = o.creator_id
         INNER JOIN order_amount a ON a.order_id = o.id
         WHERE o.id = #{id}
     </select>
@@ -122,10 +125,21 @@
         FROM orders o
         INNER JOIN room r ON r.id = o.room_id
         INNER JOIN channels c ON c.id = o.channel_id
+        LEFT JOIN creators cr ON cr.id = o.creator_id
         INNER JOIN order_amount a ON a.order_id = o.id
         <include refid="queryFilters"/>
         ORDER BY o.created_at DESC, o.id DESC
         LIMIT #{query.size} OFFSET #{offset}
+    </select>
+
+    <select id="findAllForExport" resultMap="orderViewResultMap">
+        SELECT <include refid="viewColumns"/>
+        FROM orders o
+        INNER JOIN room r ON r.id = o.room_id
+        INNER JOIN channels c ON c.id = o.channel_id
+        LEFT JOIN creators cr ON cr.id = o.creator_id
+        INNER JOIN order_amount a ON a.order_id = o.id
+        ORDER BY o.created_at DESC, o.id DESC
     </select>
 
     <select id="count" resultType="long">
@@ -139,6 +153,7 @@
         FROM orders o
         INNER JOIN room r ON r.id = o.room_id
         INNER JOIN channels c ON c.id = o.channel_id
+        LEFT JOIN creators cr ON cr.id = o.creator_id
         INNER JOIN order_amount a ON a.order_id = o.id
         WHERE o.member_id = #{memberId}
         <if test="status != null">AND o.status = #{status}</if>
@@ -160,6 +175,7 @@
         FROM orders o
         INNER JOIN room r ON r.id = o.room_id
         INNER JOIN channels c ON c.id = o.channel_id
+        LEFT JOIN creators cr ON cr.id = o.creator_id
         INNER JOIN order_amount a ON a.order_id = o.id
         LEFT JOIN points_log redeem
             ON redeem.ref_no = CONCAT('REDEEM:ORDER:', o.id)
@@ -173,6 +189,7 @@
         FROM orders o
         INNER JOIN room r ON r.id = o.room_id
         INNER JOIN channels c ON c.id = o.channel_id
+        LEFT JOIN creators cr ON cr.id = o.creator_id
         INNER JOIN order_amount a ON a.order_id = o.id
         WHERE o.member_id = #{memberId}
         ORDER BY o.created_at DESC, o.id DESC
@@ -183,6 +200,7 @@
         FROM orders o
         INNER JOIN room r ON r.id = o.room_id
         INNER JOIN channels c ON c.id = o.channel_id
+        LEFT JOIN creators cr ON cr.id = o.creator_id
         INNER JOIN order_amount a ON a.order_id = o.id
         WHERE o.status &lt;&gt; 'CANCELLED'
           AND o.check_in &lt;= #{endDate}

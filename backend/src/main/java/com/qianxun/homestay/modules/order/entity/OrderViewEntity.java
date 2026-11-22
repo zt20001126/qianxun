@@ -20,10 +20,14 @@ public class OrderViewEntity {
     private Long roomId;
     /** 关联客房的展示房号。 */
     private String roomNumber;
+    /** 客房名称。 */
+    private String roomName;
     /** 订单来源渠道编号。 */
     private Long channelId;
     /** 订单来源渠道名称。 */
     private String channelName;
+    /** 关联达人名称；无达人时为空。 */
+    private String creatorName;
     /** 订单关联达人编号；无达人时为空。 */
     private Long creatorId;
     /** 小程序下单会员编号；第三方订单为空。 */
@@ -81,10 +85,14 @@ public class OrderViewEntity {
     public void setRoomId(Long roomId) { this.roomId = roomId; }
     public String getRoomNumber() { return roomNumber; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
+    public String getRoomName() { return roomName; }
+    public void setRoomName(String roomName) { this.roomName = roomName; }
     public Long getChannelId() { return channelId; }
     public void setChannelId(Long channelId) { this.channelId = channelId; }
     public String getChannelName() { return channelName; }
     public void setChannelName(String channelName) { this.channelName = channelName; }
+    public String getCreatorName() { return creatorName; }
+    public void setCreatorName(String creatorName) { this.creatorName = creatorName; }
     public Long getCreatorId() { return creatorId; }
     public void setCreatorId(Long creatorId) { this.creatorId = creatorId; }
     public Long getMemberId() { return memberId; }

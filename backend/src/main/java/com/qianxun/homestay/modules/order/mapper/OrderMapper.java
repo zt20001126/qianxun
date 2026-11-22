@@ -27,6 +27,9 @@ public interface OrderMapper {
 
     List<OrderViewEntity> findPage(@Param("query") OrderQueryRequest query, @Param("offset") long offset);
 
+    /** 查询全部订单，供后台全量导出使用。 */
+    List<OrderViewEntity> findAllForExport();
+
     long count(@Param("query") OrderQueryRequest query);
 
     /** 查询当前小程序会员的订单页。 */

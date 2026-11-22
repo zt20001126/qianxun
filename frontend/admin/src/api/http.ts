@@ -21,6 +21,7 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
   (response) => {
+    if (response.config.responseType === 'blob') return response
     const body = response.data as ApiResponse<unknown>
     if (body.code !== 200) return Promise.reject(new Error(body.message || '请求失败'))
     return response

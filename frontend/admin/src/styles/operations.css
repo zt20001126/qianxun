@@ -1159,6 +1159,7 @@
 
 .orders-filter-summary { color: #6e777a; font-size: 12px; white-space: nowrap; }
 .orders-filter-summary span { color: #337a8b; font-weight: 700; }
+.orders-filter-summary .orders-reset-btn { margin-left: 12px; }
 
 /* 8 列订单明细表格 */
 .orders-table-card {

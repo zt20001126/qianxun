@@ -9,6 +9,7 @@ import com.qianxun.homestay.modules.order.enums.OrderAction;
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.order.service.OrderCommandService;
 import com.qianxun.homestay.modules.order.service.OrderQueryService;
+import com.qianxun.homestay.modules.order.service.OrderExportService;
 import com.qianxun.homestay.modules.portrait.dto.BookerPortraitSaveRequest;
 import com.qianxun.homestay.modules.order.vo.OrderCreatedVO;
 import com.qianxun.homestay.modules.order.vo.OrderDetailVO;
@@ -27,6 +28,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 
 /** O04-O10、O12 管理后台订单接口。 */
@@ -37,10 +41,21 @@ public class AdminOrderController {
 
     private final OrderQueryService orderQueryService;
     private final OrderCommandService orderCommandService;
+    private final OrderExportService orderExportService;
 
-    public AdminOrderController(OrderQueryService orderQueryService, OrderCommandService orderCommandService) {
+    public AdminOrderController(OrderQueryService orderQueryService, OrderCommandService orderCommandService,
+            OrderExportService orderExportService) {
         this.orderQueryService = orderQueryService;
         this.orderCommandService = orderCommandService;
+        this.orderExportService = orderExportService;
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> export() {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=orders.xlsx")
+                .body(orderExportService.exportAllOrders());
     }
 
     @GetMapping

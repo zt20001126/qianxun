@@ -12,6 +12,11 @@ import type {
 
 /** O04-O12 后台订单接口。 */
 export const orderApi = {
+  async exportAll(): Promise<Blob> {
+    const response = await http.get<Blob>('/api/admin/orders/export', { responseType: 'blob', timeout: 120_000 })
+    return response.data
+  },
+
   async list(filters: OrderFilters): Promise<OrderPage> {
     const response = await http.get<ApiResponse<OrderPage>>('/api/admin/orders', { params: filters })
     return response.data.data
