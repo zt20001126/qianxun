@@ -28,6 +28,7 @@ import com.qianxun.homestay.modules.order.domain.OrderNoGenerator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.math.BigDecimal;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -55,6 +56,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 })
 @AutoConfigureMockMvc
 class MallPointsReservationIntegrationTest {
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
+    private static final DateTimeFormatter ORDER_NO_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
+
     @Container
     private static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0")
             .withDatabaseName("mall_points_test").withUsername("qianxun").withPassword("qianxun-test-password");
@@ -202,7 +206,7 @@ class MallPointsReservationIntegrationTest {
             var firstResult = first.get(15, TimeUnit.SECONDS);
             var secondResult = second.get(15, TimeUnit.SECONDS);
             assertThat(firstResult.orderId()).isEqualTo(secondResult.orderId());
-            assertThat(firstResult.orderNo()).matches("QX[0-9]{12,}");
+            assertThat(firstResult.orderNo()).matches(todayOrderNoPattern());
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM mall_order WHERE member_id = ?", Integer.class, memberId)).isEqualTo(1);
             assertThat(jdbc.queryForObject("SELECT points FROM members WHERE id = ?", Integer.class, memberId)).isEqualTo(100);
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM points_log WHERE mall_order_id = ? AND type = 'REDEEM'", Integer.class,
@@ -252,8 +256,9 @@ class MallPointsReservationIntegrationTest {
             });
             String roomNumber = roomOrder.get(15, TimeUnit.SECONDS);
             String mallNumber = mallOrder.get(15, TimeUnit.SECONDS);
-            assertThat(roomNumber).matches("QX[0-9]{12,}");
-            assertThat(mallNumber).matches("QX[0-9]{12,}").isNotEqualTo(roomNumber);
+            assertThat(roomNumber).matches(todayOrderNoPattern());
+            assertThat(mallNumber).matches(todayOrderNoPattern()).isNotEqualTo(roomNumber);
+            assertThat(Math.abs(orderNoSequence(roomNumber) - orderNoSequence(mallNumber))).isEqualTo(1L);
         }
     }
 
@@ -400,6 +405,16 @@ class MallPointsReservationIntegrationTest {
         assertThatThrownBy(() -> mallPaymentService.mockPay(memberId, "M-expired-test")).isInstanceOf(BusinessException.class);
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM mall_order WHERE member_id = ?", Integer.class, memberId)).isZero();
         assertThat(jdbc.queryForObject("SELECT points FROM members WHERE id = ?", Integer.class, memberId)).isEqualTo(300);
+    }
+
+    /** 返回当前北京时间商城与客房订单共用的订单号格式。 */
+    private String todayOrderNoPattern() {
+        return "QX" + LocalDate.now(BUSINESS_ZONE).format(ORDER_NO_DATE_FORMAT) + "\\d{4,}";
+    }
+
+    /** 提取订单号中的日流水，用于验证商城与客房共用连续编号。 */
+    private long orderNoSequence(String orderNo) {
+        return Long.parseLong(orderNo.substring(10));
     }
 
     @Test

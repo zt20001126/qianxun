@@ -4,7 +4,7 @@ import { getMallProduct, getMallShipping, previewMall, prepayMall, mockPayMall, 
 
 Page({
   data: { product: null as MallProduct | null, preview: null as MallPreview | null, pending: null as MallPrepay | null,
-    quantity: 1, recipientName: '', recipientPhone: '', address: '', usePoints: false,
+    quantity: 1, recipientName: '', recipientPhone: '', address: '', usePoints: true, pointsTierLabel: '',
     loading: true, previewLoading: false, submitting: false, error: '' },
   async onLoad(options: Record<string, string | undefined>) {
     const id = Number(options.id)
@@ -13,19 +13,24 @@ Page({
       const [product, shipping] = await Promise.all([getMallProduct(id), getMallShipping()])
       this.setData({ product, recipientName: shipping.recipient_name || '', recipientPhone: shipping.recipient_phone || '',
         address: shipping.shipping_address || '' })
+      // 默认勾选积分抵扣，具体可用额度及金额始终以后端试算为准。
       await this.updatePreview()
     } catch (error) { this.setData({ error: error instanceof Error ? error.message : '商品加载失败' }) }
     finally { this.setData({ loading: false }) }
   },
-  async updatePreview() {
-    if (!this.data.product || this.data.previewLoading) return
+  async updatePreview(): Promise<MallPreview | null> {
+    if (!this.data.product || this.data.previewLoading) return null
     this.setData({ previewLoading: true, error: '' })
     try {
       const base = await previewMall(this.data.product.id, this.data.quantity, 0)
       const preview = this.data.usePoints && base.max_points_usable > 0
         ? await previewMall(this.data.product.id, this.data.quantity, base.max_points_usable) : base
-      this.setData({ preview })
-    } catch (error) { this.setData({ preview: null, error: error instanceof Error ? error.message : '金额试算失败' }) }
+      this.setData({ preview, pointsTierLabel: formatPointsTier(preview.points_per_yuan) })
+      return preview
+    } catch (error) {
+      this.setData({ preview: null, pointsTierLabel: '', error: error instanceof Error ? error.message : '金额试算失败' })
+      return null
+    }
     finally { this.setData({ previewLoading: false }) }
   },
   onQuantity(event: WechatMiniprogram.TouchEvent) {
@@ -34,7 +39,7 @@ Page({
     this.setData({ quantity }, () => { void this.updatePreview() })
   },
   onPointsToggle() {
-    if (this.data.previewLoading || this.data.pending) return
+    if (this.data.previewLoading || this.data.pending || !this.data.preview || this.data.preview.max_points_usable <= 0) return
     this.setData({ usePoints: !this.data.usePoints }, () => { void this.updatePreview() })
   },
   onName(event: WechatMiniprogram.Input) { this.setData({ recipientName: event.detail.value }) },
@@ -46,7 +51,10 @@ Page({
     this.setData({ submitting: true, error: '' })
     try {
       const state = await getMallPaymentStatus(pending.payment_no)
-      if (state.status === 'SUCCESS' && state.order_id) { wx.redirectTo({ url: '/pages/mall-orders/index' }); return }
+      if (state.status === 'SUCCESS' && state.order_id && state.order_no) {
+        this.goToSuccess(pending.payment_no, state.order_id, state.order_no)
+        return
+      }
       if (state.status === 'CLOSED' || state.status === 'FAILED') {
         this.setData({ pending: null, error: '该交易已关闭，请重新提交订单。' })
         return
@@ -75,9 +83,11 @@ Page({
         confirmText: '确认支付', success: (result) => resolve(result.confirm), fail: () => resolve(false) }))
       if (!confirmed) return
       if (payment.payment_method !== 'MOCK') throw new Error('该支付方式暂不可用')
-      await mockPayMall(payment.payment_no)
-      wx.showToast({ title: '支付成功', icon: 'success' })
-      wx.redirectTo({ url: '/pages/mall-orders/index' })
+      const result = await mockPayMall(payment.payment_no)
+      if (result.status !== 'SUCCESS' || !result.order_id || !result.order_no) {
+        throw new Error('支付结果正在确认中，请点击查询支付状态')
+      }
+      this.goToSuccess(payment.payment_no, result.order_id, result.order_no)
     } catch (error) { this.setData({ error: error instanceof Error ? error.message : '支付失败，请稍后重试' }) }
     finally { this.setData({ submitting: false }) }
   },
@@ -98,8 +108,9 @@ Page({
         fail: (error) => reject(new Error(error.errMsg?.includes('cancel') ? '已取消支付' : '微信支付未完成')) }))
       for (let attempt = 0; attempt < 10; attempt += 1) {
         const state = await getMallPaymentStatus(pending.payment_no)
-        if (state.status === 'SUCCESS' && state.order_id) {
-          wx.redirectTo({ url: '/pages/mall-orders/index' }); return
+        if (state.status === 'SUCCESS' && state.order_id && state.order_no) {
+          this.goToSuccess(pending.payment_no, state.order_id, state.order_no)
+          return
         }
         if (state.status === 'FAILED' || state.status === 'CLOSED') break
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -109,12 +120,25 @@ Page({
       // 客户端取消或网络错误也可能与服务端通知交错；先查询状态，避免误报已付款订单。
       try {
         const state = await getMallPaymentStatus(pending.payment_no)
-        if (state.status === 'SUCCESS' && state.order_id) {
-          wx.redirectTo({ url: '/pages/mall-orders/index' }); return
+        if (state.status === 'SUCCESS' && state.order_id && state.order_no) {
+          this.goToSuccess(pending.payment_no, state.order_id, state.order_no)
+          return
         }
       } catch { /* 保留原错误，用户可稍后查询订单。 */ }
       this.setData({ error: error instanceof Error ? error.message : '微信支付未完成，请稍后查询订单' })
     }
     finally { this.setData({ submitting: false }) }
   },
+  goToSuccess(paymentNo: string, orderId: number, orderNo: string) {
+    wx.redirectTo({
+      url: '/pages/payment-success/index?source=mall&payment_no=' + encodeURIComponent(paymentNo)
+        + '&order_id=' + orderId + '&order_no=' + encodeURIComponent(orderNo),
+    })
+  },
 })
+
+function formatPointsTier(pointsPerYuan: number): string {
+  const tierNames: Record<number, string> = { 30: '普通会员', 25: '银卡会员', 20: '金卡会员', 15: '钻石会员' }
+  const tierName = tierNames[pointsPerYuan]
+  return tierName ? `${tierName}（${pointsPerYuan}积分=¥1）` : `${pointsPerYuan}积分=¥1`
+}

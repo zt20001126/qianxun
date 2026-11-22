@@ -9,6 +9,7 @@
     "pages/payment-success/index",
     "pages/orders/index",
     "pages/mall/index",
+    "pages/mall-detail/index",
     "pages/mall-checkout/index",
     "pages/mall-orders/index",
     "pages/order-detail/index",

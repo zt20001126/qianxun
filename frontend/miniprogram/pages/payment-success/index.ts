@@ -1,10 +1,16 @@
-/** 预订成功页：再次向服务端确认支付和正式订单状态。 */
+/** 支付成功页：兼容客房预订与商城购买，并再次向服务端确认支付结果。 */
 import { getPaymentState } from '../../services/booking'
+import { getMallPaymentStatus } from '../../services/mall'
 
 interface SuccessPageData {
   orderId: number
   orderNo: string
   paymentNo: string
+  isMall: boolean
+  loadingText: string
+  successTitle: string
+  successCopyFirst: string
+  successCopySecond: string
   loading: boolean
   confirmed: boolean
 }
@@ -14,11 +20,17 @@ Page({
     orderId: 0,
     orderNo: '',
     paymentNo: '',
+    isMall: false,
+    loadingText: '正在确认预订结果…',
+    successTitle: '预订成功',
+    successCopyFirst: '您的房间已预订，',
+    successCopySecond: '可在「我的订单」中查看。',
     loading: true,
     confirmed: false,
   } as SuccessPageData,
 
   async onLoad(options: Record<string, string | undefined>) {
+    const isMall = options.source === 'mall'
     const orderId = Number(options.order_id)
     const orderNo = options.order_no || ''
     const paymentNo = options.payment_no || ''
@@ -28,15 +40,31 @@ Page({
     }
 
     try {
-      const payment = await getPaymentState(paymentNo)
-      if (payment.status !== 'SUCCESS'
-        || payment.order_id !== orderId
-        || payment.order_no !== orderNo) {
-        this.returnHome()
-        return
+      if (isMall) {
+        const payment = await getMallPaymentStatus(paymentNo)
+        if (payment.status !== 'SUCCESS' || payment.order_id !== orderId || payment.order_no !== orderNo) {
+          this.returnHome()
+          return
+        }
+      } else {
+        const payment = await getPaymentState(paymentNo)
+        if (payment.status !== 'SUCCESS' || payment.order_id !== orderId || payment.order_no !== orderNo) {
+          this.returnHome()
+          return
+        }
       }
-      this.setData({ orderId, orderNo, paymentNo, confirmed: true })
-      wx.setNavigationBarTitle({ title: '预订成功' })
+      this.setData({
+        orderId,
+        orderNo,
+        paymentNo,
+        isMall,
+        loadingText: isMall ? '正在确认购买结果…' : '正在确认预订结果…',
+        successTitle: isMall ? '购买成功' : '预订成功',
+        successCopyFirst: isMall ? '您的芊浔好物已购买，' : '您的房间已预订，',
+        successCopySecond: isMall ? '可在「商城订单」中查看。' : '可在「我的订单」中查看。',
+        confirmed: true,
+      })
+      wx.setNavigationBarTitle({ title: isMall ? '购买成功' : '预订成功' })
     } catch {
       wx.showToast({ title: '暂时无法确认支付结果', icon: 'none' })
       this.returnHome()
@@ -56,6 +84,10 @@ Page({
 
   onDetailTap() {
     if (this.data.confirmed && this.data.orderId) {
+      if (this.data.isMall) {
+        wx.redirectTo({ url: '/pages/mall-orders/index' })
+        return
+      }
       wx.redirectTo({ url: '/pages/order-detail/index?id=' + this.data.orderId })
     }
   },

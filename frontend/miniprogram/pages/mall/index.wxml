@@ -1,13 +1,22 @@
 <view class="mall-page">
-  <view class="mall-heading"><text class="mall-title">芊浔好物</text><text class="mall-subtitle">将水乡的温暖带回家</text></view>
-  <view wx:if="{{loading}}" class="mall-state">正在加载商品…</view>
-  <view wx:elif="{{error}}" class="mall-state"><text>{{error}}</text><button class="retry" bindtap="onRetry">重新加载</button></view>
-  <view wx:elif="{{products.length === 0}}" class="mall-state">暂无上架商品，敬请期待</view>
-  <view wx:else class="product-list">
-    <view wx:for="{{products}}" wx:key="id" class="product-card" data-id="{{item.id}}" bindtap="onProductTap">
-      <image wx:if="{{item.images.length}}" class="product-image" src="{{item.images[0]}}" mode="aspectFill" />
-      <view wx:else class="product-image product-placeholder" />
-      <view class="product-copy"><text class="product-name">{{item.name}}</text><text class="product-desc">{{item.description}}</text><text class="product-price">¥{{item.price}}</text></view>
+  <view class="mall-content">
+    <view class="mall-title-row"><view class="title-rail"></view><text class="mall-title">芊浔好物</text></view>
+    <view wx:if="{{loading}}" class="mall-state">正在加载好物…</view>
+    <view wx:elif="{{error}}" class="mall-state mall-error"><text>{{error}}</text><button class="retry-button" bindtap="onRetry">重新加载</button></view>
+    <view wx:elif="{{!product}}" class="mall-state">暂无上架商品，敬请期待</view>
+    <view wx:else class="product-list">
+      <view class="product-card" data-id="{{product.id}}" bindtap="onDetailTap">
+        <image wx:if="{{product.images.length}}" class="product-cover" src="{{product.images[0]}}" mode="aspectFill" />
+        <view wx:else class="product-cover product-cover-empty">暂无商品图片</view>
+        <view class="product-info">
+          <text class="product-name">{{product.name}}</text>
+          <text wx:if="{{product.description}}" class="product-description">{{product.description}}</text>
+          <view class="product-card-bottom">
+            <view class="price"><text>¥{{product.price}}</text><text>/件</text></view>
+            <button class="detail-button" data-id="{{product.id}}" catchtap="onDetailTap">查看详情</button>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 </view>

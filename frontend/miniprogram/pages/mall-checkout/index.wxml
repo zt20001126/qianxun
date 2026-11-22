@@ -2,19 +2,43 @@
   <view wx:if="{{loading}}" class="state">正在加载商品…</view>
   <view wx:elif="{{!product}}" class="state">{{error}}</view>
   <view wx:else>
-    <view class="card product"><swiper wx:if="{{product.images.length}}" class="cover" indicator-dots="{{product.images.length > 1}}" indicator-color="rgba(255,255,255,.55)" indicator-active-color="#98501F"><swiper-item wx:for="{{product.images}}" wx:key="*this"><image class="cover-image" src="{{item}}" mode="aspectFill" /></swiper-item></swiper><view class="product-copy"><text class="title">{{product.name}}</text><text class="description">{{product.description}}</text><text class="price">¥{{product.price}}</text></view></view>
-    <view class="card"><view class="heading">收货信息</view>
-      <view class="row"><text>收货人</text><input maxlength="80" disabled="{{!!pending}}" value="{{recipientName}}" placeholder="请输入收货人姓名" bindinput="onName" /></view>
-      <view class="row"><text>手机号</text><input type="number" maxlength="11" disabled="{{!!pending}}" value="{{recipientPhone}}" placeholder="请输入收货手机号" bindinput="onPhone" /></view>
-      <view class="row"><text>收货地址</text><input maxlength="500" disabled="{{!!pending}}" value="{{address}}" placeholder="请输入完整收货地址" bindinput="onAddress" /></view>
+    <view class="card product">
+      <swiper wx:if="{{product.images.length}}" class="cover" indicator-dots="{{product.images.length > 1}}" indicator-color="rgba(255,255,255,.55)" indicator-active-color="#98501F">
+        <swiper-item wx:for="{{product.images}}" wx:key="*this"><image class="cover-image" src="{{item}}" mode="aspectFill" /></swiper-item>
+      </swiper>
+      <view class="product-copy"><text class="title">{{product.name}}</text><text class="description">{{product.description}}</text><text class="price">¥{{product.price}}</text></view>
     </view>
-    <view class="card"><view class="heading">购买信息</view><view class="row"><text>购买数量</text><view class="counter"><button data-delta="-1" disabled="{{quantity <= 1 || !!pending || previewLoading}}" bindtap="onQuantity">−</button><text>{{quantity}}</text><button data-delta="1" disabled="{{!!pending || previewLoading}}" bindtap="onQuantity">＋</button></view></view>
-      <view class="row"><text>积分抵扣</text><switch checked="{{usePoints}}" disabled="{{!!pending || previewLoading}}" color="#98501F" bindchange="onPointsToggle" /></view>
-      <view wx:if="{{preview}}" class="summary"><view>可用积分 {{preview.available_points}} · 本次使用 {{preview.points_used}}</view><view>商品总额 ¥{{preview.total_amount}}</view><view>积分抵扣 −¥{{preview.discount_amount}}</view><view class="total">应付 <text>¥{{preview.amount}}</text></view></view>
-      <view wx:elif="{{previewLoading}}" class="state">正在计算金额…</view>
+
+    <view class="card">
+      <view class="section-heading"><view class="section-rail"></view><text>收货信息</text></view>
+      <view class="form-row"><text>收货人 <text class="required">*</text></text><input maxlength="80" disabled="{{!!pending}}" value="{{recipientName}}" placeholder="请输入收货人姓名" bindinput="onName" /></view>
+      <view class="form-row"><text>手机号 <text class="required">*</text></text><input type="number" maxlength="11" disabled="{{!!pending}}" value="{{recipientPhone}}" placeholder="请输入收货手机号" bindinput="onPhone" /></view>
+      <view class="form-row"><text>收货地址 <text class="required">*</text></text><input maxlength="500" disabled="{{!!pending}}" value="{{address}}" placeholder="请输入完整收货地址" bindinput="onAddress" /></view>
+    </view>
+
+    <view class="card">
+      <view class="section-heading"><view class="section-rail"></view><text>购买信息</text></view>
+      <view class="form-row no-border"><text>购买数量</text><view class="counter"><button data-delta="-1" disabled="{{quantity <= 1 || !!pending || previewLoading}}" bindtap="onQuantity">−</button><text>{{quantity}}</text><button data-delta="1" disabled="{{!!pending || previewLoading}}" bindtap="onQuantity">＋</button></view></view>
+    </view>
+
+    <view class="card fee-card">
+      <view class="fee-title-row"><view class="section-heading"><view class="section-rail"></view><text>费用明细</text></view><text wx:if="{{preview}}" class="tier-pill">{{pointsTierLabel}}</text></view>
+      <view wx:if="{{preview}}" class="fee-line"><text>商品金额</text><text class="fee-equation">¥{{product.price}} × {{quantity}}件</text><text class="fee-value">¥{{preview.total_amount}}</text></view>
+      <view wx:elif="{{previewLoading}}" class="fee-loading">正在试算费用…</view>
+      <view wx:if="{{preview}}" class="points-row">
+        <view class="points-description"><text class="points-title">积分抵扣</text><text class="points-available">当前可用积分：{{preview.available_points}}</text></view>
+        <view class="points-controls">
+          <view wx:if="{{usePoints && preview.points_used > 0}}" class="points-used">－ {{preview.points_used}} 积分</view>
+          <text wx:if="{{usePoints && preview.discount_amount !== '0.00'}}" class="discount-amount">−¥{{preview.discount_amount}}</text>
+          <text wx:else class="no-points">{{preview.max_points_usable > 0 ? '不使用积分' : '暂无可用积分'}}</text>
+          <view class="points-toggle {{usePoints ? 'is-on' : ''}} {{!!pending || previewLoading || preview.max_points_usable === 0 ? 'is-disabled' : ''}}" bindtap="onPointsToggle"><view class="toggle-thumb"></view></view>
+        </view>
+      </view>
+      <view wx:if="{{preview}}" class="pay-total"><text>实付金额</text><text>¥{{preview.amount}}</text></view>
       <view wx:if="{{error}}" class="error">{{error}}</view>
       <view wx:if="{{pending}}" class="hint">支付信息已锁定，请在有效期内完成支付。</view>
     </view>
+
     <button wx:if="{{pending && pending.payment_method === 'WECHAT'}}" class="submit" disabled="{{submitting}}" open-type="getPhoneNumber" bindgetphonenumber="onPhoneAuthorized">{{submitting ? '处理中…' : '授权手机号并微信支付'}}</button>
     <button wx:else class="submit" disabled="{{submitting || previewLoading || !preview}}" bindtap="onSubmit">{{submitting ? '处理中…' : (pending ? '继续模拟支付' : '提交并支付')}}</button>
     <button wx:if="{{pending}}" class="check-payment" disabled="{{submitting}}" bindtap="onCheckPayment">查询支付状态</button>

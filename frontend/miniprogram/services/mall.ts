@@ -28,9 +28,11 @@ export interface MallPreview {
 }
 export interface MallPrepay { payment_no: string; payment_method: 'MOCK' | 'WECHAT'; total_amount: string;
   points_used: number; discount_amount: string; amount: string; expires_at: string }
+/** 商城支付完成或查询后的服务端状态。 */
+export interface MallPaymentResult { status: string; order_id: number | null; order_no: string | null; amount: string }
 
-export function listMallProducts(page: number): Promise<{ list: MallProduct[]; total: number; page: number; size: number }> {
-  return request({ url: `/api/app/mall/products?page=${page}&size=20` })
+export function listMallProducts(page: number, size = 20): Promise<{ list: MallProduct[]; total: number; page: number; size: number }> {
+  return request({ url: `/api/app/mall/products?page=${page}&size=${size}` })
 }
 
 export function getMallProduct(id: number): Promise<MallProduct> {
@@ -46,7 +48,7 @@ export function prepayMall(data: { product_id: number; quantity: number; points_
   recipient_name: string; recipient_phone: string; shipping_address: string }): Promise<MallPrepay> {
   return request({ url: '/api/app/mall/payments', method: 'POST', data })
 }
-export function mockPayMall(paymentNo: string): Promise<{ status: string; order_id: number }> {
+export function mockPayMall(paymentNo: string): Promise<MallPaymentResult> {
   return request({ url: `/api/app/mall/payments/${encodeURIComponent(paymentNo)}/mock-pay`, method: 'POST' })
 }
 export function createMallWechatPrepay(paymentNo: string, loginCode: string, phoneCode: string): Promise<{
@@ -55,7 +57,7 @@ export function createMallWechatPrepay(paymentNo: string, loginCode: string, pho
   return request({ url: `/api/app/mall/payments/${encodeURIComponent(paymentNo)}/wechat-prepay`, method: 'POST',
     data: { login_code: loginCode, phone_code: phoneCode } })
 }
-export function getMallPaymentStatus(paymentNo: string): Promise<{ status: string; order_id: number | null }> {
+export function getMallPaymentStatus(paymentNo: string): Promise<MallPaymentResult> {
   return request({ url: `/api/app/mall/payments/${encodeURIComponent(paymentNo)}` })
 }
 

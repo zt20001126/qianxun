@@ -1,0 +1,44 @@
+<view class="detail-page">
+  <view wx:if="{{loading}}" class="detail-state">正在读取商品资料…</view>
+  <view wx:elif="{{errorMessage}}" class="detail-state detail-error">
+    <text>{{errorMessage}}</text>
+    <button class="back-button" bindtap="onBackTap">返回芊浔好物</button>
+  </view>
+  <view wx:elif="{{product}}" class="detail-content">
+    <view wx:if="{{product.images.length}}" class="gallery-wrap">
+      <swiper class="product-gallery" circular current="{{imageIndex}}" duration="280" bindchange="onGalleryChange">
+        <swiper-item wx:for="{{product.images}}" wx:key="*this">
+          <image class="gallery-image" src="{{item}}" mode="aspectFill" />
+        </swiper-item>
+      </swiper>
+      <view class="gallery-gradient"></view>
+      <view wx:if="{{imageCount > 1}}" class="gallery-control gallery-previous" data-delta="-1" bindtap="onGalleryStep"><qx-icon name="chevron-left-white" size="32" /></view>
+      <view wx:if="{{imageCount > 1}}" class="gallery-control gallery-next" data-delta="1" bindtap="onGalleryStep"><qx-icon name="chevron-right-white" size="32" /></view>
+      <view wx:if="{{imageCount > 1}}" class="gallery-count">{{imageIndex + 1}} / {{imageCount}}</view>
+    </view>
+    <view wx:else class="gallery-empty"><text>芊浔好物</text></view>
+
+    <view class="detail-card">
+      <view class="detail-heading">
+        <text class="product-title">{{product.name}}</text>
+        <text class="product-label">芊浔好物</text>
+      </view>
+
+      <view class="product-facts">
+        <view class="product-fact"><qx-icon name="gift" size="28" /><text>芊浔好物</text></view>
+        <view class="product-fact"><qx-icon name="coins" size="28" /><text>支持积分抵扣</text></view>
+        <view class="product-fact"><qx-icon name="map-pin" size="28" /><text>付款后发货</text></view>
+      </view>
+
+      <view class="detail-section">
+        <view class="section-heading"><view class="section-rail"></view><text>商品介绍</text></view>
+        <text class="product-description">{{product.description}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{product && !loading && !errorMessage}}" class="detail-footer">
+    <view class="footer-price"><text class="currency">¥</text><text class="price-number">{{priceLabel}}</text><text class="per-unit">/件</text></view>
+    <button class="buy-button" loading="{{buying}}" disabled="{{buying}}" bindtap="onBuyTap">立即购买</button>
+  </view>
+</view>
