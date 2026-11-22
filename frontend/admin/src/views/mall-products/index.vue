@@ -8,7 +8,7 @@ interface ProductForm {
   name: string
   description: string
   price: string
-  imagesText: string
+  images: string[]
 }
 
 const AMOUNT_PATTERN = /^\d{1,10}(?:\.\d{1,2})?$/
@@ -18,6 +18,8 @@ const page = ref(1)
 const total = ref(0)
 const loading = ref(false)
 const saving = ref(false)
+const uploading = ref(false)
+const imageInput = ref<HTMLInputElement | null>(null)
 const errorMessage = ref('')
 const successMessage = ref('')
 const editingProduct = ref<MallProduct | null>(null)
@@ -30,7 +32,7 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / MALL_PAGE_
 onMounted(() => { void loadProducts() })
 
 function emptyForm(): ProductForm {
-  return { name: '', description: '', price: '', imagesText: '' }
+  return { name: '', description: '', price: '', images: [] }
 }
 
 async function loadProducts(): Promise<void> {
@@ -60,14 +62,41 @@ function beginEdit(product: MallProduct): void {
     name: product.name,
     description: product.description,
     price: product.price,
-    imagesText: product.images.join('\n'),
+    images: [...product.images],
   })
   errorMessage.value = ''
   dialogOpen.value = true
 }
 
 function closeDialog(): void {
-  if (!saving.value) dialogOpen.value = false
+  if (!saving.value && !uploading.value) dialogOpen.value = false
+}
+
+async function uploadImages(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  input.value = ''
+  if (!files.length) return
+  uploading.value = true
+  errorMessage.value = ''
+  try {
+    for (const file of files) form.images.push(await mallApi.uploadImage(file))
+  } catch (error) {
+    errorMessage.value = messageOf(error, '图片上传失败')
+  } finally {
+    uploading.value = false
+  }
+}
+
+function moveImage(index: number, offset: number): void {
+  const target = index + offset
+  if (target < 0 || target >= form.images.length) return
+  const [image] = form.images.splice(index, 1)
+  form.images.splice(target, 0, image)
+}
+
+function removeImage(index: number): void {
+  form.images.splice(index, 1)
 }
 
 async function saveProduct(): Promise<void> {
@@ -87,7 +116,7 @@ async function saveProduct(): Promise<void> {
     name,
     description,
     price,
-    images: splitLines(form.imagesText),
+    images: [...form.images],
   }
   const productId = editingProduct.value?.id
   const isCreating = productId === undefined
@@ -130,10 +159,6 @@ function changePage(nextPage: number): void {
   if (nextPage < 1 || nextPage > totalPages.value || loading.value) return
   page.value = nextPage
   void loadProducts()
-}
-
-function splitLines(value: string): string[] {
-  return value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
 }
 
 function messageOf(error: unknown, fallback: string): string {
@@ -232,14 +257,30 @@ function messageOf(error: unknown, fallback: string): string {
               <label class="form-span">商品描述
                 <textarea v-model="form.description" rows="4" maxlength="10000" placeholder="请填写商品介绍" required />
               </label>
-              <label class="form-span">图片地址（每行一个）
-                <textarea v-model="form.imagesText" rows="4" placeholder="请输入已有图片 URL；每行一条" />
-                <small>当前仅支持填写已存在的图片地址，暂不提供图片上传。</small>
-              </label>
+              <div class="form-span image-field">
+                <label>商品图片</label>
+                <input ref="imageInput" class="image-file-input" type="file" accept="image/jpeg,image/png,image/gif,image/bmp,image/webp" multiple @change="uploadImages" />
+                <div class="image-toolbar">
+                  <button class="button button-outline" type="button" :disabled="uploading || saving" @click="imageInput?.click()">
+                    {{ uploading ? '上传中…' : '选择并上传图片' }}
+                  </button>
+                  <small>支持 JPG、PNG、GIF、BMP、WebP；可用上下移调整顺序，第一张为封面。</small>
+                </div>
+                <ol v-if="form.images.length" class="product-image-list">
+                  <li v-for="(image, index) in form.images" :key="image + index">
+                    <img :src="image" :alt="`商品图片 ${index + 1}`" />
+                    <span>{{ index === 0 ? '封面' : `图片 ${index + 1}` }}</span>
+                    <button class="button button-quiet" type="button" :disabled="index === 0 || uploading" @click="moveImage(index, -1)">上移</button>
+                    <button class="button button-quiet" type="button" :disabled="index === form.images.length - 1 || uploading" @click="moveImage(index, 1)">下移</button>
+                    <button class="button button-quiet" type="button" :disabled="uploading" @click="removeImage(index)">移除</button>
+                  </li>
+                </ol>
+                <small v-else>尚未添加商品图片。</small>
+              </div>
             </div>
             <footer class="dialog-actions">
-              <button class="button button-outline" type="button" :disabled="saving" @click="closeDialog">取消</button>
-              <button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '保存中…' : '保存商品' }}</button>
+              <button class="button button-outline" type="button" :disabled="saving || uploading" @click="closeDialog">取消</button>
+              <button class="button button-primary" type="submit" :disabled="saving || uploading">{{ saving ? '保存中…' : '保存商品' }}</button>
             </footer>
           </form>
         </section>
@@ -250,4 +291,12 @@ function messageOf(error: unknown, fallback: string): string {
 
 <style scoped>
 .mall-products-table { min-width: 620px; }
+.image-file-input { display: none; }
+.image-field { display: grid; gap: 10px; }
+.image-field > label { font-weight: 600; }
+.image-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.product-image-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.product-image-list li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px; border: 1px solid #e7e0da; border-radius: 10px; }
+.product-image-list img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
+.product-image-list span { flex: 1; min-width: 42px; }
 </style>

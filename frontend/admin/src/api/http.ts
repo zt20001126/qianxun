@@ -12,6 +12,8 @@ export const http = axios.create({
 })
 
 http.interceptors.request.use((config) => {
+  // FormData 由浏览器自动补充 multipart boundary，不能沿用默认 JSON Content-Type。
+  if (config.data instanceof FormData) delete config.headers['Content-Type']
   const token = localStorage.getItem('qx_admin_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config

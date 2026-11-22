@@ -61,6 +61,12 @@ export const mallApi = {
   async create(input: MallProductInput): Promise<void> {
     await http.post('/api/admin/mall/products', input)
   },
+  async uploadImage(file: File): Promise<string> {
+    const form = new FormData()
+    form.append('file', file)
+    const response = await http.post<ApiResponse<{ url: string }>>('/api/admin/mall/products/images', form)
+    return response.data.data.url
+  },
   async update(id: number, input: MallProductInput): Promise<void> {
     await http.put(`/api/admin/mall/products/${id}`, input)
   },

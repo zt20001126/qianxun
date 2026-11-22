@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 public class OssProperties {
 
     private String endpoint;
+    /** 用于生成浏览器可直接访问图片地址的公开域名，可配置 CDN 域名。 */
+    private String publicBaseUrl;
     private String bucket;
     private String accessKeyId;
     private String accessKeySecret;
@@ -26,6 +28,10 @@ public class OssProperties {
     public String getBucket() {
         return bucket;
     }
+
+    public String getPublicBaseUrl() { return publicBaseUrl; }
+
+    public void setPublicBaseUrl(String publicBaseUrl) { this.publicBaseUrl = publicBaseUrl; }
 
     public void setBucket(String bucket) {
         this.bucket = bucket;

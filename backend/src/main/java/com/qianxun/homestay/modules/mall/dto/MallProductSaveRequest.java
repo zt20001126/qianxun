@@ -12,6 +12,6 @@ import java.util.List;
 public record MallProductSaveRequest(
         /** 商品名称。 */ @NotBlank @Size(max = 120) String name,
         /** 商品介绍及规格。 */ @NotBlank @Size(max = 10000) String description,
-        /** 公开可读取的图片地址。 */ @NotNull @Size(max = 50) List<@NotBlank @Size(max = 2048) String> images,
+        /** 已上传至 OSS 的公开图片链接，顺序决定商品图片展示顺序。 */ @NotNull @Size(max = 50) List<@NotBlank @Size(max = 2048) String> images,
         /** 单价，单位元。 */ @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2) BigDecimal price) {
 }
