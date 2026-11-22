@@ -19,6 +19,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 微信退款准备和确认结果的独立数据库事务。 */
@@ -30,9 +31,10 @@ public class MallWechatRefundTransactionServiceImpl implements MallWechatRefundT
     private final MallRefundMapper refunds;
     private final MemberMapper members;
     private final MallPointsRefundService points;
+    private final ApplicationEventPublisher eventPublisher;
     public MallWechatRefundTransactionServiceImpl(MallOrderMapper orders, MallPaymentMapper payments,
-            MallRefundMapper refunds, MemberMapper members, MallPointsRefundService points) {
-        this.orders = orders; this.payments = payments; this.refunds = refunds; this.members = members; this.points = points;
+            MallRefundMapper refunds, MemberMapper members, MallPointsRefundService points, ApplicationEventPublisher eventPublisher) {
+        this.orders = orders; this.payments = payments; this.refunds = refunds; this.members = members; this.points = points; this.eventPublisher = eventPublisher;
     }
     @Override @Transactional public MallWechatRefundCommand prepare(Long memberId, Long orderId) {
         MallOrderEntity order = orders.findByIdForUpdate(orderId);
@@ -86,6 +88,8 @@ public class MallWechatRefundTransactionServiceImpl implements MallWechatRefundT
         if (refunds.markSuccess(refund.getId(), wechatRefundId, LocalDateTime.now(BUSINESS_ZONE)) != 1
                 || orders.markRefunded(order.getId()) != 1) throw new BusinessException(HttpStatus.CONFLICT, "退款状态更新失败");
         points.returnPoints(member, order);
+        eventPublisher.publishEvent(new com.qianxun.homestay.modules.notification.event.OrderNotificationEvent(
+                com.qianxun.homestay.modules.notification.event.OrderNotificationEvent.Type.MALL_REFUNDED, order.getId(), refund.getAmount(), null, LocalDateTime.now(BUSINESS_ZONE)));
         return new MallRefundVO(refundNo, order.getId(), "SUCCESS", refund.getAmount().setScale(2).toPlainString());
     }
     @Override @Transactional public void fail(String refundNo) {

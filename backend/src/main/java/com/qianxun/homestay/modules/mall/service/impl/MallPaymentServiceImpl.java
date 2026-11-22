@@ -34,6 +34,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,10 +51,11 @@ public class MallPaymentServiceImpl implements MallPaymentService {
     private final PointsLogMapper pointsLogMapper;
     private final WechatPayProperties wechatProperties;
     private final OrderNoGenerator orderNoGenerator;
+    private final ApplicationEventPublisher eventPublisher;
 
     public MallPaymentServiceImpl(MallProductMapper productMapper, MallPaymentMapper paymentMapper,
             MallOrderMapper orderMapper, MemberMapper memberMapper, PointsBalanceService pointsService,
-            PointsLogMapper pointsLogMapper, WechatPayProperties wechatProperties, OrderNoGenerator orderNoGenerator) {
+            PointsLogMapper pointsLogMapper, WechatPayProperties wechatProperties, OrderNoGenerator orderNoGenerator, ApplicationEventPublisher eventPublisher) {
         this.productMapper = productMapper;
         this.paymentMapper = paymentMapper;
         this.orderMapper = orderMapper;
@@ -62,6 +64,7 @@ public class MallPaymentServiceImpl implements MallPaymentService {
         this.pointsLogMapper = pointsLogMapper;
         this.wechatProperties = wechatProperties;
         this.orderNoGenerator = orderNoGenerator;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override @Transactional(readOnly = true)
@@ -190,6 +193,8 @@ public class MallPaymentServiceImpl implements MallPaymentService {
                 payment.getShippingAddress()) != 1 || paymentMapper.markSuccess(payment.getId(), order.getId(), transactionId, paidAt) != 1) {
             throw new BusinessException(HttpStatus.CONFLICT, "支付交易状态已变化");
         }
+        eventPublisher.publishEvent(new com.qianxun.homestay.modules.notification.event.OrderNotificationEvent(
+                com.qianxun.homestay.modules.notification.event.OrderNotificationEvent.Type.MALL_PAID, order.getId(), null, null, paidAt));
         return new MallPaymentResultVO(payment.getPaymentNo(), PaymentStatus.SUCCESS.name(), order.getId(), order.getOrderNo(), money(payment.getAmount()));
     }
 

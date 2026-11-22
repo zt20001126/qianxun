@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -43,6 +44,7 @@ public class RefundServiceImpl implements RefundService {
     private final PointsBalanceService pointsBalanceService;
     private final WechatRefundService wechatRefundService;
     private final TransactionTemplate transactionTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     public RefundServiceImpl(
             OrderCancellationPolicy cancellationPolicy,
@@ -51,7 +53,7 @@ public class RefundServiceImpl implements RefundService {
             RefundMapper refundMapper,
             PointsBalanceService pointsBalanceService,
             WechatRefundService wechatRefundService,
-            org.springframework.transaction.PlatformTransactionManager transactionManager) {
+            org.springframework.transaction.PlatformTransactionManager transactionManager, ApplicationEventPublisher eventPublisher) {
         this.cancellationPolicy = cancellationPolicy;
         this.orderMapper = orderMapper;
         this.paymentMapper = paymentMapper;
@@ -59,6 +61,7 @@ public class RefundServiceImpl implements RefundService {
         this.pointsBalanceService = pointsBalanceService;
         this.wechatRefundService = wechatRefundService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -121,6 +124,8 @@ public class RefundServiceImpl implements RefundService {
             throw new BusinessException(HttpStatus.CONFLICT, "订单状态已变化，请重新查询");
         }
         pointsBalanceService.returnForRefund(memberId, orderId);
+        eventPublisher.publishEvent(new com.qianxun.homestay.modules.notification.event.OrderNotificationEvent(
+                com.qianxun.homestay.modules.notification.event.OrderNotificationEvent.Type.STAY_CANCELLED, orderId, refund.getAmount(), refund.getReason(), now));
         return toResult(refund);
     }
 

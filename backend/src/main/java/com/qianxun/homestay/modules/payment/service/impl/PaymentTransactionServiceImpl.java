@@ -32,6 +32,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 串行处理模拟支付，原子写入正式订单、金额快照和积分抵扣流水。 */
@@ -52,6 +53,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
     private final RoomMapper roomMapper;
     private final BookerPortraitService bookerPortraitService;
     private final Long miniProgramChannelId;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PaymentTransactionServiceImpl(
             AvailabilityService availabilityService,
@@ -64,7 +66,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
             PointsBalanceService pointsBalanceService,
             RoomMapper roomMapper,
             @Value("${app.channel.mini-program-id}") Long miniProgramChannelId,
-            BookerPortraitService bookerPortraitService) {
+            BookerPortraitService bookerPortraitService, ApplicationEventPublisher eventPublisher) {
         this.availabilityService = availabilityService;
         this.bookingLockMapper = bookingLockMapper;
         this.memberMapper = memberMapper;
@@ -76,6 +78,7 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         this.roomMapper = roomMapper;
         this.bookerPortraitService = bookerPortraitService;
         this.miniProgramChannelId = miniProgramChannelId;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -203,6 +206,8 @@ public class PaymentTransactionServiceImpl implements PaymentTransactionService 
         if (updated != 1) {
             throw new BusinessException(HttpStatus.CONFLICT, "支付交易状态已变化，请查询支付结果");
         }
+        eventPublisher.publishEvent(new com.qianxun.homestay.modules.notification.event.OrderNotificationEvent(
+                com.qianxun.homestay.modules.notification.event.OrderNotificationEvent.Type.STAY_PAID, order.getId(), null, null, paidAt));
         return new PaymentAttemptResult(false, new MockPayVO(
                 payment.getPaymentNo(), PaymentStatus.SUCCESS, order.getId(), order.getOrderNo(), money(payment.getAmount())));
     }

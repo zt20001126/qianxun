@@ -16,6 +16,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 原子处理商城模拟退款及积分返还。 */
@@ -27,9 +28,10 @@ public class MallRefundServiceImpl implements MallRefundService {
     private final MallRefundMapper refunds;
     private final MemberMapper members;
     private final MallPointsRefundService pointsRefund;
+    private final ApplicationEventPublisher eventPublisher;
     public MallRefundServiceImpl(MallOrderMapper orders, MallPaymentMapper payments, MallRefundMapper refunds,
-            MemberMapper members, MallPointsRefundService pointsRefund) {
-        this.orders = orders; this.payments = payments; this.refunds = refunds; this.members = members; this.pointsRefund = pointsRefund;
+            MemberMapper members, MallPointsRefundService pointsRefund, ApplicationEventPublisher eventPublisher) {
+        this.orders = orders; this.payments = payments; this.refunds = refunds; this.members = members; this.pointsRefund = pointsRefund; this.eventPublisher = eventPublisher;
     }
     @Override @Transactional public MallRefundVO refund(Long memberId, Long orderId) {
         // 发货与退款都先锁订单，避免重复变更同一笔订单状态。
@@ -54,6 +56,8 @@ public class MallRefundServiceImpl implements MallRefundService {
         if (refunds.insertSuccess(orderId, payment.getId(), refundNo, payment.getAmount(), LocalDateTime.now(BUSINESS_ZONE)) != 1
                 || orders.markRefunded(orderId) != 1) throw new BusinessException(HttpStatus.CONFLICT, "订单退款状态已变化");
         pointsRefund.returnPoints(member, order);
+        eventPublisher.publishEvent(new com.qianxun.homestay.modules.notification.event.OrderNotificationEvent(
+                com.qianxun.homestay.modules.notification.event.OrderNotificationEvent.Type.MALL_REFUNDED, orderId, payment.getAmount(), null, LocalDateTime.now(BUSINESS_ZONE)));
         return new MallRefundVO(refundNo, orderId, "SUCCESS", payment.getAmount().setScale(2).toPlainString());
     }
 }

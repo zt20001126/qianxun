@@ -23,6 +23,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 /** 事务化准备微信退款，并在微信确认后取消订单和返还积分。 */
@@ -35,15 +36,17 @@ public class WechatRefundTransactionServiceImpl implements WechatRefundTransacti
     private final PaymentMapper paymentMapper;
     private final RefundMapper refundMapper;
     private final PointsBalanceService pointsBalanceService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public WechatRefundTransactionServiceImpl(
             OrderCancellationPolicy cancellationPolicy, OrderMapper orderMapper,
-            PaymentMapper paymentMapper, RefundMapper refundMapper, PointsBalanceService pointsBalanceService) {
+            PaymentMapper paymentMapper, RefundMapper refundMapper, PointsBalanceService pointsBalanceService, ApplicationEventPublisher eventPublisher) {
         this.cancellationPolicy = cancellationPolicy;
         this.orderMapper = orderMapper;
         this.paymentMapper = paymentMapper;
         this.refundMapper = refundMapper;
         this.pointsBalanceService = pointsBalanceService;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -122,6 +125,8 @@ public class WechatRefundTransactionServiceImpl implements WechatRefundTransacti
             throw new BusinessException(HttpStatus.CONFLICT, "订单状态已变化，退款未完成");
         }
         pointsBalanceService.returnForRefund(order.getMemberId(), order.getId());
+        eventPublisher.publishEvent(new com.qianxun.homestay.modules.notification.event.OrderNotificationEvent(
+                com.qianxun.homestay.modules.notification.event.OrderNotificationEvent.Type.STAY_CANCELLED, order.getId(), refund.getAmount(), refund.getReason(), LocalDateTime.now(BUSINESS_ZONE)));
         return new RefundResultVO(refund.getId(), refund.getRefundNo(), RefundStatus.SUCCESS);
     }
 
