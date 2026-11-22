@@ -12,6 +12,7 @@
     "pages/mall-detail/index",
     "pages/mall-checkout/index",
     "pages/mall-orders/index",
+    "pages/mall-order-detail/index",
     "pages/order-detail/index",
     "pages/member-center/index",
     "pages/my/index",

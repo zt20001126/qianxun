@@ -7,6 +7,7 @@ import com.qianxun.homestay.modules.mall.entity.MallOrderEntity;
 import com.qianxun.homestay.modules.mall.enums.MallOrderStatus;
 import com.qianxun.homestay.modules.mall.mapper.MallOrderMapper;
 import com.qianxun.homestay.modules.mall.service.MallOrderService;
+import com.qianxun.homestay.modules.mall.vo.AppMallOrderDetailVO;
 import com.qianxun.homestay.modules.mall.vo.MallOrderPageVO;
 import com.qianxun.homestay.modules.mall.vo.MallOrderVO;
 import com.qianxun.homestay.modules.member.entity.MemberEntity;
@@ -19,7 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** 维护商城订单状态及完成订单时的积分奖励。 */
+/** 提供商城订单查询、履约状态维护及完成订单的积分奖励。 */
 @Service
 public class MallOrderServiceImpl implements MallOrderService {
     private final MallOrderMapper orderMapper;
@@ -38,6 +39,13 @@ public class MallOrderServiceImpl implements MallOrderService {
     @Override public MallOrderPageVO findMemberPage(Long memberId, int page, int size) {
         return new MallOrderPageVO(orderMapper.findMemberPage(memberId, (long) (page - 1) * size, size)
                 .stream().map(this::toVO).toList(), orderMapper.countMember(memberId), page, size);
+    }
+    @Override @Transactional(readOnly = true)
+    public AppMallOrderDetailVO findMemberById(Long memberId, Long id) {
+        // 会员详情查询必须在 SQL 层同时限制归属，未命中统一按不存在返回。
+        MallOrderEntity order = orderMapper.findMemberById(memberId, id);
+        if (order == null) throw new BusinessException(HttpStatus.NOT_FOUND, "商城订单不存在");
+        return toAppDetailVO(order);
     }
     @Override public MallOrderVO findById(Long id) { return toVO(requireOrder(id, false)); }
 
@@ -107,5 +115,14 @@ public class MallOrderServiceImpl implements MallOrderService {
                 order.getRecipientPhone(), order.getShippingAddress(), order.getStatus(), order.getExpressCompany(),
                 order.getTrackingNo(), ApiTime.fromShanghai(order.getPaidAt()), ApiTime.fromShanghai(order.getShippedAt()),
                 ApiTime.fromShanghai(order.getCompletedAt()), ApiTime.fromShanghai(order.getCreatedAt()));
+    }
+
+    private AppMallOrderDetailVO toAppDetailVO(MallOrderEntity order) {
+        return new AppMallOrderDetailVO(order.getId(), order.getOrderNo(), order.getProductName(), order.getQuantity(),
+                order.getTotalAmount().setScale(2).toPlainString(), order.getPaidAmount().setScale(2).toPlainString(),
+                order.getPointsUsed(), order.getRecipientName(), order.getRecipientPhone(), order.getShippingAddress(),
+                order.getStatus(), order.getExpressCompany(), order.getTrackingNo(), ApiTime.fromShanghai(order.getPaidAt()),
+                ApiTime.fromShanghai(order.getShippedAt()), ApiTime.fromShanghai(order.getCompletedAt()),
+                ApiTime.fromShanghai(order.getCreatedAt()));
     }
 }

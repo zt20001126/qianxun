@@ -1,5 +1,5 @@
-/** 当前会员商城订单列表，沿用房间订单的卡片层级展示商品与物流状态。 */
-import { listMallOrders, refundMallOrder, type MallOrder } from '../../services/mall'
+/** 当前会员商城订单列表，沿用房间订单的卡片层级并跳转至详情页操作。 */
+import { listMallOrders, type MallOrder } from '../../services/mall'
 
 const statusLabels: Record<MallOrder['status'], string> = {
   PENDING_SHIPMENT: '待发货',
@@ -18,7 +18,6 @@ interface MallOrdersPageData {
   orders: DisplayOrder[]
   loading: boolean
   loadingMore: boolean
-  refundingId: number
   errorMessage: string
   page: number
   total: number
@@ -46,7 +45,6 @@ Page({
     orders: [],
     loading: true,
     loadingMore: false,
-    refundingId: 0,
     errorMessage: '',
     page: 1,
     total: 0,
@@ -112,22 +110,10 @@ Page({
   },
 
   onRetry() { void this.loadOrders() },
-  onRefund(event: WechatMiniprogram.TouchEvent) {
-    const id = Number(event.currentTarget.dataset.id)
-    if (!Number.isInteger(id) || id <= 0 || this.data.refundingId) return
-    wx.showModal({ title: '申请退款', content: '确认对这笔待发货订单申请整单退款吗？', success: (result) => {
-      if (result.confirm) void this.submitRefund(id)
-    } })
-  },
-  async submitRefund(id: number) {
-    if (this.data.refundingId) return
-    this.setData({ refundingId: id })
-    try {
-      const result = await refundMallOrder(id)
-      wx.showToast({ title: result.status === 'SUCCESS' ? '退款成功' : (result.status === 'PENDING' ? '退款处理中' : '退款未成功'),
-        icon: result.status === 'SUCCESS' ? 'success' : 'none' })
-      await this.loadOrders()
-    } catch (error) { wx.showToast({ title: error instanceof Error ? error.message : '退款失败', icon: 'none' }) }
-    finally { this.setData({ refundingId: 0 }) }
+  onOrderTap(event: WechatMiniprogram.TouchEvent) {
+    const id = Number(event.currentTarget.dataset.orderId)
+    if (Number.isInteger(id) && id > 0) {
+      wx.navigateTo({ url: `/pages/mall-order-detail/index?id=${id}` })
+    }
   },
 })

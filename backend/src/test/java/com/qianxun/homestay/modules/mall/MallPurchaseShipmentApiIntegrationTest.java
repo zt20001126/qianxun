@@ -133,6 +133,19 @@ class MallPurchaseShipmentApiIntegrationTest {
                 .andExpect(jsonPath("$.data.list[0].product_name").value("初始蚕丝被"))
                 .andExpect(jsonPath("$.data.list[0].paid_amount").value("199.00"))
                 .andExpect(jsonPath("$.data.list[0].status").value("PENDING_SHIPMENT"));
+        mockMvc.perform(get("/api/app/mall/orders/{id}", orderId).header("Authorization", memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order_no").value(orderNo))
+                .andExpect(jsonPath("$.data.member_id").doesNotExist())
+                .andExpect(jsonPath("$.data.product_name").value("初始蚕丝被"))
+                .andExpect(jsonPath("$.data.quantity").value(1))
+                .andExpect(jsonPath("$.data.total_amount").value("199.00"))
+                .andExpect(jsonPath("$.data.points_used").value(0))
+                .andExpect(jsonPath("$.data.paid_amount").value("199.00"))
+                .andExpect(jsonPath("$.data.recipient_name").value("初始收货人"))
+                .andExpect(jsonPath("$.data.recipient_phone").value(phoneFor(memberId)))
+                .andExpect(jsonPath("$.data.shipping_address").value("浙江省湖州市南浔区测试路 1 号"))
+                .andExpect(jsonPath("$.data.status").value("PENDING_SHIPMENT"));
         mockMvc.perform(get("/api/admin/mall/orders/{id}", orderId).header("Authorization", adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.order_no").value(orderNo))
@@ -153,6 +166,11 @@ class MallPurchaseShipmentApiIntegrationTest {
                 .andExpect(jsonPath("$.data.list[0].status").value("SHIPPED"))
                 .andExpect(jsonPath("$.data.list[0].express_company").value("顺丰速运"))
                 .andExpect(jsonPath("$.data.list[0].tracking_no").value("SF-10001"));
+        mockMvc.perform(get("/api/app/mall/orders/{id}", orderId).header("Authorization", memberToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("SHIPPED"))
+                .andExpect(jsonPath("$.data.express_company").value("顺丰速运"))
+                .andExpect(jsonPath("$.data.tracking_no").value("SF-10001"));
         mockMvc.perform(post("/api/admin/mall/orders/{id}/ship", orderId).header("Authorization", adminToken)
                         .contentType("application/json").content("{\"express_company\":\"顺丰速运\",\"tracking_no\":\"SF-10002\"}"))
                 .andExpect(status().isConflict())
@@ -218,6 +236,13 @@ class MallPurchaseShipmentApiIntegrationTest {
         String paymentNo = prepay(productId, memberToken, 0, "收货人", phoneFor(memberId), "测试地址");
         long orderId = mockPay(paymentNo, memberToken);
 
+        mockMvc.perform(get("/api/app/mall/orders/{id}", orderId))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401));
+        mockMvc.perform(get("/api/app/mall/orders/{id}", orderId).header("Authorization", adminToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403));
+
         mockMvc.perform(post("/api/admin/mall/orders/{id}/ship", orderId).header("Authorization", memberToken)
                         .contentType("application/json").content("{\"express_company\":\"快递\",\"tracking_no\":\"NO-1\"}"))
                 .andExpect(status().isForbidden())
@@ -249,6 +274,12 @@ class MallPurchaseShipmentApiIntegrationTest {
         mockMvc.perform(get("/api/app/mall/orders").header("Authorization", otherMemberToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.total").value(0));
+        mockMvc.perform(get("/api/app/mall/orders/{id}", orderId).header("Authorization", otherMemberToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404));
+        mockMvc.perform(get("/api/app/mall/orders/{id}", 999999L).header("Authorization", memberToken))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404));
         mockMvc.perform(post("/api/app/mall/orders/{id}/refund", orderId).header("Authorization", otherMemberToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404));

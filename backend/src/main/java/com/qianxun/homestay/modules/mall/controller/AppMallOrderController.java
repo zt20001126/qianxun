@@ -4,6 +4,7 @@ import com.qianxun.homestay.common.api.ApiResponse;
 import com.qianxun.homestay.common.security.AuthPrincipal;
 import com.qianxun.homestay.modules.mall.service.MallOrderService;
 import com.qianxun.homestay.modules.mall.service.MallRefundFacadeService;
+import com.qianxun.homestay.modules.mall.vo.AppMallOrderDetailVO;
 import com.qianxun.homestay.modules.mall.vo.MallOrderPageVO;
 import com.qianxun.homestay.modules.mall.vo.MallRefundVO;
 import jakarta.validation.constraints.Max;
@@ -33,6 +34,11 @@ public class AppMallOrderController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return ApiResponse.success(service.findMemberPage(principal.id(), page, size));
+    }
+    /** 返回当前会员自己的商城订单详情。 */
+    @GetMapping("/{id}") public ApiResponse<AppMallOrderDetailVO> detail(
+            @AuthenticationPrincipal AuthPrincipal principal, @PathVariable Long id) {
+        return ApiResponse.success(service.findMemberById(principal.id(), id));
     }
     /** 对本人待发货订单申请整单退款。 */
     @PostMapping("/{id}/refund") public ApiResponse<MallRefundVO> refund(

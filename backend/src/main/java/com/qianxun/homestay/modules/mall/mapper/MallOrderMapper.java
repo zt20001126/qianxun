@@ -20,6 +20,8 @@ public interface MallOrderMapper {
     long count();
     /** 按主键读取订单。 */
     MallOrderEntity findById(@Param("id") Long id);
+    /** 按订单和会员归属读取订单，避免会员跨订单访问。 */
+    MallOrderEntity findMemberById(@Param("memberId") Long memberId, @Param("id") Long id);
     /** 锁定订单以串行化状态变化。 */
     MallOrderEntity findByIdForUpdate(@Param("id") Long id);
     /** 待发货订单填写快递信息并发货。 */

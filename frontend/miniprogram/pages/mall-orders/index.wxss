@@ -140,6 +140,13 @@
   gap: 12rpx;
 }
 
+.order-title-side {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .order-product {
   overflow: hidden;
   color: #231f1d;
@@ -154,6 +161,11 @@
   flex-shrink: 0;
   color: #7a726b;
   font-size: 22rpx;
+}
+
+.chevron-icon {
+  width: 28rpx;
+  height: 28rpx;
 }
 
 .shipping-row {
@@ -192,39 +204,8 @@
   white-space: nowrap;
 }
 
-.order-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 2rpx solid rgba(232, 224, 212, .5);
-}
-
-.refund-button {
-  width: 176rpx;
-  height: 60rpx;
-  margin: 0;
-  padding: 0;
-  border: 2rpx solid rgba(184, 59, 42, .45);
-  border-radius: 999rpx;
-  color: #b83b2a;
-  background: #fff8f6;
-  font-size: 22rpx;
-  line-height: 56rpx;
-}
-
-.refund-button::after,
 .retry-button::after {
   border: 0;
-}
-
-.shipping-hint {
-  display: block;
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 2rpx solid rgba(232, 224, 212, .5);
-  color: #7a726b;
-  font-size: 22rpx;
 }
 
 .orders-state {

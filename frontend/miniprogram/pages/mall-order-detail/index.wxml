@@ -1,0 +1,45 @@
+<view class="mall-order-detail-page">
+  <view wx:if="{{loading}}" class="detail-state">正在读取商城订单详情…</view>
+  <view wx:elif="{{errorMessage}}" class="detail-state detail-error">
+    <text>{{errorMessage}}</text>
+    <button class="detail-button" bindtap="onOrdersTap">返回商城订单</button>
+  </view>
+  <block wx:elif="{{order}}">
+    <view class="detail-content">
+      <view class="status-banner status-{{order.status}}">
+        <view class="status-heading">
+          <image wx:if="{{order.status === 'REFUNDED'}}" class="status-icon" src="/assets/orders-x-circle.svg" mode="aspectFit" />
+          <image wx:else class="status-icon" src="/assets/orders-clock.svg" mode="aspectFit" />
+          <text>{{statusLabel}}</text>
+        </view>
+        <text class="status-hint">{{statusHint}}</text>
+      </view>
+
+      <view class="detail-card info-card">
+        <view class="section-heading"><view class="section-mark"></view><text>订单信息</text></view>
+        <view wx:for="{{detailRows}}" wx:key="label" class="detail-row">
+          <text class="detail-label">{{item.label}}</text>
+          <text class="detail-value {{item.mono ? 'detail-value-mono' : ''}} {{item.strong ? 'detail-value-strong' : ''}}">{{item.value}}</text>
+        </view>
+      </view>
+
+      <view class="detail-card amount-card">
+        <view class="section-heading"><view class="section-mark"></view><text>费用明细</text></view>
+        <view class="fee-row"><text class="fee-label">商品金额</text><text class="fee-total">¥{{totalAmountLabel}}</text></view>
+        <view wx:if="{{order.points_used > 0}}" class="fee-row discount-row">
+          <text class="fee-label">积分抵扣</text>
+          <text class="fee-summary">使用 {{order.points_used}} 积分</text>
+          <text class="fee-total">－¥{{discountAmountLabel}}</text>
+        </view>
+        <view class="paid-row"><text>实付金额</text><text class="paid-amount">¥{{paidAmountLabel}}</text></view>
+      </view>
+    </view>
+
+    <view class="sticky-footer">
+      <view class="footer-actions">
+        <button wx:if="{{order.status !== 'REFUNDED'}}" class="cancel-button {{order.status === 'PENDING_SHIPMENT' ? 'cancel-available' : 'cancel-unavailable'}}" loading="{{refunding}}" disabled="{{refunding}}" bindtap="onCancelTap">{{refunding ? '退款处理中' : '取消订单'}}</button>
+        <button class="contact-button" bindtap="onContactTap"><image class="contact-button-icon" src="/assets/orders-phone-call-white.svg" mode="aspectFit" /><text>联系商家</text></button>
+      </view>
+    </view>
+  </block>
+</view>

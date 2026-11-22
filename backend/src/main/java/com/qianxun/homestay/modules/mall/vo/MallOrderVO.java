@@ -2,7 +2,7 @@ package com.qianxun.homestay.modules.mall.vo;
 
 import java.time.OffsetDateTime;
 
-/** 管理员查看的商城订单资料。 */
+/** 后台与订单所属会员查看的商城订单资料。 */
 public record MallOrderVO(
         /** 订单编号。 */ Long id,
         /** 对外订单号。 */ String orderNo,

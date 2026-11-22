@@ -20,6 +20,28 @@ export interface MallOrder {
   tracking_no: string | null
 }
 
+/** 当前会员可查看的商城订单完整资料。 */
+export interface MallOrderDetail extends MallOrder {
+  /** 商品原价总额。 */
+  total_amount: string
+  /** 本单实际抵扣的积分数。 */
+  points_used: number
+  /** 收货人姓名快照。 */
+  recipient_name: string
+  /** 收货手机号快照。 */
+  recipient_phone: string
+  /** 收货地址快照。 */
+  shipping_address: string
+  /** 支付完成时间。 */
+  paid_at: string | null
+  /** 商家发货时间。 */
+  shipped_at: string | null
+  /** 订单完成时间。 */
+  completed_at: string | null
+  /** 订单创建时间。 */
+  created_at: string | null
+}
+
 export interface MallOrderPage { list: MallOrder[]; total: number; page: number; size: number }
 export interface MallShipping { recipient_name: string | null; recipient_phone: string | null; shipping_address: string | null }
 export interface MallPreview {
@@ -63,6 +85,11 @@ export function getMallPaymentStatus(paymentNo: string): Promise<MallPaymentResu
 
 export function listMallOrders(page: number): Promise<MallOrderPage> {
   return request<MallOrderPage>({ url: `/api/app/mall/orders?page=${page}&size=20` })
+}
+
+/** 读取当前会员本人商城订单的完整信息。 */
+export function getMallOrder(id: number): Promise<MallOrderDetail> {
+  return request<MallOrderDetail>({ url: `/api/app/mall/orders/${id}` })
 }
 
 /** 申请本人待发货订单整单退款。 */
