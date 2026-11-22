@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(properties = {
         "app.jwt.secret=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
         "app.jwt.member-expiration-seconds=2592000",
-        "app.jwt.admin-expiration-seconds=28800",
+        "app.jwt.admin-expiration-seconds=2592000",
         "app.auth.default-avatar=/assets/default.png"
 })
 @AutoConfigureMockMvc

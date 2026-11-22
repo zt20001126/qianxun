@@ -60,7 +60,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:}
     member-expiration-seconds: ${APP_JWT_EXPIRATION_SECONDS:2592000}
-    admin-expiration-seconds: ${ADMIN_JWT_EXPIRATION_SECONDS:28800}
+    admin-expiration-seconds: ${ADMIN_JWT_EXPIRATION_SECONDS:2592000}
   auth:
     default-avatar: ${MEMBER_DEFAULT_AVATAR:/assets/member-default-avatar.png}
   cors:
