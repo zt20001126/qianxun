@@ -57,6 +57,7 @@ services:
       SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
       MAIL_NOTIFICATION_RECIPIENTS: ${MAIL_NOTIFICATION_RECIPIENTS:-}
       MAIL_SENDER_NAME: ${MAIL_SENDER_NAME:-芊浔民宿}
+      MAIL_DAILY_ROOM_STATUS_CRON: ${MAIL_DAILY_ROOM_STATUS_CRON:-0 0 10,18 * * *}
       TZ: Asia/Shanghai
     volumes:
       - ${WECHAT_PAY_KEY_DIR:-./secrets}:/run/secrets/wechat:ro
