@@ -191,6 +191,60 @@ class MallPurchaseShipmentApiIntegrationTest {
     }
 
     @Test
+    void adminCanFilterMallOrdersByStatusAndKeywordWithPagination() throws Exception {
+        String marker = "商城筛选" + Long.toUnsignedString(System.nanoTime());
+        long productId = createOnShelfProduct(marker + "商品", "88.00");
+        long shippedOrderId = mockPay(prepay(productId, memberToken, 0, marker + "收货人甲", phoneFor(memberId), "筛选地址甲"), memberToken);
+        long pendingOrderId = mockPay(prepay(productId, memberToken, 0, marker + "收货人乙", phoneFor(memberId), "筛选地址乙"), memberToken);
+        mockPay(prepay(productId, memberToken, 0, marker + "收货人丙", phoneFor(memberId), "筛选地址丙"), memberToken);
+        String pendingOrderNo = jdbc.queryForObject(
+                "SELECT order_no FROM mall_order WHERE id = ?", String.class, pendingOrderId);
+
+        mockMvc.perform(post("/api/admin/mall/orders/{id}/ship", shippedOrderId).header("Authorization", adminToken)
+                        .contentType("application/json").content("{\"express_company\":\"筛选快递\",\"tracking_no\":\"FILTER-1\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("SHIPPED"));
+
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("status", "PENDING_SHIPMENT").param("keyword", marker).param("page", "1").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(2))
+                .andExpect(jsonPath("$.data.list.length()").value(2))
+                .andExpect(jsonPath("$.data.list[0].status").value("PENDING_SHIPMENT"));
+
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("keyword", marker + "商品").param("page", "1").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(3));
+
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("keyword", pendingOrderNo).param("page", "1").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.list[0].id").value(pendingOrderId));
+
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("keyword", marker + "收货人甲").param("page", "1").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(1))
+                .andExpect(jsonPath("$.data.list[0].id").value(shippedOrderId));
+
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("keyword", phoneFor(memberId)).param("page", "1").param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(3));
+
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("keyword", marker).param("page", "2").param("size", "1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total").value(3))
+                .andExpect(jsonPath("$.data.page").value(2))
+                .andExpect(jsonPath("$.data.size").value(1))
+                .andExpect(jsonPath("$.data.list.length()").value(1));
+
+    }
+
+    @Test
     void mallEndpointsEnforceRolesAndRejectInvalidProductAndShippingRequests() throws Exception {
         String validProduct = productRequest("鉴权商品", "88.00");
         mockMvc.perform(post("/api/admin/mall/products").contentType("application/json").content(validProduct))
@@ -255,6 +309,15 @@ class MallPurchaseShipmentApiIntegrationTest {
                         .contentType("application/json").content("{\"express_company\":\"快递\",\"tracking_no\":\"NO-1\"}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404));
+
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("status", "NOT_A_STATUS"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
+        mockMvc.perform(get("/api/admin/mall/orders").header("Authorization", adminToken)
+                        .param("keyword", "a".repeat(121)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
     }
 
     @Test

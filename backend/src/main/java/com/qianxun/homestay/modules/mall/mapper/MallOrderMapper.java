@@ -1,5 +1,6 @@
 package com.qianxun.homestay.modules.mall.mapper;
 
+import com.qianxun.homestay.modules.mall.dto.MallOrderQueryRequest;
 import com.qianxun.homestay.modules.mall.entity.MallOrderEntity;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
@@ -10,14 +11,16 @@ import org.apache.ibatis.annotations.Param;
 public interface MallOrderMapper {
     /** 写入支付成功后的商城正式订单。 */
     int insert(MallOrderEntity order);
-    /** 管理员分页读取订单。 */
-    List<MallOrderEntity> findPage(@Param("offset") long offset, @Param("size") int size);
+    /** 管理员按筛选条件分页读取订单。 */
+    List<MallOrderEntity> findPage(
+            @Param("query") MallOrderQueryRequest query,
+            @Param("offset") long offset);
     /** 按会员分页读取自己的商城订单。 */
     List<MallOrderEntity> findMemberPage(@Param("memberId") Long memberId, @Param("offset") long offset, @Param("size") int size);
     /** 统计会员自己的商城订单。 */
     long countMember(@Param("memberId") Long memberId);
-    /** 统计商城订单数量。 */
-    long count();
+    /** 统计符合管理员筛选条件的商城订单数量。 */
+    long count(@Param("query") MallOrderQueryRequest query);
     /** 按主键读取订单。 */
     MallOrderEntity findById(@Param("id") Long id);
     /** 按订单和会员归属读取订单，避免会员跨订单访问。 */

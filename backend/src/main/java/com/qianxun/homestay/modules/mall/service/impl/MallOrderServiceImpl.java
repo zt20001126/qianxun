@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.mall.service.impl;
 
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.util.ApiTime;
+import com.qianxun.homestay.modules.mall.dto.MallOrderQueryRequest;
 import com.qianxun.homestay.modules.mall.dto.MallShipRequest;
 import com.qianxun.homestay.modules.mall.entity.MallOrderEntity;
 import com.qianxun.homestay.modules.mall.enums.MallOrderStatus;
@@ -32,9 +33,14 @@ public class MallOrderServiceImpl implements MallOrderService {
         this.memberMapper = memberMapper;
         this.pointsLogMapper = pointsLogMapper;
     }
-    @Override public MallOrderPageVO findPage(int page, int size) {
-        return new MallOrderPageVO(orderMapper.findPage((long) (page - 1) * size, size).stream().map(this::toVO).toList(),
-                orderMapper.count(), page, size);
+    @Override
+    @Transactional(readOnly = true)
+    public MallOrderPageVO findPage(MallOrderQueryRequest request) {
+        MallOrderQueryRequest normalizedRequest = normalizeQuery(request);
+        long offset = (long) (normalizedRequest.page() - 1) * normalizedRequest.size();
+        return new MallOrderPageVO(
+                orderMapper.findPage(normalizedRequest, offset).stream().map(this::toVO).toList(),
+                orderMapper.count(normalizedRequest), normalizedRequest.page(), normalizedRequest.size());
     }
     @Override public MallOrderPageVO findMemberPage(Long memberId, int page, int size) {
         return new MallOrderPageVO(orderMapper.findMemberPage(memberId, (long) (page - 1) * size, size)
@@ -108,6 +114,16 @@ public class MallOrderServiceImpl implements MallOrderService {
         if (order == null) throw new BusinessException(HttpStatus.NOT_FOUND, "商城订单不存在");
         return order;
     }
+
+    /** 去除空白关键词，避免空白字符意外缩小管理员的查询范围。 */
+    private MallOrderQueryRequest normalizeQuery(MallOrderQueryRequest request) {
+        String keyword = request.keyword() == null ? null : request.keyword().trim();
+        if (keyword != null && keyword.isEmpty()) {
+            keyword = null;
+        }
+        return new MallOrderQueryRequest(request.status(), keyword, request.page(), request.size());
+    }
+
     private MallOrderVO toVO(MallOrderEntity order) {
         return new MallOrderVO(order.getId(), order.getOrderNo(), order.getMemberId(), order.getProductName(),
                 order.getQuantity(), order.getTotalAmount().setScale(2).toPlainString(),

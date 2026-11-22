@@ -1,6 +1,9 @@
 import { http } from './http'
 import type { ApiResponse } from '../types/api'
 
+/** 商城后台列表统一每页展示的记录数。 */
+export const MALL_PAGE_SIZE = 10
+
 /** 商城商品维护所需的数据。 */
 export interface MallProduct {
   id: number
@@ -34,6 +37,14 @@ export interface MallOrder {
   tracking_no: string | null
 }
 
+/** 商城订单列表的服务端查询条件。 */
+export interface MallOrderQuery {
+  page: number
+  size?: number
+  status?: MallOrder['status']
+  keyword?: string
+}
+
 export interface MallOrderPage {
   list: MallOrder[]
   total: number
@@ -43,8 +54,8 @@ export interface MallOrderPage {
 
 /** 商城商品管理 API，沿用后台统一认证与错误处理。 */
 export const mallApi = {
-  async list(page: number): Promise<MallProductPage> {
-    const result = await http.get<ApiResponse<MallProductPage>>('/api/admin/mall/products', { params: { page, size: 20 } })
+  async list(page: number, size = MALL_PAGE_SIZE): Promise<MallProductPage> {
+    const result = await http.get<ApiResponse<MallProductPage>>('/api/admin/mall/products', { params: { page, size } })
     return result.data.data
   },
   async create(input: MallProductInput): Promise<void> {
@@ -56,8 +67,10 @@ export const mallApi = {
   async setStatus(id: number, status: MallProduct['status']): Promise<void> {
     await http.post(`/api/admin/mall/products/${id}/status`, { status })
   },
-  async orders(page: number): Promise<MallOrderPage> {
-    const result = await http.get<ApiResponse<MallOrderPage>>('/api/admin/mall/orders', { params: { page, size: 20 } })
+  async orders(query: MallOrderQuery): Promise<MallOrderPage> {
+    const result = await http.get<ApiResponse<MallOrderPage>>('/api/admin/mall/orders', {
+      params: { ...query, size: query.size ?? MALL_PAGE_SIZE },
+    })
     return result.data.data
   },
   async ship(id: number, express_company: string, tracking_no: string): Promise<void> {

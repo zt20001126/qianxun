@@ -1,13 +1,16 @@
 package com.qianxun.homestay.modules.mall.controller;
 
 import com.qianxun.homestay.common.api.ApiResponse;
+import com.qianxun.homestay.modules.mall.dto.MallOrderQueryRequest;
 import com.qianxun.homestay.modules.mall.dto.MallShipRequest;
+import com.qianxun.homestay.modules.mall.enums.MallOrderStatus;
 import com.qianxun.homestay.modules.mall.service.MallOrderService;
 import com.qianxun.homestay.modules.mall.vo.MallOrderPageVO;
 import com.qianxun.homestay.modules.mall.vo.MallOrderVO;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,10 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminMallOrderController {
     private final MallOrderService service;
     public AdminMallOrderController(MallOrderService service) { this.service = service; }
+    /** 按状态与关键词分页查询商城订单。 */
     @GetMapping public ApiResponse<MallOrderPageVO> list(
+            @RequestParam(required = false) MallOrderStatus status,
+            @RequestParam(required = false) @Size(max = 120) String keyword,
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-        return ApiResponse.success(service.findPage(page, size));
+        return ApiResponse.success(service.findPage(new MallOrderQueryRequest(status, keyword, page, size)));
     }
     @GetMapping("/{id}") public ApiResponse<MallOrderVO> detail(@PathVariable Long id) {
         return ApiResponse.success(service.findById(id));
