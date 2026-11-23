@@ -1,7 +1,7 @@
 package com.qianxun.homestay.modules.auth.vo;
 
 /**
- * A01 手机号登录成功响应数据。
+ * A01/A05 小程序会员登录成功响应数据。
  */
 public record AppLoginVO(
         /** 会员 JWT。 */

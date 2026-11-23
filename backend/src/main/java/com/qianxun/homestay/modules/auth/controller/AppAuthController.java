@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.auth.controller;
 
 import com.qianxun.homestay.common.api.ApiResponse;
 import com.qianxun.homestay.common.security.AuthPrincipal;
+import com.qianxun.homestay.modules.auth.dto.PhoneLoginRequest;
 import com.qianxun.homestay.modules.auth.dto.WechatLoginRequest;
 import com.qianxun.homestay.modules.auth.service.AuthService;
 import com.qianxun.homestay.modules.auth.vo.AppLoginVO;
@@ -36,6 +37,12 @@ public class AppAuthController {
     @PostMapping("/login")
     public ApiResponse<AppLoginVO> login(@Valid @RequestBody WechatLoginRequest request) {
         return ApiResponse.success(authService.loginWithWechat(request.getLoginCode(), request.getPhoneCode()));
+    }
+
+    /** A05：仅校验手机号格式并登录或创建会员，不验证号码归属。 */
+    @PostMapping("/phone-login")
+    public ApiResponse<AppLoginVO> phoneLogin(@Valid @RequestBody PhoneLoginRequest request) {
+        return ApiResponse.success(authService.loginByPhone(request.getPhone()));
     }
 
     /**

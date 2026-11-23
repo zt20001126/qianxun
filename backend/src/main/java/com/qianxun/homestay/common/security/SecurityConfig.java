@@ -52,7 +52,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/payment/wechat/notify/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/app/auth/login", "/api/admin/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/app/auth/login", "/api/app/auth/phone-login",
+                                "/api/admin/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/app/rooms/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/app/rooms/availability-check").permitAll()
                         .requestMatchers("/api/app/**").hasRole(UserRole.MEMBER.name())

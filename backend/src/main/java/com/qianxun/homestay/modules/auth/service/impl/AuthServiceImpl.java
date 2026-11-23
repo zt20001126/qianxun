@@ -55,6 +55,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
+     * 直接按手机号复用会员资料；该登录方式不验证号码归属。
+     */
+    @Override
+    @Transactional
+    public AppLoginVO loginByPhone(String phone) {
+        String nickname = phone.substring(phone.length() - 4);
+        memberMapper.upsertLoginProfile(phone, nickname, defaultAvatar);
+        MemberEntity member = memberMapper.findByPhone(phone);
+        if (member == null) {
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "会员资料初始化失败");
+        }
+        return new AppLoginVO(jwtService.issueMemberToken(member.getId()),
+                jwtService.getMemberExpirationSeconds(), toMemberVO(member));
+    }
+
+    /**
      * 读取当前会员流程。
      *
      * 仅使用 JWT 中的会员 ID 查询会员；不存在时返回 404。

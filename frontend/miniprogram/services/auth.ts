@@ -11,6 +11,15 @@ export function login(loginCode: string, phoneCode: string): Promise<AppLoginRes
   })
 }
 
+export function phoneLogin(phone: string): Promise<AppLoginResult> {
+  return request<AppLoginResult>({
+    url: '/api/app/auth/phone-login',
+    method: 'POST',
+    data: { phone },
+    withAuth: false,
+  })
+}
+
 export function getCurrentMember(): Promise<MemberProfile> {
   return request<MemberProfile>({ url: '/api/app/auth/me' })
 }

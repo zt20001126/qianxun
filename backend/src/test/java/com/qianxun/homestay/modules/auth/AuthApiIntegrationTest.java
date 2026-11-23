@@ -163,6 +163,52 @@ class AuthApiIntegrationTest {
     }
 
     @Test
+    void phoneOnlyLoginCreatesMemberAndIssuesMemberToken() throws Exception {
+        String response = mockMvc.perform(post("/api/app/auth/phone-login")
+                        .contentType("application/json")
+                        .content("{\"phone\":\"" + MEMBER_PHONE + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.member.phone").value(MEMBER_PHONE))
+                .andExpect(jsonPath("$.data.member.nickname").value("0000"))
+                .andReturn().getResponse().getContentAsString();
+
+        String token = objectMapper.readTree(response).path("data").path("token").asText();
+        mockMvc.perform(get("/api/app/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.phone").value(MEMBER_PHONE));
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM members WHERE phone = ?", Integer.class,
+                MEMBER_PHONE)).isEqualTo(1);
+    }
+
+    @Test
+    void phoneOnlyLoginReusesExistingMemberWithoutChangingPoints() throws Exception {
+        jdbcTemplate.update("INSERT INTO members (phone, openid, nickname, avatar, points, growth_points) " +
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                MEMBER_PHONE, "existing-openid", "旧昵称", "old-avatar", 325, 870);
+        long existingId = jdbcTemplate.queryForObject("SELECT id FROM members WHERE phone = ?", Long.class,
+                MEMBER_PHONE);
+
+        mockMvc.perform(post("/api/app/auth/phone-login")
+                        .contentType("application/json")
+                        .content("{\"phone\":\"" + MEMBER_PHONE + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.member.id").value(existingId))
+                .andExpect(jsonPath("$.data.member.points").value(325));
+
+        assertThat(jdbcTemplate.queryForObject("SELECT openid FROM members WHERE id = ?", String.class, existingId))
+                .isEqualTo("existing-openid");
+    }
+
+    @Test
+    void phoneOnlyLoginRejectsInvalidPhone() throws Exception {
+        mockMvc.perform(post("/api/app/auth/phone-login")
+                        .contentType("application/json")
+                        .content("{\"phone\":\"123\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400));
+    }
+
+    @Test
     void rejectsMemberTokensIssuedBeforeWechatLoginCutover() throws Exception {
         Instant now = Instant.now();
         String oldToken = Jwts.builder().subject("1").claim("member_id", 1L).claim("role", "MEMBER")

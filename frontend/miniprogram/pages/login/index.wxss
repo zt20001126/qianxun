@@ -200,6 +200,35 @@
   line-height: 1.55;
 }
 
+.phone-field {
+  display: flex;
+  height: 92rpx;
+  align-items: center;
+  margin-top: 54rpx;
+  padding: 0 28rpx;
+  border: 2rpx solid #ead9c8;
+  border-radius: 999rpx;
+  box-sizing: border-box;
+  background: #fffdfa;
+}
+
+.phone-field-icon {
+  margin-right: 22rpx;
+  color: #8b4d25;
+  font-size: 34rpx;
+}
+
+.phone-input {
+  flex: 1;
+  min-width: 0;
+  color: #292421;
+  font-size: 28rpx;
+}
+
+.phone-placeholder {
+  color: #a69a8f;
+}
+
 .login-card .login-button {
   display: flex;
   width: 100%;
@@ -218,6 +247,10 @@
   font-weight: 600;
   letter-spacing: 2rpx;
   line-height: 1;
+}
+
+.login-card .phone-login-button {
+  margin-top: 38rpx;
 }
 
 .login-button::after {
@@ -286,6 +319,16 @@
 
 .terms-link {
   color: #965027;
+}
+
+.login-mode-link {
+  display: block;
+  margin: 26rpx auto 0;
+  padding: 10rpx 18rpx;
+  color: #8b7565;
+  font-size: 23rpx;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .scenery {
