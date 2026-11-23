@@ -1,7 +1,7 @@
 /** 小程序首页：展示水乡品牌视觉、行程选择和导览入口。 */
 import { listRooms } from '../../services/rooms'
 import type { AppRoomSummary } from '../../types/room'
-import { STORE_ADDRESS, STORE_CONTACT_PHONE_LABEL } from '../../config'
+import { STORE_ADDRESS } from '../../config'
 import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
 
 interface GuideContent {
@@ -32,23 +32,11 @@ interface HomePageData {
 }
 
 const GUIDE_CONTENT: Record<string, GuideContent> = {
-  intro: {
-    tag: '关于芊浔',
-    title: '芊浔民宿',
-    body: `芊浔民宿位于${STORE_ADDRESS}，靠近百间楼片区，共有六间客房。房型、床型和设施请查看房间详情。`,
-    extra: `地址：${STORE_ADDRESS}`,
-  },
   around: {
     tag: '古镇漫游',
     title: '百间楼周边',
     body: '附近可游览百间楼、张静江故居和东大街，沿河感受古镇水乡风貌。文保建筑开放与售票信息以景区公告为准。',
     extra: '南浔古镇东北片区',
-  },
-  traffic: {
-    tag: '出行指南',
-    title: '到店交通',
-    body: `导航搜索“${STORE_ADDRESS}”。乘高铁到湖州南浔站后，请按实时地图查询公交或打车路线；古镇内停车与步行路线以现场指引为准。`,
-    extra: `联系电话：${STORE_CONTACT_PHONE_LABEL}`,
   },
   rooms: {
     tag: '雅居一览',
@@ -168,6 +156,18 @@ Page({
 
   onGuideTap(event: WechatMiniprogram.TouchEvent) {
     const type = String(event.currentTarget.dataset.type)
+    if (type === 'around') {
+      wx.navigateTo({ url: '/pages/around-guide/index' })
+      return
+    }
+    if (type === 'traffic') {
+      wx.navigateTo({ url: '/pages/traffic-guide/index' })
+      return
+    }
+    if (type === 'intro') {
+      wx.navigateTo({ url: '/pages/inn-intro/index' })
+      return
+    }
     const guide = GUIDE_CONTENT[type]
     if (guide) this.setData({ guide, guideVisible: true })
   },

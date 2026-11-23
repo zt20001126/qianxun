@@ -85,7 +85,7 @@
       <text class="guide-title">{{guide.title}}</text>
       <text class="guide-body">{{guide.body}}</text>
       <view class="guide-extra">{{guide.extra}}</view>
-      <button class="guide-close" bindtap="onGuideClose">我知道了</button>
+      <button class="guide-close" hover-class="guide-close-hover" bindtap="onGuideClose">我知道了</button>
     </view>
   </view>
 </view>

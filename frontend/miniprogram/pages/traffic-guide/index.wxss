@@ -1,0 +1,27 @@
+.traffic-page { min-height: 100vh; padding: 34rpx 30rpx calc(56rpx + env(safe-area-inset-bottom)); box-sizing: border-box; color: #292522; background: #faf7f2; }
+.traffic-heading { display: flex; flex-direction: column; padding: 8rpx 4rpx 26rpx; }
+.traffic-kicker { color: #9a5a2e; font-size: 18rpx; font-weight: 600; letter-spacing: 4rpx; }
+.traffic-title { margin-top: 12rpx; color: #512a18; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 38rpx; font-weight: 700; letter-spacing: 2rpx; }
+.traffic-summary { margin-top: 12rpx; color: #7a726b; font-size: 22rpx; line-height: 1.75; }
+.destination-card { display: flex; align-items: center; gap: 20rpx; padding: 26rpx 24rpx; border: 1rpx solid #eadccf; border-radius: 28rpx; background: #fffcf8; box-shadow: 0 10rpx 28rpx rgba(95, 60, 36, .06); }
+.destination-pin { display: flex; width: 70rpx; height: 70rpx; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 50%; color: #8b4d25; background: #f7ede3; }
+.destination-copy { display: flex; min-width: 0; flex-direction: column; }
+.destination-name { color: #512a18; font-size: 27rpx; font-weight: 700; }
+.destination-address { margin-top: 6rpx; color: #51463e; font-size: 22rpx; }
+.destination-note { margin-top: 8rpx; color: #897c70; font-size: 19rpx; line-height: 1.5; }
+.route-section { margin-top: 36rpx; }
+.route-section-title { display: block; margin: 0 4rpx 18rpx; color: #512a18; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 30rpx; font-weight: 700; }
+.route-card { margin-top: 16rpx; padding: 24rpx 24rpx 18rpx; border: 1rpx solid #eadccf; border-radius: 26rpx; background: #fffcf8; }
+.route-heading { display: flex; align-items: center; gap: 14rpx; margin-bottom: 18rpx; }
+.route-number { display: flex; width: 46rpx; height: 46rpx; align-items: center; justify-content: center; border-radius: 50%; color: #fff; background: #8b4d25; font-size: 19rpx; font-weight: 700; }
+.route-gate { color: #512a18; font-size: 25rpx; font-weight: 700; }
+.route-line { position: relative; display: flex; gap: 18rpx; min-height: 58rpx; align-items: flex-start; padding-left: 17rpx; color: #62574f; font-size: 21rpx; line-height: 1.65; }
+.route-line::before { position: absolute; top: 18rpx; bottom: -5rpx; left: 24rpx; width: 2rpx; background: #e7d4c2; content: ""; }
+.route-line-last::before { display: none; }
+.route-dot { position: relative; z-index: 1; width: 14rpx; height: 14rpx; flex-shrink: 0; margin-top: 10rpx; border: 3rpx solid #c18a5a; border-radius: 50%; background: #fffcf8; }
+.route-dot-end { border-color: #fff; background: #d74332; box-shadow: 0 0 0 2rpx #d74332; }
+.traffic-tip { margin-top: 24rpx; padding: 26rpx; border: 1rpx solid #eadccf; border-radius: 26rpx; background: #f7ede3; }
+.tip-title { display: block; color: #6f3b1a; font-size: 23rpx; font-weight: 700; }
+.tip-body { display: block; margin-top: 10rpx; color: #6e6258; font-size: 20rpx; line-height: 1.75; }
+.copy-button { display: flex; height: 76rpx; align-items: center; justify-content: center; margin: 20rpx 0 0; border-radius: 20rpx; color: #fff; background: #8b4d25; font-size: 23rpx; }
+.copy-button::after { border: 0; }

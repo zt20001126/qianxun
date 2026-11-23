@@ -1,0 +1,93 @@
+<view class="intro-page">
+  <view class="intro-hero">
+    <image class="intro-hero-image" src="../../assets/login-baijianlou-hero.webp" mode="aspectFill" />
+    <view class="intro-hero-wash"></view>
+    <view class="intro-hero-copy">
+      <text class="intro-eyebrow">MISTVILLA · NANXUN</text>
+      <text class="intro-brand">芊浔民宿</text>
+      <text class="intro-tagline">枕水而居 · 慢游南浔</text>
+    </view>
+  </view>
+
+  <view class="intro-content">
+    <view class="intro-story card">
+      <text class="section-kicker">关于芊浔</text>
+      <text class="story-title">在南浔，住进慢时光</text>
+      <text class="story-body">民宿坐落于宝善街，邻近百间楼片区。白日沿着水巷与老街慢慢漫游，归来后在舒适客房里歇息，让旅程留一点从容。</text>
+      <view class="story-divider"></view>
+      <view class="room-note">
+        <view class="room-note-mark"></view>
+        <text>六间客房 · 房型与设施以客房详情为准</text>
+      </view>
+    </view>
+
+    <view class="section-block">
+      <view class="section-heading">
+        <text class="section-kicker">住得舒心</text>
+        <text class="section-title">旅途里的贴心细节</text>
+      </view>
+      <view class="feature-grid">
+        <view class="feature-card">
+          <view class="feature-icon"><qx-icon name="landmark" size="34" /></view>
+          <text class="feature-title">免费停车</text>
+          <text class="feature-caption">自驾出行更从容</text>
+        </view>
+        <view class="feature-card">
+          <view class="feature-icon"><qx-icon name="sparkles-celadon" size="34" /></view>
+          <text class="feature-title">智能客控</text>
+          <text class="feature-caption">客房体验更便捷</text>
+        </view>
+        <view class="feature-card">
+          <view class="feature-icon"><qx-icon name="sprout" size="34" /></view>
+          <text class="feature-title">宠物友好</text>
+          <text class="feature-caption">携宠入住请先联系</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-block walk-section">
+      <view class="section-heading">
+        <text class="section-kicker">古镇漫游</text>
+        <text class="section-title">从宝善街出发</text>
+      </view>
+      <view class="walk-card">
+        <image class="walk-image" src="../../assets/decoration-baijianlou-houses.webp" mode="aspectFill" />
+        <view class="walk-copy">
+          <text class="walk-title">百间楼与南浔老街</text>
+          <text class="walk-body">沿河看看白墙黛瓦，再走进街巷，感受水乡古镇的日常风景。</text>
+        </view>
+        <view class="walk-sites">
+          <text class="site-chip">百间楼</text>
+          <text class="site-chip">张静江故居</text>
+          <text class="site-chip">东大街</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="section-block location-section">
+      <view class="section-heading">
+        <text class="section-kicker">出行指引</text>
+        <text class="section-title">找到芊浔</text>
+      </view>
+      <view class="location-card">
+        <view class="location-topline">
+          <view class="location-pin"><qx-icon name="map-pin" size="34" /></view>
+          <text class="location-label">民宿地址</text>
+        </view>
+        <text class="location-address">{{address}}</text>
+        <text class="location-transit">携程页面标注距湖州南浔汽车站步行约950米、约14分钟；出行时间请以实时地图为准。</text>
+        <view class="location-actions">
+          <button class="location-action location-copy" bindtap="onAddressTap">复制地址</button>
+          <button class="location-action location-call" bindtap="onCallTap">联系民宿</button>
+        </view>
+      </view>
+    </view>
+
+    <view class="intro-footer-note">景点开放、交通与客房设施信息以现场及实时信息为准</view>
+  </view>
+
+  <view class="intro-bottom-bar">
+    <text class="bottom-hint">选好日期，看看哪间客房适合你</text>
+    <button class="rooms-button" hover-class="rooms-button-hover" bindtap="onViewRoomsTap">查看客房</button>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "民宿介绍",
+  "navigationBarBackgroundColor": "#FAF7F2",
+  "navigationBarTextStyle": "black",
+  "backgroundColor": "#FAF7F2",
+  "usingComponents": {
+    "qx-icon": "/components/icon/index"
+  }
+}

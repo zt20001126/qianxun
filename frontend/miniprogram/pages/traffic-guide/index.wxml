@@ -1,0 +1,47 @@
+<view class="traffic-page">
+  <view class="traffic-heading">
+    <text class="traffic-kicker">ARRIVE AT QIANXUN</text>
+    <text class="traffic-title">从古镇入口，走到芊浔</text>
+    <text class="traffic-summary">民宿在百间楼片区，地址为 {{address}}。以下按古镇公共街巷整理步行方向。</text>
+  </view>
+
+  <view class="destination-card">
+    <view class="destination-pin"><qx-icon name="map-pin" size="34" /></view>
+    <view class="destination-copy">
+      <text class="destination-name">芊浔民宿</text>
+      <text class="destination-address">{{address}}</text>
+      <text class="destination-note">位置参考：你提供的地图截图中红色「1」标记附近</text>
+    </view>
+  </view>
+
+  <view class="route-section">
+    <text class="route-section-title">从古镇入口步行前往</text>
+
+    <view class="route-card">
+      <view class="route-heading"><text class="route-number">01</text><text class="route-gate">北门 · 栅桩桥</text></view>
+      <view class="route-line"><view class="route-dot"></view><text>北门出来，过栅桩桥进入宝善河一带</text></view>
+      <view class="route-line"><view class="route-dot"></view><text>沿宝善街、百间楼北段方向向南步行</text></view>
+      <view class="route-line route-line-last"><view class="route-dot route-dot-end"></view><text>按门牌找到宝善街167号</text></view>
+    </view>
+
+    <view class="route-card">
+      <view class="route-heading"><text class="route-number">02</text><text class="route-gate">东门 · 丝绸码头方向</text></view>
+      <view class="route-line"><view class="route-dot"></view><text>从东门向西，沿頔塘风情街前行</text></view>
+      <view class="route-line"><view class="route-dot"></view><text>转入东大街，向北走到东吊桥、百间楼南端</text></view>
+      <view class="route-line route-line-last"><view class="route-dot route-dot-end"></view><text>沿百间楼北行，转到宝善街167号</text></view>
+    </view>
+
+    <view class="route-card">
+      <view class="route-heading"><text class="route-number">03</text><text class="route-gate">南门</text></view>
+      <view class="route-line"><view class="route-dot"></view><text>由南门经象门街进入南东街，沿街向北</text></view>
+      <view class="route-line"><view class="route-dot"></view><text>经下塘东街到东门，再沿頔塘风情街转入东大街</text></view>
+      <view class="route-line route-line-last"><view class="route-dot route-dot-end"></view><text>沿百间楼北行，转到宝善街167号</text></view>
+    </view>
+  </view>
+
+  <view class="traffic-tip">
+    <text class="tip-title">导航小贴士</text>
+    <text class="tip-body">古镇内以步行为主，石板巷道和临时管制可能影响走法。出发前可复制地址，在地图应用中选择步行导航；以地图实时路线和现场路牌为准。</text>
+    <button class="copy-button" bindtap="onCopyAddress">复制民宿地址</button>
+  </view>
+</view>

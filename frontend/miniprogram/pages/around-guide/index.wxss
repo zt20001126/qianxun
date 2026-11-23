@@ -1,0 +1,9 @@
+.around-page { min-height: 100vh; padding: 36rpx 28rpx calc(56rpx + env(safe-area-inset-bottom)); box-sizing: border-box; color: #292522; background: #faf7f2; }
+.around-intro { display: flex; flex-direction: column; padding: 10rpx 8rpx 28rpx; }
+.around-kicker { color: #9a5a2e; font-size: 18rpx; font-weight: 600; letter-spacing: 4rpx; }
+.around-title { margin-top: 12rpx; color: #512a18; font-family: "Songti SC", "Noto Serif SC", serif; font-size: 38rpx; font-weight: 700; letter-spacing: 2rpx; }
+.around-description { margin-top: 12rpx; color: #7a726b; font-size: 22rpx; line-height: 1.7; }
+.guide-card { overflow: hidden; border: 1rpx solid #eadccf; border-radius: 28rpx; background: #fffcf8; box-shadow: 0 10rpx 30rpx rgba(95, 60, 36, .07); }
+.guide-image { display: block; width: 100%; height: auto; }
+.preview-hint { display: flex; min-height: 72rpx; align-items: center; justify-content: center; gap: 12rpx; color: #80634e; font-size: 21rpx; }
+.hint-dot { width: 10rpx; height: 10rpx; border-radius: 50%; background: #b57a44; }

@@ -1,0 +1,20 @@
+<view class="around-page">
+  <view class="around-intro">
+    <text class="around-kicker">NANXUN WALKING GUIDE</text>
+    <text class="around-title">南浔古镇一日游攻略</text>
+    <text class="around-description">路线图供游览参考，景点开放与交通信息请以现场及官方公告为准。</text>
+  </view>
+
+  <view class="guide-card">
+    <image
+      class="guide-image"
+      src="{{guideImage}}"
+      mode="widthFix"
+      show-menu-by-longpress="true"
+      bindtap="onPreviewGuide" />
+    <view class="preview-hint">
+      <text class="hint-dot"></text>
+      <text>点击图片可放大查看，双指缩放细节</text>
+    </view>
+  </view>
+</view>
