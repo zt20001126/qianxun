@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qianxun.homestay.modules.auth.WechatLoginTestSupport;
+import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -35,6 +38,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 })
 @AutoConfigureMockMvc
 class ExpenseReportApiIntegrationTest {
+
+    @MockitoBean
+    private WechatIdentityService wechatIdentityService;
 
     private static final String ADMIN_USERNAME = "stage-nine-admin";
     private static final String ADMIN_PASSWORD = "stage-nine-password";
@@ -438,9 +444,10 @@ class ExpenseReportApiIntegrationTest {
     }
 
     private String loginMemberToken() throws Exception {
+        WechatLoginTestSupport.stub(wechatIdentityService, "13800000009");
         String response = mockMvc.perform(post("/api/app/auth/login")
                         .contentType("application/json")
-                        .content("{\"phone\":\"13800000009\"}"))
+                        .content(WechatLoginTestSupport.request("13800000009")))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).path("data").path("token").asText();

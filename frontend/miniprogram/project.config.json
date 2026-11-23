@@ -41,6 +41,11 @@
     ],
     "include": [
       { "type": "file", "value": "assets/login-baijianlou-hero.jpg" },
+      { "type": "file", "value": "assets/login-card-crest.svg" },
+      { "type": "file", "value": "assets/login-card-house.svg" },
+      { "type": "file", "value": "assets/login-card-bamboo.svg" },
+      { "type": "file", "value": "assets/login-card-river.svg" },
+      { "type": "file", "value": "assets/login-wechat.svg" },
       { "type": "file", "value": "assets/decoration-baijianlou-houses.jpg" },
       { "type": "file", "value": "assets/member-default-avatar.jpg" },
       { "type": "file", "value": "assets/tab-home.png" },

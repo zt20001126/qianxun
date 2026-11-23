@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtServiceImpl implements JwtService {
 
+    private static final int MEMBER_AUTH_VERSION = 2;
+
     private final SecretKey signingKey;
     private final long memberExpirationSeconds;
     private final long adminExpirationSeconds;
@@ -83,6 +85,11 @@ public class JwtServiceImpl implements JwtService {
         Claims claims = Jwts.parser().verifyWith(signingKey).build()
                 .parseSignedClaims(token).getPayload();
         UserRole role = UserRole.valueOf(claims.get("role", String.class));
+        // 强制会员重新完成微信手机号授权，管理员令牌沿用独立认证流程。
+        if (role == UserRole.MEMBER && !Integer.valueOf(MEMBER_AUTH_VERSION)
+                .equals(claims.get("auth_version", Integer.class))) {
+            throw new JwtException("Unsupported member authentication version");
+        }
         String identityClaim = role == UserRole.MEMBER ? "member_id" : "admin_id";
         Object identityValue = claims.get(identityClaim);
         if (identityValue == null) {
@@ -94,13 +101,15 @@ public class JwtServiceImpl implements JwtService {
     private String issueToken(Long identityId, UserRole role, long expirationSeconds) {
         Instant issuedAt = Instant.now();
         String identityClaim = role == UserRole.MEMBER ? "member_id" : "admin_id";
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(identityId.toString())
                 .claim(identityClaim, identityId)
                 .claim("role", role.name())
                 .issuedAt(Date.from(issuedAt))
-                .expiration(Date.from(issuedAt.plusSeconds(expirationSeconds)))
-                .signWith(signingKey)
-                .compact();
+                .expiration(Date.from(issuedAt.plusSeconds(expirationSeconds)));
+        if (role == UserRole.MEMBER) {
+            builder.claim("auth_version", MEMBER_AUTH_VERSION);
+        }
+        return builder.signWith(signingKey).compact();
     }
 }

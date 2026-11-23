@@ -2,7 +2,7 @@ package com.qianxun.homestay.modules.auth.controller;
 
 import com.qianxun.homestay.common.api.ApiResponse;
 import com.qianxun.homestay.common.security.AuthPrincipal;
-import com.qianxun.homestay.modules.auth.dto.PhoneLoginRequest;
+import com.qianxun.homestay.modules.auth.dto.WechatLoginRequest;
 import com.qianxun.homestay.modules.auth.service.AuthService;
 import com.qianxun.homestay.modules.auth.vo.AppLoginVO;
 import com.qianxun.homestay.modules.auth.vo.MemberVO;
@@ -28,14 +28,14 @@ public class AppAuthController {
     }
 
     /**
-     * A01：手机号登录并在首次登录时自动创建会员。
+     * A01：微信手机号授权登录并在首次登录时自动创建会员。
      *
-     * @param request 登录手机号
+     * @param request 微信登录及手机号授权凭证
      * @return JWT 和会员资料
      */
     @PostMapping("/login")
-    public ApiResponse<AppLoginVO> login(@Valid @RequestBody PhoneLoginRequest request) {
-        return ApiResponse.success(authService.loginByPhone(request.getPhone()));
+    public ApiResponse<AppLoginVO> login(@Valid @RequestBody WechatLoginRequest request) {
+        return ApiResponse.success(authService.loginWithWechat(request.getLoginCode(), request.getPhoneCode()));
     }
 
     /**

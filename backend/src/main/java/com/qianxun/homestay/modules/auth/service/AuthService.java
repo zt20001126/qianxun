@@ -9,12 +9,13 @@ import com.qianxun.homestay.modules.auth.vo.MemberVO;
 public interface AuthService {
 
     /**
-     * 按手机号创建或复用会员并签发 30 天 JWT。
+     * 验证微信手机号与 OpenID，创建或复用会员并签发 30 天 JWT。
      *
-     * @param phone 中国大陆手机号
+     * @param loginCode wx.login 返回的一次性登录凭证
+     * @param phoneCode 微信手机号授权的一次性凭证
      * @return 登录令牌及会员资料
      */
-    AppLoginVO loginByPhone(String phone);
+    AppLoginVO loginWithWechat(String loginCode, String phoneCode);
 
     /**
      * 根据 JWT 身份读取当前会员资料。

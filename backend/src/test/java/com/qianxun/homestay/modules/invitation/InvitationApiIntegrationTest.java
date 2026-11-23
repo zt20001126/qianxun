@@ -7,6 +7,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qianxun.homestay.modules.auth.WechatLoginTestSupport;
+import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -18,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -33,6 +36,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 })
 @AutoConfigureMockMvc
 class InvitationApiIntegrationTest {
+    @MockitoBean private WechatIdentityService wechatIdentityService;
     @Container
     private static final MySQLContainer<?> MYSQL = new MySQLContainer<>("mysql:8.0")
             .withDatabaseName("qianxun_invitation_test").withUsername("qianxun").withPassword("test-password");
@@ -99,8 +103,9 @@ class InvitationApiIntegrationTest {
     }
 
     private String login(String phone) throws Exception {
+        WechatLoginTestSupport.stub(wechatIdentityService, phone);
         String body = mvc.perform(post("/api/app/auth/login").contentType("application/json")
-                .content("{\"phone\":\"" + phone + "\"}"))
+                .content(WechatLoginTestSupport.request(phone)))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         return json.readTree(body).path("data").path("token").asText();
     }

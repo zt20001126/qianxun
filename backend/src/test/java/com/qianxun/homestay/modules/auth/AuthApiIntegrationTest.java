@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.qianxun.homestay.modules.auth.domain.VerifiedWechatIdentity;
+import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -20,10 +22,16 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import java.time.Instant;
+import java.util.Date;
 
 /**
  * 使用真实 MySQL 8 验证四个认证接口、会员手机号去重和角色隔离。
@@ -56,6 +64,8 @@ class AuthApiIntegrationTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @MockitoBean
+    private WechatIdentityService wechatIdentityService;
 
     @DynamicPropertySource
     static void registerDatabaseProperties(DynamicPropertyRegistry registry) {
@@ -68,13 +78,17 @@ class AuthApiIntegrationTest {
     void clearAuthenticationRows() {
         jdbcTemplate.update("DELETE FROM admin");
         jdbcTemplate.update("DELETE FROM members");
+        org.mockito.Mockito.when(wechatIdentityService.verifyLoginCredentials(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
+                .thenAnswer(invocation -> new VerifiedWechatIdentity(
+                        invocation.getArgument(1), "openid-" + invocation.getArgument(1)));
     }
 
     @Test
     void appLoginCreatesOneMemberAndAppMeReturnsCurrentMember() throws Exception {
         String loginResponse = mockMvc.perform(post("/api/app/auth/login")
                         .contentType("application/json")
-                        .content("{\"phone\":\"" + MEMBER_PHONE + "\"}"))
+                        .content(loginRequest(MEMBER_PHONE)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.data.expires_in").value(2592000))
@@ -105,14 +119,14 @@ class AuthApiIntegrationTest {
 
     @Test
     void repeatedPhoneLoginReusesMemberAndResetsFixedProfile() throws Exception {
-        jdbcTemplate.update("INSERT INTO members (phone, nickname, avatar) VALUES (?, ?, ?)",
-                MEMBER_PHONE, "旧昵称", "https://example.invalid/old.png");
+        jdbcTemplate.update("INSERT INTO members (phone, nickname, avatar, points, growth_points) VALUES (?, ?, ?, ?, ?)",
+                MEMBER_PHONE, "旧昵称", "https://example.invalid/old.png", 375, 920);
         long originalId = jdbcTemplate.queryForObject("SELECT id FROM members WHERE phone = ?", Long.class,
                 MEMBER_PHONE);
 
         mockMvc.perform(post("/api/app/auth/login")
                         .contentType("application/json")
-                        .content("{\"phone\":\"" + MEMBER_PHONE + "\"}"))
+                        .content(loginRequest(MEMBER_PHONE)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.member.id").value(originalId))
                 .andExpect(jsonPath("$.data.member.nickname").value("0000"))
@@ -120,6 +134,45 @@ class AuthApiIntegrationTest {
 
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM members WHERE phone = ?", Integer.class,
                 MEMBER_PHONE)).isEqualTo(1);
+        assertThat(jdbcTemplate.queryForObject("SELECT points FROM members WHERE id = ?", Integer.class,
+                originalId)).isEqualTo(375);
+        assertThat(jdbcTemplate.queryForObject("SELECT growth_points FROM members WHERE id = ?", Integer.class,
+                originalId)).isEqualTo(920);
+        assertThat(jdbcTemplate.queryForObject("SELECT openid FROM members WHERE id = ?", String.class,
+                originalId)).isEqualTo("openid-" + MEMBER_PHONE);
+    }
+
+    @Test
+    void rejectsAConflictingOpenIdAndKeepsExistingMemberData() throws Exception {
+        jdbcTemplate.update("INSERT INTO members (phone, openid, points, growth_points) VALUES (?, ?, ?, ?)",
+                MEMBER_PHONE, "previous-openid", 240, 610);
+        org.mockito.Mockito.when(wechatIdentityService.verifyLoginCredentials(
+                org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(new VerifiedWechatIdentity(MEMBER_PHONE, "new-openid"));
+
+        mockMvc.perform(post("/api/app/auth/login")
+                        .contentType("application/json")
+                        .content(loginRequest(MEMBER_PHONE)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("账号绑定信息存在冲突，请联系管理员处理"));
+
+        assertThat(jdbcTemplate.queryForObject("SELECT openid FROM members WHERE phone = ?", String.class,
+                MEMBER_PHONE)).isEqualTo("previous-openid");
+        assertThat(jdbcTemplate.queryForObject("SELECT points FROM members WHERE phone = ?", Integer.class,
+                MEMBER_PHONE)).isEqualTo(240);
+    }
+
+    @Test
+    void rejectsMemberTokensIssuedBeforeWechatLoginCutover() throws Exception {
+        Instant now = Instant.now();
+        String oldToken = Jwts.builder().subject("1").claim("member_id", 1L).claim("role", "MEMBER")
+                .issuedAt(Date.from(now)).expiration(Date.from(now.plusSeconds(600)))
+                .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(
+                        "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=")))
+                .compact();
+
+        mockMvc.perform(get("/api/app/auth/me").header("Authorization", "Bearer " + oldToken))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -130,7 +183,7 @@ class AuthApiIntegrationTest {
                     .<Callable<Long>>mapToObj(index -> () -> {
                         String response = mockMvc.perform(post("/api/app/auth/login")
                                         .contentType("application/json")
-                                        .content("{\"phone\":\"" + MEMBER_PHONE + "\"}"))
+                                        .content(loginRequest(MEMBER_PHONE)))
                                 .andExpect(status().isOk())
                                 .andReturn().getResponse().getContentAsString();
                         return objectMapper.readTree(response).path("data").path("member").path("id").asLong();
@@ -184,15 +237,19 @@ class AuthApiIntegrationTest {
     }
 
     @Test
-    void loginRejectsInvalidPhoneAndUnauthenticatedAdminMe() throws Exception {
+    void loginRejectsLegacyPhoneOnlyRequestAndUnauthenticatedAdminMe() throws Exception {
         mockMvc.perform(post("/api/app/auth/login")
                         .contentType("application/json")
-                        .content("{\"phone\":\"12345\"}"))
+                        .content("{\"phone\":\"" + MEMBER_PHONE + "\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400));
 
         mockMvc.perform(get("/api/admin/auth/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401));
+    }
+
+    private String loginRequest(String phone) {
+        return "{\"login_code\":\"test-login-code\",\"phone_code\":\"" + phone + "\"}";
     }
 }

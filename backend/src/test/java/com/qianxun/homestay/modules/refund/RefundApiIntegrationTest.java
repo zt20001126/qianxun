@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.common.security.service.JwtService;
+import com.qianxun.homestay.modules.auth.WechatLoginTestSupport;
+import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import com.qianxun.homestay.modules.payment.provider.WechatPayGateway;
 import com.qianxun.homestay.modules.refund.service.WechatRefundTransactionService;
 import java.math.BigDecimal;
@@ -65,6 +67,8 @@ class RefundApiIntegrationTest {
     private WechatRefundTransactionService wechatRefundTransactionService;
     @MockitoBean
     private WechatPayGateway wechatPayGateway;
+    @MockitoBean
+    private WechatIdentityService wechatIdentityService;
 
     private long memberId;
     private long orderId;
@@ -347,9 +351,10 @@ class RefundApiIntegrationTest {
     }
 
     private String loginMemberToken(String phone) throws Exception {
+        WechatLoginTestSupport.stub(wechatIdentityService, phone);
         String response = mockMvc.perform(post("/api/app/auth/login")
                         .contentType("application/json")
-                        .content("{\"phone\":\"" + phone + "\"}"))
+                        .content(WechatLoginTestSupport.request(phone)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).path("data").path("token").asText();

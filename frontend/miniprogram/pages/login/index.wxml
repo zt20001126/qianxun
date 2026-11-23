@@ -20,43 +20,37 @@
   </view>
 
   <view class="login-card">
-    <text class="card-title">手机号登录</text>
+    <image class="card-crest" src="../../assets/login-card-crest.svg" mode="scaleToFill" />
+    <image class="card-house" src="../../assets/login-card-house.svg" mode="aspectFit" />
+    <image class="card-bamboo" src="../../assets/login-card-bamboo.svg" mode="aspectFit" />
 
-    <view class="phone-field">
-      <qx-icon name="smartphone" size="32" />
-      <input
-        class="phone-input"
-        type="number"
-        maxlength="11"
-        value="{{phone}}"
-        placeholder="请输入手机号"
-        placeholder-class="placeholder"
-        confirm-type="done"
-        bindinput="onPhoneInput"
-        bindconfirm="onLoginTap"
-      />
-      <view wx:if="{{phone}}" class="phone-clear" bindtap="onClearPhoneTap">
-        <qx-icon name="x-circle" size="32" />
+    <view class="card-content">
+      <view class="title-row">
+        <view class="title-rule title-rule-left"></view>
+        <text class="card-title">登录</text>
+        <view class="title-rule title-rule-right"></view>
+      </view>
+
+      <text wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</text>
+      <button class="login-button" hover-class="login-button-hover" loading="{{loading}}" disabled="{{loading}}" open-type="getPhoneNumber" bindgetphonenumber="onPhoneAuthorized">
+        <image wx:if="{{!loading}}" class="wechat-icon" src="../../assets/login-wechat.svg" mode="aspectFit" />
+        <text>{{loading ? '正在登录…' : '微信授权登录'}}</text>
+      </button>
+
+      <view class="terms-row">
+        <view class="terms-checkbox {{agreedTerms ? 'terms-checkbox-checked' : ''}}" bindtap="onTermsToggle">
+          <text wx:if="{{agreedTerms}}" class="terms-check">✓</text>
+        </view>
+        <view class="terms-copy" bindtap="onTermsToggle">
+          <text>我已阅读并同意</text>
+          <text class="terms-link" data-type="user" catchtap="onAgreementTap">《用户协议》</text>
+          <text>和</text>
+          <text class="terms-link" data-type="privacy" catchtap="onAgreementTap">《隐私协议》</text>
+        </view>
       </view>
     </view>
 
-    <text wx:if="{{errorMessage}}" class="error-message">{{errorMessage}}</text>
-    <button class="login-button" loading="{{loading}}" disabled="{{loading}}" bindtap="onLoginTap">
-      {{loading ? '正在登录…' : '登录'}}
-    </button>
-
-    <view class="terms-row">
-      <view class="terms-checkbox {{agreedTerms ? 'terms-checkbox-checked' : ''}}" bindtap="onTermsToggle">
-        <text wx:if="{{agreedTerms}}" class="terms-check">✓</text>
-      </view>
-      <view class="terms-copy" bindtap="onTermsToggle">
-        <text>我已阅读并同意</text>
-        <text class="terms-link" data-type="user" catchtap="onAgreementTap">《用户协议》</text>
-        <text>和</text>
-        <text class="terms-link" data-type="privacy" catchtap="onAgreementTap">《隐私协议》</text>
-      </view>
-    </view>
-
+    <image class="card-river-art" src="../../assets/login-card-river.svg" mode="scaleToFill" />
   </view>
 
   <view class="scenery">

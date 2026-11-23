@@ -11,9 +11,9 @@ public class MemberEntity {
     private Long id;
     /** 会员登录手机号，数据库唯一去重。 */
     private String phone;
-    /** 预留微信 OpenID；本阶段始终为空。 */
+    /** 已绑定的小程序 OpenID；管理员预建但未登录的会员可为空。 */
     private String openid;
-    /** 固定由手机号后四位生成的昵称。 */
+    /** 登录资料使用手机号后四位生成的昵称。 */
     private String nickname;
     /** 系统统一默认头像地址。 */
     private String avatar;

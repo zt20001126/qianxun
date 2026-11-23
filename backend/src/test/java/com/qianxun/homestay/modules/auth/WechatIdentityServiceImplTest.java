@@ -59,6 +59,17 @@ class WechatIdentityServiceImplTest {
     }
 
     @Test
+    void loginIdentityCanBeVerifiedWhenWechatPaymentIsDisabled() {
+        properties.setEnabled(false);
+        expectIdentityLookup("login-code", "phone-code");
+
+        assertThat(service.verifyLoginCredentials("login-code", "phone-code"))
+                .isEqualTo(new com.qianxun.homestay.modules.auth.domain.VerifiedWechatIdentity(PHONE, OPENID));
+
+        server.verify();
+    }
+
+    @Test
     void rejectsWechatLoginErrorWithoutRequestingPhoneOrBindingIdentity() {
         server.expect(requestTo(org.hamcrest.Matchers.containsString("/sns/jscode2session")))
                 .andExpect(method(HttpMethod.GET))

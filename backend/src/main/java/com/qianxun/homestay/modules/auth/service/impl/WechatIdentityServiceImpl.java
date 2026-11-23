@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.auth.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.qianxun.homestay.common.exception.BusinessException;
+import com.qianxun.homestay.modules.auth.domain.VerifiedWechatIdentity;
 import com.qianxun.homestay.modules.auth.service.WechatIdentityBindingService;
 import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import com.qianxun.homestay.modules.payment.config.WechatPayProperties;
@@ -37,9 +38,10 @@ public class WechatIdentityServiceImpl implements WechatIdentityService {
     }
 
     @Override
-    public String verifyAndBindOpenId(Long memberId, String loginCode, String phoneCode) {
-        if (!properties.isEnabled()) {
-            throw new BusinessException(HttpStatus.CONFLICT, "微信支付当前未启用");
+    public VerifiedWechatIdentity verifyLoginCredentials(String loginCode, String phoneCode) {
+        if (properties.getAppId() == null || properties.getAppId().isBlank()
+                || properties.getAppSecret() == null || properties.getAppSecret().isBlank()) {
+            throw new BusinessException(HttpStatus.SERVICE_UNAVAILABLE, "微信登录服务尚未配置");
         }
         try {
             JsonNode session = restClient.get()
@@ -66,12 +68,21 @@ public class WechatIdentityServiceImpl implements WechatIdentityService {
             ensureWechatSuccess(phoneResponse);
             String phone = requiredText(phoneResponse.path("phone_info"), "purePhoneNumber");
             phone = PHONE_DIGITS.matcher(phone).replaceAll("");
-            return bindingService.bindVerifiedIdentity(memberId, phone, openid);
+            if (!phone.matches("^1[3-9]\\d{9}$")) {
+                throw new BusinessException(HttpStatus.BAD_GATEWAY, "微信返回的手机号格式无效");
+            }
+            return new VerifiedWechatIdentity(phone, openid);
         } catch (BusinessException exception) {
             throw exception;
         } catch (RestClientException exception) {
             throw new BusinessException(HttpStatus.BAD_GATEWAY, "暂时无法验证微信身份，请稍后重试");
         }
+    }
+
+    @Override
+    public String verifyAndBindOpenId(Long memberId, String loginCode, String phoneCode) {
+        VerifiedWechatIdentity identity = verifyLoginCredentials(loginCode, phoneCode);
+        return bindingService.bindVerifiedIdentity(memberId, identity.phone(), identity.openid());
     }
 
     private String accessToken() {

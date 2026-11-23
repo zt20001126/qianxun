@@ -1,11 +1,9 @@
-/** 芊浔民宿手机号登录页：输入校验、提交状态、登录后保存 JWT。 */
+/** 芊浔民宿微信手机号授权登录页：管理授权、提交状态并保存登录令牌。 */
 import { login } from '../../services/auth'
-import { isValidMainlandPhone } from '../../utils/phone'
 import { getValidToken, saveSession } from '../../utils/session'
 import { consumePendingInvitation } from '../../utils/invitation'
 
 interface LoginPageData {
-  phone: string
   loading: boolean
   errorMessage: string
   agreedTerms: boolean
@@ -13,7 +11,6 @@ interface LoginPageData {
 
 Page({
   data: {
-    phone: '',
     loading: false,
     errorMessage: '',
     agreedTerms: false,
@@ -26,15 +23,6 @@ Page({
     }
   },
 
-  onPhoneInput(event: WechatMiniprogram.Input) {
-    const phone = event.detail.value.replace(/\D/g, '').slice(0, 11)
-    this.setData({ phone, errorMessage: '' })
-  },
-
-  onClearPhoneTap() {
-    this.setData({ phone: '', errorMessage: '' })
-  },
-
   onTermsToggle() {
     this.setData({ agreedTerms: !this.data.agreedTerms })
   },
@@ -44,21 +32,31 @@ Page({
     wx.navigateTo({ url: `/pages/agreement/index?type=${type}` })
   },
 
-  async onLoginTap() {
+  async onPhoneAuthorized(event: { detail: { code?: string; errMsg?: string; errno?: number } }) {
     if (!this.data.agreedTerms) {
       wx.showToast({ title: '请先勾选同意用户协议与隐私协议', icon: 'none' })
       return
     }
 
-    const phone = this.data.phone.trim()
-    if (!isValidMainlandPhone(phone)) {
-      this.setData({ errorMessage: '请输入有效的 11 位中国大陆手机号' })
+    const phoneCode = event.detail.code
+    if (!phoneCode) {
+      const platformMessage = event.detail.errMsg || '微信没有返回授权结果'
+      const errorNumber = event.detail.errno ? `（错误码 ${event.detail.errno}）` : ''
+      const permissionIssue = /permission|not auth|unsupported|api.*disabled/i.test(platformMessage)
+      const hint = permissionIssue
+        ? '请在微信公众平台确认小程序已完成认证并开通手机号快速验证能力。'
+        : '请确认已在微信授权弹窗中同意手机号授权后重试。'
+      this.setData({ errorMessage: `手机号授权失败：${platformMessage}${errorNumber}。${hint}` })
       return
     }
 
     this.setData({ loading: true, errorMessage: '' })
     try {
-      const result = await login(phone)
+      const loginCode = await new Promise<string>((resolve, reject) => wx.login({
+        success: (result) => result.code ? resolve(result.code) : reject(new Error('获取微信登录凭证失败')),
+        fail: () => reject(new Error('获取微信登录凭证失败，请重试')),
+      }))
+      const result = await login(loginCode, phoneCode)
       saveSession(result)
       void consumePendingInvitation()
       wx.switchTab({ url: '/pages/home/index' })

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.qianxun.homestay.common.exception.BusinessException;
+import com.qianxun.homestay.modules.auth.domain.VerifiedWechatIdentity;
 import com.qianxun.homestay.modules.auth.service.impl.WechatIdentityBindingServiceImpl;
 import com.qianxun.homestay.modules.member.entity.MemberEntity;
 import com.qianxun.homestay.modules.member.mapper.MemberMapper;
@@ -32,6 +33,7 @@ class WechatIdentityBindingServiceImplTest {
         member.setId(MEMBER_ID);
         member.setPhone(PHONE);
         when(memberMapper.findByIdForUpdate(MEMBER_ID)).thenReturn(member);
+        when(memberMapper.findByPhoneForUpdate(PHONE)).thenReturn(member);
         when(memberMapper.findByOpenid(OPENID)).thenReturn(null);
     }
 
@@ -42,6 +44,33 @@ class WechatIdentityBindingServiceImplTest {
         assertThat(service.bindVerifiedIdentity(MEMBER_ID, PHONE, OPENID)).isEqualTo(OPENID);
 
         verify(memberMapper).bindOpenidIfAbsent(MEMBER_ID, OPENID);
+    }
+
+    @Test
+    void loginBindsExistingUnboundMemberWithoutChangingItsIdentity() {
+        when(memberMapper.upsertLoginProfile(PHONE, "8000", "/avatar.png")).thenReturn(1);
+        when(memberMapper.bindOpenidIfAbsent(MEMBER_ID, OPENID)).thenReturn(1);
+
+        assertThat(service.loginOrBindVerifiedIdentity(
+                new VerifiedWechatIdentity(PHONE, OPENID), "/avatar.png")).isEqualTo(MEMBER_ID);
+
+        verify(memberMapper).findByPhoneForUpdate(PHONE);
+        verify(memberMapper).bindOpenidIfAbsent(MEMBER_ID, OPENID);
+    }
+
+    @Test
+    void loginRejectsBindingConflictWithAdministratorMessage() {
+        member.setOpenid("other-openid");
+        when(memberMapper.upsertLoginProfile(PHONE, "8000", "/avatar.png")).thenReturn(1);
+
+        assertThatThrownBy(() -> service.loginOrBindVerifiedIdentity(
+                new VerifiedWechatIdentity(PHONE, OPENID), "/avatar.png"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("账号绑定信息存在冲突，请联系管理员处理")
+                .extracting(exception -> ((BusinessException) exception).getStatus())
+                .isEqualTo(HttpStatus.CONFLICT);
+
+        verify(memberMapper, never()).bindOpenidIfAbsent(MEMBER_ID, OPENID);
     }
 
     @Test

@@ -8,7 +8,7 @@ export interface MemberProfile {
   growth_points: number
 }
 
-/** A01 手机号登录响应数据。 */
+/** A01 微信手机号授权登录响应数据。 */
 export interface AppLoginResult {
   token: string
   expires_in: number
