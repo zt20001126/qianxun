@@ -4,7 +4,7 @@
 
 ## 本机验收启动
 
-1. 将 `.env.example` 复制为 `.env`，至少设置 `JWT_SECRET`。开发用数据库、账号、口令和连接 URL 固定为 `qianxun`，由 Compose 统一配置。生产环境不要复用这些值；应提供独立的生产 Compose 配置，同时修改数据库和后端连接 URL，并使用独立 JWT 密钥。
+1. 本地和服务器使用同一份配置模板 `.env.example`，各自在自己的 `deploy/.env` 中保存运行配置。服务器上的 `deploy/.env` 只需把 `MYSQL_DATABASE`、`MYSQL_USER`、`MYSQL_PASSWORD`、`MYSQL_ROOT_PASSWORD` 改为生产专用值；Compose 会据此初始化服务器 MySQL 并生成后端连接地址。不要把服务器上的真实配置提交到 Git。`DATABASE_URL` 通常留空；只有连接 Compose 之外的数据库或自定义连接参数时才填写。
 2. 启动并检查服务：
 
    ```sh
@@ -17,7 +17,7 @@
 3. 管理后台默认在 `http://localhost:8081`，API 通过同源 `/api` 访问。开发者工具打开 `frontend/miniprogram`；真机访问须把 `frontend/miniprogram/config.ts` 指向 HTTPS API 域名并配置微信合法 request 域名。
 4. 第一次数据库迁移只初始化结构、固定渠道和管理员记录。部署前应按环境准备六间客房资料，确认管理员凭据已由受控流程设置；不要把口令或 JWT 密钥写进仓库。旧系统迁移时使用仓库提供的只读源库导入脚本。
 
-默认端口：管理后台 `8081`、局域网可访问的后端 `8080`、仅本机可访问的 MySQL `3307`。小程序本机联调时，需将 `frontend/miniprogram/config.ts` 中的 API 地址设为开发电脑当前 Wi‑Fi IPv4 地址；正式环境应使用 HTTPS 合法域名。发生端口冲突时，可在 `deploy/.env` 追加 `ADMIN_HTTP_PORT`、`BACKEND_HOST_PORT` 或 `MYSQL_HOST_PORT` 覆盖对应映射；默认开发环境不需要这些变量。
+默认端口：管理后台 `8081`、局域网可访问的后端 `8080`、仅本机可访问的 MySQL `3307`。小程序本机联调时，需将 `frontend/miniprogram/config.ts` 中的 API 地址设为开发电脑当前 Wi‑Fi IPv4 地址；正式环境应使用 HTTPS 合法域名。发生端口冲突时，可在 `deploy/.env` 追加 `ADMIN_HTTP_PORT`、`BACKEND_HOST_PORT` 或 `MYSQL_HOST_PORT` 覆盖映射。
 
 ## HTTPS 与上线边界
 
@@ -25,7 +25,7 @@
 
 以下示例针对 Ubuntu 宿主机已运行 Nginx、管理后台使用默认端口 8081 的情况。宿主机处理 HTTPS，转发到本机管理后台容器；容器继续提供页面并转发 `/api/`。若端口有调整，须同步修改 `nginx.qianxun.https.conf.example` 的 `proxy_pass`。
 
-1. 将本仓库部署到服务器，在 `deploy/.env` 设置 `JWT_SECRET`、`APP_CORS_ALLOWED_ORIGINS=https://111.229.107.194`（使用域名时改为实际 HTTPS 来源，不带路径或末尾斜杠），并设置 `ADMIN_BIND_ADDRESS=127.0.0.1`、`BACKEND_BIND_ADDRESS=127.0.0.1`，避免直接向公网开放容器端口。开发用数据库口令不得用于生产环境。
+1. 将本仓库部署到服务器，在服务器上按 `.env.example` 创建 `deploy/.env`，并将数据库相关值替换为服务器生产专用配置；设置 `APP_CORS_ALLOWED_ORIGINS=https://111.229.107.194`（使用域名时改为实际 HTTPS 来源，不带路径或末尾斜杠），并设置 `ADMIN_BIND_ADDRESS=127.0.0.1`、`BACKEND_BIND_ADDRESS=127.0.0.1`，避免直接向公网开放容器端口。开发用数据库口令不得用于生产环境。
 2. 从仓库根目录运行 `docker compose --env-file deploy/.env -f deploy/docker-compose.yml up --build -d`，检查 `docker compose --env-file deploy/.env -f deploy/docker-compose.yml ps` 和 `curl http://127.0.0.1:8081/health`。
 3. 获取与访问地址匹配的可信证书，将完整证书链和私钥放在服务器安全位置。示例文件中的 `/etc/letsencrypt/live/111.229.107.194/` 仅为路径示意，必须改为证书实际路径；不要将证书私钥提交到仓库。IP 地址证书需要覆盖该 IP，域名证书需要使用对应域名访问。
 4. 将 `deploy/nginx.qianxun.https.conf.example` 复制到 `/etc/nginx/sites-available/qianxun`，按实际证书路径、IP 或域名及端口修改。检查现有站点配置，避免同地址同端口的默认站点与其冲突；确认无需默认站点后，可移除 `/etc/nginx/sites-enabled/default` 这个链接，然后建立 `sudo ln -s /etc/nginx/sites-available/qianxun /etc/nginx/sites-enabled/qianxun`。修改前备份现有配置。

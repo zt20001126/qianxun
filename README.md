@@ -19,13 +19,15 @@ Copy-Item deploy/.env.example deploy/.env
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 ```
 
-把生成值填入 `deploy/.env` 的 `JWT_SECRET`，然后启动容器：
+把生成值填入 `deploy/.env` 的 `JWT_SECRET`，然后启动本地开发容器：
 
 ```powershell
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml up --build -d
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml ps
 docker compose --env-file deploy/.env -f deploy/docker-compose.yml logs -f backend
 ```
+
+服务器使用同一份 `deploy/.env.example` 作为配置模板，在服务器单独创建 `deploy/.env`；只需将数据库相关参数改为服务器的生产数据库配置。不要把服务器上的真实配置提交到 Git。
 
 管理后台经 Nginx 访问 `http://localhost:8081`，同域 `/api` 由 Nginx 转发到后端。后端健康检查地址为 `http://localhost:8080/actuator/health`，仅绑定本机回环地址。MySQL 映射在本机 `3307`，应用连接容器网络中的 `mysql:3306`。首次启动由 Flyway 创建表和七个固定渠道，并按迁移初始化管理员行；房间资料按实际环境通过后台创建或使用旧库导入脚本。
 
