@@ -3,6 +3,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.modules.agent.core.schema.*;
+import com.qianxun.homestay.modules.agent.core.tool.AgentToolRegistry;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -22,29 +23,18 @@ public class DeepSeekModel implements AgentModel {
     private final ObjectMapper mapper;
     private final HttpClient client;
     private final Duration timeout;
+    private final AgentToolRegistry registry;
     public DeepSeekModel(@Value("${app.agent.base-url}") String baseUrl, @Value("${app.agent.api-key}") String apiKey,
                          @Value("${app.agent.model}") String model,
-                         @Value("${app.agent.timeout-seconds:60}") long timeoutSeconds, ObjectMapper mapper) {
+                         @Value("${app.agent.timeout-seconds:60}") long timeoutSeconds, ObjectMapper mapper, AgentToolRegistry registry) {
         this.baseUrl = baseUrl; this.apiKey = apiKey; this.model = model; this.mapper = mapper;
-        this.timeout = Duration.ofSeconds(timeoutSeconds);
+        this.timeout = Duration.ofSeconds(timeoutSeconds); this.registry = registry;
         this.client = HttpClient.newBuilder().connectTimeout(timeout).build();
     }
     @Override public AgentModelResult generate(List<AgentModelMessage> messages) {
         if (apiKey.isBlank() || baseUrl.isBlank() || model.isBlank()) throw failure("智能体模型配置不完整");
-        // 工具参数包含自由文本题和四选一题；服务端仍需校验模型输出。
-        var option = Map.of("type", "object", "properties", Map.of("label", Map.of("type", "string"), "description", Map.of("type", "string")),
-                "required", List.of("label", "description"), "additionalProperties", false);
-        var textQuestion = Map.of("type", "object", "properties", Map.of("id", Map.of("type", "string"), "title", Map.of("type", "string"), "type", Map.of("type", "string", "enum", List.of("text"))),
-                "required", List.of("id", "title", "type"), "additionalProperties", false);
-        var choiceQuestion = Map.of("type", "object", "properties", Map.of("id", Map.of("type", "string"), "title", Map.of("type", "string"),
-                "type", Map.of("type", "string", "enum", List.of("single_choice")), "context", Map.of("type", "string"),
-                "options", Map.of("type", "array", "minItems", 4, "maxItems", 4, "items", option),
-                "allow_custom_input", Map.of("type", "boolean", "enum", List.of(false))),
-                "required", List.of("id", "title", "type", "options", "allow_custom_input"), "additionalProperties", false);
-        var parameters = Map.of("type", "object", "properties", Map.of("questions", Map.of("type", "array", "minItems", 1, "maxItems", 3,
-                "items", Map.of("anyOf", List.of(textQuestion, choiceQuestion)))), "required", List.of("questions"), "additionalProperties", false);
-        var tool = Map.of("type", "function", "function", Map.of("name", "ask_user_questions", "description", "在缺少关键信息时提出自由文本题或四选一题", "parameters", parameters));
-        var payload = Map.of("model", model, "messages", messages, "thinking", Map.of("type", "disabled"), "tools", List.of(tool), "stream", false);
+        var payload = Map.of("model", model, "messages", messages, "thinking", Map.of("type", "disabled"),
+                "tools", registry.definitions(), "stream", false);
         try {
             String url = baseUrl.replaceAll("/+$", "") + "/chat/completions";
             HttpRequest request = HttpRequest.newBuilder(URI.create(url)).timeout(timeout)
@@ -64,7 +54,10 @@ public class DeepSeekModel implements AgentModel {
             if ("tool_calls".equals(reason)) {
                 if (!calls.isArray() || calls.size() != 1) throw failure("模型工具调用格式无效");
                 JsonNode function = calls.get(0).path("function");
-                return new AgentModelResult(null, function.path("name").asText(), mapper.readTree(function.path("arguments").asText()));
+                String callId = calls.get(0).path("id").asText();
+                String name = function.path("name").asText();
+                if (callId.isBlank() || name.isBlank() || !function.path("arguments").isTextual()) throw failure("模型工具调用格式无效");
+                return new AgentModelResult(null, name, mapper.readTree(function.path("arguments").asText()), callId);
             }
             if (!"stop".equals(reason) || !message.path("content").isTextual() || message.path("content").asText().isBlank()) throw failure("模型未返回完整回答");
             return new AgentModelResult(message.path("content").asText(), null, null);

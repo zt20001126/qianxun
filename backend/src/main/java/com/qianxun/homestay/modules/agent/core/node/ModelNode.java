@@ -22,4 +22,13 @@ import java.io.IOException;
         messages.add(new AgentModelMessage("system", prompt)); messages.addAll(history); messages.add(new AgentModelMessage("user", message));
         return model.generate(messages);
     }
+    /** 保持原上下文并将工具结果交还模型。 */
+    public AgentModelResult resume(List<AgentModelMessage> history, String message, List<AgentModelMessage> toolMessages) {
+        List<AgentModelMessage> messages = new ArrayList<>();
+        messages.add(new AgentModelMessage("system", prompt));
+        messages.addAll(history);
+        messages.add(new AgentModelMessage("user", message));
+        messages.addAll(toolMessages);
+        return model.generate(messages);
+    }
 }

@@ -76,4 +76,25 @@ class AgentApiIntegrationTest {
         mvc.perform(get("/api/admin/agent/conversations/{id}/messages",id).header("Authorization",token)).andExpect(jsonPath("$.data.total").value(4));
         mvc.perform(get("/api/admin/agent/conversations").header("Authorization","Bearer "+jwt.issueMemberToken(1L))).andExpect(status().isForbidden());
     }
+
+    @Test void queriesTodayBusinessDataThroughRegisteredTool() throws Exception {
+        jdbc.update("INSERT INTO admin(username,password_hash,enabled) VALUES ('agent_business_test','hash',1)");
+        Long admin = jdbc.queryForObject("SELECT id FROM admin WHERE username='agent_business_test'", Long.class);
+        when(model.generate(anyList())).thenReturn(
+                new AgentModelResult(null, "get_today_business_data", json.readTree("{}"), "business-call"),
+                new AgentModelResult("今日经营数据已查询", null, null));
+        mvc.perform(post("/api/admin/agent/chat")
+                        .header("Authorization", "Bearer " + jwt.issueAdminToken(admin))
+                        .contentType("application/json").content("{\"message\":\"今日营业情况\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.status").value("completed"))
+                .andExpect(jsonPath("$.data.answer").value("今日经营数据已查询"));
+        var captor = org.mockito.ArgumentCaptor.forClass(java.util.List.class);
+        org.mockito.Mockito.verify(model, org.mockito.Mockito.times(2)).generate(captor.capture());
+        var messages = captor.getAllValues().get(1);
+        var result = (com.qianxun.homestay.modules.agent.core.schema.AgentModelMessage) messages.get(messages.size() - 1);
+        var data = json.readTree(result.content());
+        org.junit.jupiter.api.Assertions.assertEquals("business-call", result.toolCallId());
+        org.junit.jupiter.api.Assertions.assertTrue(data.has("paid_amount"));
+        org.junit.jupiter.api.Assertions.assertFalse(data.has("guest_name"));
+    }
 }

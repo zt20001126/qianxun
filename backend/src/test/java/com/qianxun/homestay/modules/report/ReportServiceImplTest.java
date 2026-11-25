@@ -13,6 +13,7 @@ import com.qianxun.homestay.modules.creator.mapper.CreatorMapper;
 import com.qianxun.homestay.modules.expense.mapper.ExpenseMapper;
 import com.qianxun.homestay.modules.order.enums.OrderStatus;
 import com.qianxun.homestay.modules.report.entity.ReportBlockEntity;
+import com.qianxun.homestay.modules.report.entity.DashboardRoomEntity;
 import com.qianxun.homestay.modules.report.entity.ReportOrderEntity;
 import com.qianxun.homestay.modules.report.enums.ReportScope;
 import com.qianxun.homestay.modules.report.mapper.ReportMapper;
@@ -142,6 +143,45 @@ class ReportServiceImplTest {
         JsonNode creatorJson = objectMapper().valueToTree(creators.get(0));
         assertThat(creatorJson.has("id")).isTrue();
         assertThat(creatorJson.get("id").isNull()).isTrue();
+    }
+
+
+    @Test
+    void dailyDashboardMatchesRoomAndSeparateNetAllocation() {
+        LocalDate date = LocalDate.of(2026, 2, 2);
+        DashboardRoomEntity booked = new DashboardRoomEntity();
+        booked.setOrderId(1L); booked.setCheckIn(LocalDate.of(2026, 1, 31));
+        booked.setOrderStatus("PENDING_CHECKIN");
+        DashboardRoomEntity blocked = new DashboardRoomEntity(); blocked.setBlockId(3L);
+        DashboardRoomEntity free = new DashboardRoomEntity();
+        when(reportMapper.findDashboardRooms(date, CANCELLED_STATUS)).thenReturn(List.of(booked, blocked, free));
+        ReportOrderEntity order = order(1L, 1L, LocalDate.of(2026, 1, 31),
+                LocalDate.of(2026, 2, 3), OrderStatus.PENDING_CHECKIN, "100.01", "10.01", "3.01", "2.01");
+        order.setNetAmount(new BigDecimal("84.98"));
+        ReportOrderEntity ended = order(2L, 2L, LocalDate.of(2026, 2, 1),
+                date, OrderStatus.COMPLETED, "99.00", "0.00", "0.00", "0.00");
+        when(reportMapper.findMonthOrders(LocalDate.of(2026, 2, 1), LocalDate.of(2026, 3, 1), CANCELLED_STATUS))
+                .thenReturn(List.of(order, ended));
+        var result = service.dailyBusinessData(date);
+        assertThat(result.occupiedRooms()).isEqualTo(2);
+        assertThat(result.availableRooms()).isEqualTo(1);
+        assertThat(result.occupancyRate()).isEqualTo("50.0%");
+        assertThat(result.paidAmount()).isEqualTo("33.35");
+        assertThat(result.platformFee()).isEqualTo("3.35");
+        assertThat(result.platformCommission()).isEqualTo("1.01");
+        assertThat(result.extraCommission()).isEqualTo("0.67");
+        assertThat(result.netAmount()).isEqualTo("28.34");
+    }
+
+    @Test
+    void dailyDashboardHandlesAllRoomsBlocked() {
+        LocalDate date = LocalDate.of(2026, 2, 2);
+        DashboardRoomEntity blocked = new DashboardRoomEntity(); blocked.setBlockId(1L);
+        when(reportMapper.findDashboardRooms(date, CANCELLED_STATUS)).thenReturn(List.of(blocked));
+        var result = service.dailyBusinessData(date);
+        assertThat(result.occupancyRate()).isEqualTo("0.0%");
+        assertThat(result.availableRooms()).isZero();
+        assertThat(result.paidAmount()).isEqualTo("0.00");
     }
 
     private void prepare(

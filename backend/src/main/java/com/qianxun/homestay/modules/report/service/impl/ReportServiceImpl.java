@@ -13,6 +13,7 @@ import com.qianxun.homestay.modules.report.service.ReportService;
 import com.qianxun.homestay.modules.report.vo.DashboardMonthSummaryVO;
 import com.qianxun.homestay.modules.report.vo.DashboardRoomVO;
 import com.qianxun.homestay.modules.report.vo.DashboardVO;
+import com.qianxun.homestay.modules.report.vo.TodayBusinessDataVO;
 import com.qianxun.homestay.modules.report.vo.ReportDimensionItemVO;
 import com.qianxun.homestay.modules.report.vo.ReportDimensionVO;
 import com.qianxun.homestay.modules.report.vo.ReportOverviewVO;
@@ -85,6 +86,39 @@ public class ReportServiceImpl implements ReportService {
                 metrics.occupancyRate());
         int occupiedRooms = (int) roomCards.stream().filter(room -> room.orderId() != null).count();
         return new DashboardVO(date, occupiedRooms, roomCards.size(), roomCards, monthSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public TodayBusinessDataVO dailyBusinessData(LocalDate date) {
+        // 房间分类与日看板一致，封房计入占用但不计入入住率分母。
+        List<DashboardRoomVO> rooms = reportMapper.findDashboardRooms(date, CANCELLED_STATUS).stream()
+                .map(room -> toDashboardRoom(room, date)).toList();
+        int booked = (int) rooms.stream().filter(room -> room.orderId() != null).count();
+        int blocked = (int) rooms.stream().filter(room -> "BLOCKED".equals(room.status())).count();
+        int sellable = rooms.size() - blocked;
+        String rate = sellable <= 0 ? "0.0%" : BigDecimal.valueOf(booked).multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(sellable), 1, RoundingMode.HALF_UP).toPlainString() + "%";
+        YearMonth month = YearMonth.from(date);
+        List<ReportOrderEntity> orders = reportMapper.findMonthOrders(month.atDay(1),
+                month.plusMonths(1).atDay(1), CANCELLED_STATUS);
+        BigDecimal paid = ZERO_AMOUNT, fee = ZERO_AMOUNT, commission = ZERO_AMOUNT;
+        BigDecimal extra = ZERO_AMOUNT, net = ZERO_AMOUNT;
+        for (ReportOrderEntity order : orders) {
+            if (CANCELLED_STATUS.equals(order.getStatus()) || date.isBefore(order.getCheckIn())
+                    || !date.isBefore(order.getCheckOut())) continue;
+            long nights = ChronoUnit.DAYS.between(order.getCheckIn(), order.getCheckOut());
+            long index = ChronoUnit.DAYS.between(order.getCheckIn(), date);
+            paid = paid.add(allocate(order.getPaidAmount(), nights, index));
+            fee = fee.add(allocate(order.getPlatformFee(), nights, index));
+            commission = commission.add(allocate(order.getPlatformCommission(), nights, index));
+            extra = extra.add(allocate(order.getExtraCommission(), nights, index));
+            // 日看板对净额单独分摊，不能以当日实付减费用替代。
+            net = net.add(allocate(order.getNetAmount(), nights, index));
+        }
+        return new TodayBusinessDataVO(date, rooms.size(), booked + blocked,
+                Math.max(0, rooms.size() - booked - blocked), rate,
+                money(paid), money(fee), money(commission), money(extra), money(net));
     }
 
     @Override

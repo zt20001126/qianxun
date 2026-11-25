@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.report.service;
 
 import com.qianxun.homestay.modules.report.enums.ReportScope;
 import com.qianxun.homestay.modules.report.vo.DashboardVO;
+import com.qianxun.homestay.modules.report.vo.TodayBusinessDataVO;
 import com.qianxun.homestay.modules.report.vo.ReportDimensionVO;
 import com.qianxun.homestay.modules.report.vo.ReportOverviewVO;
 import com.qianxun.homestay.modules.report.vo.RoomReportDimensionVO;
@@ -13,6 +14,9 @@ public interface ReportService {
 
     /** 查询指定日期房态及指定月份的经营总览。 */
     DashboardVO dashboard(LocalDate date, YearMonth month);
+
+    /** 按日看板口径查询指定日期的经营汇总。 */
+    TodayBusinessDataVO dailyBusinessData(LocalDate date);
 
     /** 按订单状态范围汇总指定月份的整体经营数据。 */
     ReportOverviewVO overview(YearMonth month, ReportScope scope);

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.modules.agent.core.node.*;
 import com.qianxun.homestay.modules.agent.core.schema.*;
+import com.qianxun.homestay.modules.agent.core.tool.AgentToolResult;
 import com.qianxun.homestay.modules.agent.dto.AgentChatRequest;
 import com.qianxun.homestay.modules.agent.entity.*;
 import com.qianxun.homestay.modules.agent.mapper.AgentMapper;
@@ -20,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 /** 对话流程协调与会话持久化实现。 */
 @Service public class AgentServiceImpl implements AgentService {
     private static final int MAX_HISTORY = 40;
+    private static final int MAX_TOOL_CALLS = 5;
     private static final int MAX_PAGE_SIZE = 100;
     private static final int TITLE_LENGTH = 40;
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
@@ -57,7 +59,25 @@ import org.springframework.transaction.support.TransactionTemplate;
         List<AgentModelMessage> history = previous.stream().map(this::toModelMessage).toList();
         // 网络调用不持有数据库锁；写入时通过会话行锁检测历史是否发生变化。
         AgentModelResult generated = model.execute(history, text);
-        AgentChatVO result = generated.toolName() == null ? output.completed(generated) : output.waiting(tool.execute(generated));
+        AgentChatVO result = null;
+        List<AgentModelMessage> toolMessages = new ArrayList<>();
+        int calls = 0;
+        while (generated.toolName() != null) {
+            if (++calls > MAX_TOOL_CALLS) throw new BusinessException(HttpStatus.SERVICE_UNAVAILABLE, "工具调用次数超过限制");
+            AgentToolResult toolResult = tool.execute(generated);
+            if (toolResult.questions() != null) {
+                result = output.waiting(toolResult.questions());
+                break;
+            }
+            if (generated.toolCallId() == null || generated.toolCallId().isBlank() || toolResult.content() == null) {
+                throw new BusinessException(HttpStatus.SERVICE_UNAVAILABLE, "模型工具调用格式无效");
+            }
+            // 工具消息只保留在本轮上下文，避免将中间数据写入会话历史。
+            toolMessages.add(AgentModelMessage.call(generated));
+            toolMessages.add(AgentModelMessage.tool(generated.toolCallId(), toolResult.content()));
+            generated = model.resume(history, text, toolMessages);
+        }
+        if (result == null) result = output.completed(generated);
         String userContent = answering
                 ? encode(Map.of("parts", List.of(Map.of("type", "text", "text", text),
                         Map.of("type", "question_answers", "question_message_id", request.questionMessageId(), "answers", request.answers()))))

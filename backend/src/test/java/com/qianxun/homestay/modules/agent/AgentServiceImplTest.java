@@ -7,7 +7,8 @@ import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.modules.agent.core.model.AgentModel;
 import com.qianxun.homestay.modules.agent.core.node.*;
 import com.qianxun.homestay.modules.agent.core.schema.AgentModelResult;
-import com.qianxun.homestay.modules.agent.core.tool.AskUserQuestionsTool;
+import com.qianxun.homestay.modules.agent.core.tool.*;
+import java.util.Map;
 import com.qianxun.homestay.modules.agent.dto.AgentChatRequest;
 import com.qianxun.homestay.modules.agent.entity.*;
 import com.qianxun.homestay.modules.agent.mapper.AgentMapper;
@@ -24,7 +25,12 @@ class AgentServiceImplTest {
         mapper=mock(AgentMapper.class); model=mock(AgentModel.class); json=new ObjectMapper();
         TransactionTemplate tx=mock(TransactionTemplate.class);
         when(tx.execute(any())).thenAnswer(invocation -> ((TransactionCallback<?>) invocation.getArgument(0)).doInTransaction(null));
-        service=new AgentServiceImpl(mapper,json,tx,new InputNode(),new ModelNode(model),new ToolNode(new AskUserQuestionsTool()),new OutputNode());
+        service=new AgentServiceImpl(mapper,json,tx,new InputNode(),new ModelNode(model),new ToolNode(new AgentToolRegistry(List.of(new AskUserQuestionsTool(), new AgentTool() {
+            public String name() { return "test_query"; }
+            public String description() { return "测试查询"; }
+            public Map<String,Object> parameters() { return Map.of(); }
+            public AgentToolResult invoke(com.fasterxml.jackson.databind.JsonNode args) { return AgentToolResult.completed("{\"value\":1}"); }
+        }))),new OutputNode());
     }
     @Test void firstMessageSavesBothMessages() {
         when(model.generate(anyList())).thenReturn(new AgentModelResult("您好",null,null));
@@ -72,5 +78,26 @@ class AgentServiceImplTest {
         when(model.generate(anyList())).thenThrow(new BusinessException(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,"模型服务暂时不可用"));
         assertThrows(BusinessException.class,()->service.chat(1L,new AgentChatRequest(null,"你好")));
         verify(mapper,never()).insertConversation(any()); verify(mapper,never()).insertMessage(any());
+    }
+
+    @Test void queryToolReturnsResultToModelBeforeSavingAnswer() throws Exception {
+        when(model.generate(anyList())).thenReturn(
+                new AgentModelResult(null,"test_query",json.readTree("{}"),"call-1"),
+                new AgentModelResult("今日营业额为 1 元",null,null));
+        doAnswer(call -> { AgentConversationEntity c=call.getArgument(0); c.id=12L; return 1; }).when(mapper).insertConversation(any());
+        var result=service.chat(1L,new AgentChatRequest(null,"今日营业情况"));
+        assertEquals("completed",result.status());
+        assertEquals("今日营业额为 1 元",result.answer());
+        var captor=org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(model,times(2)).generate(captor.capture());
+        var second=captor.getAllValues().get(1);
+        var response=(com.qianxun.homestay.modules.agent.core.schema.AgentModelMessage) second.get(second.size()-1);
+        assertEquals("tool",response.role()); assertEquals("call-1",response.toolCallId());
+        assertEquals("{\"value\":1}",response.content());
+    }
+    @Test void repeatedQueryToolCallsStopWithoutSaving() throws Exception {
+        when(model.generate(anyList())).thenReturn(new AgentModelResult(null,"test_query",json.readTree("{}"),"call-1"));
+        assertThrows(BusinessException.class,()->service.chat(1L,new AgentChatRequest(null,"查询")));
+        verify(mapper,never()).insertConversation(any());
     }
 }
