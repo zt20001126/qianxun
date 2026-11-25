@@ -18,4 +18,10 @@ export const agentApi = {
     }, { timeout: 75_000 })
     return response.data.data
   },
+  async answer(conversationId: number, questionMessageId: number, answers: Record<string, string>): Promise<AgentChatResult> {
+    const response = await http.post<ApiResponse<AgentChatResult>>('/api/admin/agent/chat', {
+      conversation_id: conversationId, question_message_id: questionMessageId, answers,
+    }, { timeout: 75_000 })
+    return response.data.data
+  },
 }

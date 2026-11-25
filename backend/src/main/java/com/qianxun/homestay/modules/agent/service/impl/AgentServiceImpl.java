@@ -35,7 +35,12 @@ import org.springframework.transaction.support.TransactionTemplate;
         this.mapper=mapper; this.json=json; this.transactions=transactions; this.input=input; this.model=model; this.tool=tool; this.output=output;
     }
     @Override public AgentChatVO chat(Long adminId, AgentChatRequest request) {
-        String text = input.execute(request.message()); Long id = request.conversationId();
+        boolean answering = request.questionMessageId() != null || request.answers() != null;
+        if (answering && (request.questionMessageId() == null || request.answers() == null
+                || request.conversationId() == null || request.message() != null)) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "答题请求格式不正确");
+        }
+        String text = answering ? null : input.execute(request.message()); Long id = request.conversationId();
         List<AgentMessageEntity> previous = List.of(); Long observed = null;
         if (id != null) {
             owned(id, adminId);
@@ -43,29 +48,40 @@ import org.springframework.transaction.support.TransactionTemplate;
             Collections.reverse(previous);
             observed = previous.isEmpty() ? null : previous.get(previous.size()-1).id;
         }
+        if (answering) {
+            if (!Objects.equals(observed, request.questionMessageId()) || previous.isEmpty()) {
+                throw new BusinessException(HttpStatus.CONFLICT, "题卡已失效或已经回答，请刷新会话");
+            }
+            text = validateAnswers(previous.get(previous.size() - 1), request.answers());
+        }
         List<AgentModelMessage> history = previous.stream().map(this::toModelMessage).toList();
         // 网络调用不持有数据库锁；写入时通过会话行锁检测历史是否发生变化。
         AgentModelResult generated = model.execute(history, text);
         AgentChatVO result = generated.toolName() == null ? output.completed(generated) : output.waiting(tool.execute(generated));
-        String userContent = encode(Map.of("parts", List.of(Map.of("type", "text", "text", text))));
+        String userContent = answering
+                ? encode(Map.of("parts", List.of(Map.of("type", "text", "text", text),
+                        Map.of("type", "question_answers", "question_message_id", request.questionMessageId(), "answers", request.answers()))))
+                : encode(Map.of("parts", List.of(Map.of("type", "text", "text", text))));
         String assistantContent = "completed".equals(result.status())
                 ? encode(Map.of("parts", List.of(Map.of("type", "text", "text", result.answer()))))
                 : encode(Map.of("parts", List.of(Map.of("type", "questions", "questions", result.questions()))));
         Long expected = observed;
-        Long savedId = transactions.execute(status -> {
+        String submittedText = text;
+        Long[] saved = transactions.execute(status -> {
             Long currentId = id;
             if (currentId == null) {
                 AgentConversationEntity conversation = new AgentConversationEntity(); conversation.adminId = adminId;
-                conversation.title = text.substring(0, text.offsetByCodePoints(0, Math.min(TITLE_LENGTH, text.codePointCount(0, text.length()))));
+                conversation.title = submittedText.substring(0, submittedText.offsetByCodePoints(0, Math.min(TITLE_LENGTH, submittedText.codePointCount(0, submittedText.length()))));
                 mapper.insertConversation(conversation); currentId = conversation.id;
             } else {
                 if (mapper.lockOwned(currentId, adminId) == null) throw notFound();
                 if (!Objects.equals(expected, mapper.latestMessageId(currentId))) throw new BusinessException(HttpStatus.CONFLICT, "会话已更新，请重新发送消息");
             }
-            save(currentId, "user", userContent); save(currentId, "assistant", assistantContent); mapper.touchConversation(currentId);
-            return currentId;
+            save(currentId, "user", userContent); Long assistantId = save(currentId, "assistant", assistantContent); mapper.touchConversation(currentId);
+            return new Long[]{currentId, assistantId};
         });
-        return new AgentChatVO(savedId, result.status(), result.answer(), result.questions());
+        return new AgentChatVO(saved[0], result.status(), result.answer(), result.questions(),
+                "waiting".equals(result.status()) ? saved[1] : null);
     }
     @Override public AgentPageVO<AgentConversationVO> conversations(Long adminId, int page, int size) {
         int p = page(page); int s = size(size);
@@ -81,11 +97,41 @@ import org.springframework.transaction.support.TransactionTemplate;
         JsonNode parts = parse(m.content).path("parts"); List<String> text = new ArrayList<>();
         for (JsonNode part : parts) {
             if ("text".equals(part.path("type").asText())) text.add(part.path("text").asText());
-            else if ("questions".equals(part.path("type").asText())) for (JsonNode q : part.path("questions")) text.add(q.path("title").asText());
+            else if ("questions".equals(part.path("type").asText())) for (JsonNode q : part.path("questions")) {
+                StringBuilder question = new StringBuilder(q.path("title").asText());
+                if (q.path("context").isTextual() && !q.path("context").asText().isBlank()) question.append("\n").append(q.path("context").asText());
+                for (JsonNode option : q.path("options")) question.append("\n- ").append(option.path("label").asText()).append("：").append(option.path("description").asText());
+                text.add(question.toString());
+            }
         }
         return new AgentModelMessage(m.role, String.join("\n", text));
     }
-    private void save(Long id,String role,String content) { AgentMessageEntity m=new AgentMessageEntity(); m.conversationId=id; m.role=role; m.content=content; mapper.insertMessage(m); }
+    private Long save(Long id,String role,String content) { AgentMessageEntity m=new AgentMessageEntity(); m.conversationId=id; m.role=role; m.content=content; mapper.insertMessage(m); return m.id; }
+    /** 只允许回答本会话最新的助手题卡，避免历史题卡被重复提交。 */
+    private String validateAnswers(AgentMessageEntity message, Map<String, String> answers) {
+        if (!"assistant".equals(message.role)) throw new BusinessException(HttpStatus.CONFLICT, "题卡已失效或已经回答，请刷新会话");
+        JsonNode parts = parse(message.content).path("parts");
+        JsonNode questions = null;
+        for (JsonNode part : parts) if ("questions".equals(part.path("type").asText())) questions = part.path("questions");
+        if (questions == null || !questions.isArray() || questions.isEmpty() || answers.size() != questions.size()) {
+            throw new BusinessException(HttpStatus.BAD_REQUEST, "答案必须与题卡问题一一对应");
+        }
+        List<String> lines = new ArrayList<>();
+        for (JsonNode question : questions) {
+            String id = question.path("id").asText(); String answer = answers.get(id);
+            if (answer == null || answer.isBlank() || answer.strip().length() > 100) {
+                throw new BusinessException(HttpStatus.BAD_REQUEST, "请填写所有问题的有效答案");
+            }
+            answer = answer.strip();
+            if ("single_choice".equals(question.path("type").asText())) {
+                boolean valid = false;
+                for (JsonNode option : question.path("options")) if (answer.equals(option.path("label").asText())) valid = true;
+                if (!valid) throw new BusinessException(HttpStatus.BAD_REQUEST, "单选题答案不在选项中");
+            }
+            lines.add(question.path("title").asText() + "：" + answer);
+        }
+        return String.join("\n", lines);
+    }
     private void owned(Long id,Long adminId) { if (mapper.findOwned(id,adminId)==null) throw notFound(); }
     private BusinessException notFound() { return new BusinessException(HttpStatus.NOT_FOUND,"会话不存在"); }
     private String encode(Object value) { try { return json.writeValueAsString(value); } catch (JsonProcessingException e) { throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR,"消息处理失败"); } }

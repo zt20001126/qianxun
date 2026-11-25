@@ -60,6 +60,14 @@ class AgentServiceImplTest {
         assertThrows(BusinessException.class,()->service.chat(1L,new AgentChatRequest(null," ")));
         verifyNoInteractions(model);
     }
+    @Test void rejectsDuplicateChoiceLabels() throws Exception {
+        var arguments = json.readTree("""
+                {"questions":[{"id":"q","type":"single_choice","title":"选择？","allow_custom_input":false,
+                "options":[{"label":"A","description":"一"},{"label":"a","description":"二"},
+                {"label":"C","description":"三"},{"label":"D","description":"四"}]}]}
+                """);
+        assertThrows(BusinessException.class, () -> new AskUserQuestionsTool().execute(arguments));
+    }
     @Test void modelFailureDoesNotPersist() {
         when(model.generate(anyList())).thenThrow(new BusinessException(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,"模型服务暂时不可用"));
         assertThrows(BusinessException.class,()->service.chat(1L,new AgentChatRequest(null,"你好")));

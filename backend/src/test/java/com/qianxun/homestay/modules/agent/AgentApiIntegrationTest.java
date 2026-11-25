@@ -28,6 +28,36 @@ class AgentApiIntegrationTest {
     @DynamicPropertySource static void db(DynamicPropertyRegistry r) { r.add("spring.datasource.url",MYSQL::getJdbcUrl); r.add("spring.datasource.username",MYSQL::getUsername); r.add("spring.datasource.password",MYSQL::getPassword); }
     @Autowired MockMvc mvc; @Autowired JdbcTemplate jdbc; @Autowired JwtService jwt; @Autowired ObjectMapper json;
     @MockitoBean AgentModel model;
+    @Test void validatesAndPersistsStructuredAnswers() throws Exception {
+        jdbc.update("INSERT INTO admin(username,password_hash,enabled) VALUES ('agent_answer_test','hash',1)");
+        Long admin = jdbc.queryForObject("SELECT id FROM admin WHERE username='agent_answer_test'", Long.class);
+        String token = "Bearer " + jwt.issueAdminToken(admin);
+        var arguments = json.readTree("""
+                {"questions":[{"id":"channel","type":"single_choice","title":"选择渠道？","allow_custom_input":false,
+                "options":[{"label":"甲","description":"说明甲"},{"label":"乙","description":"说明乙"},
+                {"label":"丙","description":"说明丙"},{"label":"丁","description":"说明丁"}]},
+                {"id":"detail","type":"text","title":"补充说明？"}]}
+                """);
+        when(model.generate(anyList())).thenReturn(new AgentModelResult(null, "ask_user_questions", arguments),
+                new AgentModelResult("已收到", null, null));
+        String response = mvc.perform(post("/api/admin/agent/chat").header("Authorization",token)
+                .contentType("application/json").content("{\"message\":\"请提问\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.questions[0].options.length()").value(4))
+                .andReturn().getResponse().getContentAsString();
+        long conversationId = json.readTree(response).path("data").path("conversation_id").asLong();
+        long questionId = json.readTree(response).path("data").path("question_message_id").asLong();
+        String prefix = "{\"conversation_id\":" + conversationId + ",\"question_message_id\":" + questionId + ",\"answers\":";
+        mvc.perform(post("/api/admin/agent/chat").header("Authorization",token).contentType("application/json")
+                .content(prefix + "{\"channel\":\"无效\",\"detail\":\"内容\"}}"))
+                .andExpect(status().isBadRequest());
+        String valid = prefix + "{\"channel\":\"甲\",\"detail\":\"内容\"}}";
+        mvc.perform(post("/api/admin/agent/chat").header("Authorization",token).contentType("application/json").content(valid))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.answer").value("已收到"));
+        mvc.perform(post("/api/admin/agent/chat").header("Authorization",token).contentType("application/json").content(valid))
+                .andExpect(status().isConflict());
+        mvc.perform(get("/api/admin/agent/conversations/{id}/messages",conversationId).header("Authorization",token))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.list[2].content.parts[1].answers.channel").value("甲"));
+    }
     @Test void savesConversationAndRestrictsAccess() throws Exception {
         jdbc.update("INSERT INTO admin(username,password_hash,enabled) VALUES ('agent_test_a','hash',1),('agent_test_b','hash',1)");
         Long a=jdbc.queryForObject("SELECT id FROM admin WHERE username='agent_test_a'",Long.class);

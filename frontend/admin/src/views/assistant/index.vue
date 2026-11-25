@@ -2,7 +2,7 @@
 /** 管理员智能助手：会话历史、自由文本提问与对话。 */
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { agentApi } from '../../api/agent'
-import type { AgentConversation, AgentMessage, AgentPart } from '../../types/agent'
+import type { AgentConversation, AgentMessage, AgentPart, AgentQuestion, AgentChatResult } from '../../types/agent'
 
 const props = withDefaults(defineProps<{ floating?: boolean }>(), { floating: false })
 const historyOpen = ref(false)
@@ -19,6 +19,7 @@ const sending = ref(false)
 const listError = ref('')
 const messageError = ref('')
 const sendError = ref('')
+const questionAnswers = ref<Record<number, Record<string, string>>>({})
 const messageArea = ref<HTMLElement | null>(null)
 let selectionVersion = 0
 let temporaryId = -1
@@ -33,6 +34,11 @@ function errorMessage(error: unknown, fallback: string): string {
 async function scrollToBottom(): Promise<void> {
   await nextTick()
   if (messageArea.value) messageArea.value.scrollTop = messageArea.value.scrollHeight
+}
+function restoreAnswers(items: AgentMessage[]): void {
+  for (const item of items) for (const part of item.content.parts) {
+    if (part.type === 'question_answers') questionAnswers.value[part.question_message_id] = part.answers
+  }
 }
 async function loadConversations(reset = false): Promise<void> {
   if (listLoading.value) return
@@ -66,6 +72,7 @@ async function openConversation(id: number): Promise<void> {
     const result = await agentApi.messages(id, lastPage)
     if (version !== selectionVersion) return
     messages.value = result.list
+    restoreAnswers(result.list)
     messagePage.value = lastPage
     await scrollToBottom()
   } catch (error) {
@@ -84,6 +91,7 @@ async function loadEarlier(): Promise<void> {
     const result = await agentApi.messages(id, messagePage.value - 1)
     if (version !== selectionVersion) return
     messages.value = [...result.list, ...messages.value]
+    restoreAnswers(result.list)
     messagePage.value--
   } catch (error) {
     if (version === selectionVersion) messageError.value = errorMessage(error, '更早的消息加载失败，请重试。')
@@ -105,6 +113,40 @@ function newConversation(): void {
 function localMessage(role: AgentMessage['role'], parts: AgentPart[]): AgentMessage {
   return { id: temporaryId--, role, content: { parts }, created_at: new Date().toISOString() }
 }
+function resultMessage(result: AgentChatResult): AgentMessage {
+  const parts: AgentPart[] = result.status === 'waiting'
+    ? [{ type: 'questions', questions: result.questions || [] }]
+    : [{ type: 'text', text: result.answer || '' }]
+  const message = localMessage('assistant', parts)
+  if (result.status === 'waiting' && result.question_message_id) message.id = result.question_message_id
+  return message
+}
+function isPendingQuestion(message: AgentMessage): boolean {
+  return message.id > 0 && messages.value.at(-1)?.id === message.id && !sending.value && !messagesLoading.value
+}
+function setAnswer(messageId: number, questionId: string, value: string): void {
+  questionAnswers.value[messageId] = { ...questionAnswers.value[messageId], [questionId]: value }
+}
+function readyToAnswer(message: AgentMessage, questions: AgentQuestion[]): boolean {
+  return isPendingQuestion(message) && questions.every((q) => !!questionAnswers.value[message.id]?.[q.id]?.trim())
+}
+async function submitAnswers(message: AgentMessage, questions: AgentQuestion[]): Promise<void> {
+  if (activeId.value === null || !readyToAnswer(message, questions)) return
+  const answers = Object.fromEntries(questions.map((q) => [q.id, questionAnswers.value[message.id]![q.id]!.trim()]))
+  sending.value = true
+  sendError.value = ''
+  try {
+    const result = await agentApi.answer(activeId.value, message.id, answers)
+    const summary = questions.map((q) => `${q.title}：${answers[q.id]}`).join('\n')
+    messages.value.push(localMessage('user', [{ type: 'text', text: summary }, { type: 'question_answers', question_message_id: message.id, answers }]), resultMessage(result))
+    await scrollToBottom()
+    void loadConversations(true)
+  } catch (error) {
+    sendError.value = `${errorMessage(error, '提交失败')}。请检查会话后再重试。`
+  } finally {
+    sending.value = false
+  }
+}
 async function send(): Promise<void> {
   if (!canSend.value) return
   const text = draft.value.trim()
@@ -114,10 +156,7 @@ async function send(): Promise<void> {
   try {
     const result = await agentApi.chat(text, id)
     activeId.value = result.conversation_id
-    const parts: AgentPart[] = result.status === 'waiting'
-      ? [{ type: 'questions', questions: result.questions || [] }]
-      : [{ type: 'text', text: result.answer || '' }]
-    messages.value.push(localMessage('user', [{ type: 'text', text }]), localMessage('assistant', parts))
+    messages.value.push(localMessage('user', [{ type: 'text', text }]), resultMessage(result))
     draft.value = ''
     await scrollToBottom()
     void loadConversations(true)
@@ -171,7 +210,20 @@ onMounted(() => { void loadConversations(true) })
             <article v-for="message in messages" :key="message.id" class="message-row" :class="{ 'message-user': message.role === 'user' }">
               <div class="message-avatar" aria-hidden="true">{{ message.role === 'user' ? '我' : '芊' }}</div>
               <div class="message-body"><div class="message-label">{{ message.role === 'user' ? '你' : '智能助手' }}</div>
-                <div class="message-bubble"><template v-for="(part, index) in message.content.parts" :key="index"><p v-if="part.type === 'text'">{{ part.text }}</p><div v-else-if="part.type === 'questions'" class="question-list"><p v-for="question in part.questions" :key="question.id">{{ question.title }}</p></div></template></div>
+                <div class="message-bubble"><template v-for="(part, index) in message.content.parts" :key="index"><p v-if="part.type === 'text'">{{ part.text }}</p><div v-else-if="part.type === 'questions'" class="question-list">
+                  <fieldset v-for="question in part.questions" :key="question.id" class="question-field" :disabled="!isPendingQuestion(message)">
+                    <legend>{{ question.title }}</legend>
+                    <template v-if="question.type === 'single_choice'">
+                      <p v-if="question.context" class="question-context">{{ question.context }}</p>
+                      <label v-for="option in question.options" :key="option.label" class="choice-option" :class="{ selected: questionAnswers[message.id]?.[question.id] === option.label }">
+                        <input type="radio" :name="`${props.floating ? 'float' : 'page'}-${message.id}-${question.id}`" :checked="questionAnswers[message.id]?.[question.id] === option.label" @change="setAnswer(message.id, question.id, option.label)" />
+                        <span><strong>{{ option.label }}</strong><small>{{ option.description }}</small></span>
+                      </label>
+                    </template>
+                    <input v-else class="question-text" type="text" maxlength="100" placeholder="请输入答案" :value="questionAnswers[message.id]?.[question.id] || ''" @input="setAnswer(message.id, question.id, ($event.target as HTMLInputElement).value)" />
+                  </fieldset>
+                  <button v-if="isPendingQuestion(message)" type="button" class="send-button question-submit" :disabled="!readyToAnswer(message, part.questions)" @click="submitAnswers(message, part.questions)">提交答案</button>
+                </div></template></div>
               </div>
             </article>
             <div v-if="sending" class="message-row"><div class="message-avatar" aria-hidden="true">芊</div><div class="message-body"><div class="message-label">智能助手</div><div class="message-bubble thinking" role="status">正在思考，请稍候…</div></div></div>
@@ -224,6 +276,16 @@ onMounted(() => { void loadConversations(true) })
 .message-user .message-bubble { border-radius: 12px 4px 12px 12px; color: #fff; background: #337a8b; }
 .message-bubble p { margin: 0; white-space: pre-wrap; }
 .question-list { display: grid; gap: 10px; }
+.question-field { min-width: 0; margin: 0; padding: 0; border: 0; }
+.question-field legend { padding: 0; font-weight: 600; }
+.question-context { margin-top: 4px !important; color: #536b6e; font-size: 12px; }
+.choice-option { display: flex; gap: 9px; align-items: flex-start; margin-top: 8px; padding: 9px 10px; border: 1px solid #d3e2e3; border-radius: 7px; background: #fff; cursor: pointer; }
+.choice-option.selected { border-color: #337a8b; background: #e7f4f5; }
+.choice-option input { margin-top: 5px; accent-color: #286e7f; }
+.choice-option strong, .choice-option small { display: block; }
+.choice-option small { color: #536b6e; font-size: 12px; }
+.question-text { width: 100%; margin-top: 8px; padding: 8px; border: 1px solid #c8dada; border-radius: 7px; font: inherit; }
+.question-submit { justify-self: start; margin-top: 4px; }
 .thinking { color: #536f73; }
 .composer { padding: 16px 24px 20px; border-top: 1px solid #e8eeee; }
 .composer textarea { display: block; width: 100%; min-height: 72px; resize: vertical; padding: 12px 14px; border: 1px solid #cedddd; border-radius: 9px; outline: none; color: #263b3d; background: #fff; font: inherit; font-size: 14px; line-height: 1.6; }

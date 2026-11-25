@@ -31,11 +31,19 @@ public class DeepSeekModel implements AgentModel {
     }
     @Override public AgentModelResult generate(List<AgentModelMessage> messages) {
         if (apiKey.isBlank() || baseUrl.isBlank() || model.isBlank()) throw failure("智能体模型配置不完整");
-        // 显式关闭思考模式，只声明当前允许调用的自由文本提问工具。
+        // 工具参数包含自由文本题和四选一题；服务端仍需校验模型输出。
+        var option = Map.of("type", "object", "properties", Map.of("label", Map.of("type", "string"), "description", Map.of("type", "string")),
+                "required", List.of("label", "description"), "additionalProperties", false);
+        var textQuestion = Map.of("type", "object", "properties", Map.of("id", Map.of("type", "string"), "title", Map.of("type", "string"), "type", Map.of("type", "string", "enum", List.of("text"))),
+                "required", List.of("id", "title", "type"), "additionalProperties", false);
+        var choiceQuestion = Map.of("type", "object", "properties", Map.of("id", Map.of("type", "string"), "title", Map.of("type", "string"),
+                "type", Map.of("type", "string", "enum", List.of("single_choice")), "context", Map.of("type", "string"),
+                "options", Map.of("type", "array", "minItems", 4, "maxItems", 4, "items", option),
+                "allow_custom_input", Map.of("type", "boolean", "enum", List.of(false))),
+                "required", List.of("id", "title", "type", "options", "allow_custom_input"), "additionalProperties", false);
         var parameters = Map.of("type", "object", "properties", Map.of("questions", Map.of("type", "array", "minItems", 1, "maxItems", 3,
-                "items", Map.of("type", "object", "properties", Map.of("id", Map.of("type", "string"), "title", Map.of("type", "string")),
-                "required", List.of("id", "title"), "additionalProperties", false))), "required", List.of("questions"), "additionalProperties", false);
-        var tool = Map.of("type", "function", "function", Map.of("name", "ask_user_questions", "description", "在缺少关键信息时向用户提出自由文本问题", "parameters", parameters));
+                "items", Map.of("anyOf", List.of(textQuestion, choiceQuestion)))), "required", List.of("questions"), "additionalProperties", false);
+        var tool = Map.of("type", "function", "function", Map.of("name", "ask_user_questions", "description", "在缺少关键信息时提出自由文本题或四选一题", "parameters", parameters));
         var payload = Map.of("model", model, "messages", messages, "thinking", Map.of("type", "disabled"), "tools", List.of(tool), "stream", false);
         try {
             String url = baseUrl.replaceAll("/+$", "") + "/chat/completions";
