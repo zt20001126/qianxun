@@ -26,11 +26,11 @@
 .price { display: flex; align-items: baseline; white-space: nowrap; }
 .price text:first-child { color: #b83b2a; font-size: 34rpx; font-weight: 700; }
 .price text:last-child { margin-left: 5rpx; color: #7a726b; font-size: 22rpx; }
-.room-card-bottom .detail-button { display: flex; flex: 0 0 156rpx; width: 156rpx; min-width: 156rpx; max-width: 156rpx; height: 58rpx; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0; border-radius: 24rpx; color: #fff; background: #8b4d25; box-shadow: 0 4rpx 12rpx rgba(35, 31, 29, .08); font-size: 24rpx; font-weight: 500; line-height: 1; white-space: nowrap; }
+.room-card-bottom .detail-button { display: flex; flex: 0 0 156rpx; width: 156rpx; min-width: 156rpx; max-width: 156rpx; height: 88rpx; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0; border-radius: 24rpx; color: #fff; background: #8b4d25; box-shadow: 0 4rpx 12rpx rgba(35, 31, 29, .08); font-size: 24rpx; font-weight: 500; line-height: 1; white-space: nowrap; }
 .detail-button::after, .retry-button::after, .change-date-button::after { border: 0; }
 .rooms-state, .rooms-empty { display: flex; min-height: 260rpx; flex-direction: column; align-items: center; justify-content: center; gap: 24rpx; padding: 40rpx; border: 1rpx solid #e8e0d4; border-radius: 32rpx; color: #7a726b; background: #fff; font-size: 22rpx; text-align: center; }
 .rooms-error { color: #b83b2a; }
 .rooms-empty { min-height: 300rpx; }
-.retry-button, .change-date-button { min-height: 68rpx; margin: 0; padding: 0 36rpx; border: 1rpx solid #e8e0d4; border-radius: 999rpx; color: #8b4d25; background: #fff; font-size: 21rpx; line-height: 66rpx; }
+.retry-button, .change-date-button { display: flex; height: 88rpx; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0 36rpx; border: 1rpx solid #e8e0d4; border-radius: 24rpx; color: #8b4d25; background: #fff; font-size: 22rpx; line-height: 1; }
 .change-date-button { border: 0; color: #fff; background: #8b4d25; }
 

@@ -18,9 +18,9 @@
 .date-week { color: #7a726b; font-size: 24rpx; }
 .nights-row { display: flex; justify-content: center; margin: 24rpx 0; }
 .nights-pill { display: flex; align-items: center; gap: 12rpx; padding: 12rpx 40rpx; border: 1rpx solid rgba(139, 77, 37, .15); border-radius: 999rpx; color: #8b4d25; background: #f7efe8; font-size: 24rpx; font-weight: 600; }
-.booking-card .search-button { display: flex; width: 100%; height: 100rpx; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0 20rpx; border-radius: 32rpx; color: #fff; background: #8b4d25; box-shadow: 0 14rpx 36rpx rgba(139, 77, 37, .22); font-size: 30rpx; font-weight: 500; line-height: 1; }
+.booking-card .search-button { display: flex; width: 100%; height: 100rpx; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0 20rpx; border-radius: 32rpx; color: #fff; background: #8b4d25; box-shadow: 0 14rpx 36rpx rgba(139, 77, 37, .22); font-size: 30rpx; font-weight: 500; line-height: 1; }
 .booking-card .search-button::after { border: 0; }
-.room-count-error { display: block; margin-top: 12rpx; color: #b83b2a; font-size: 19rpx; text-align: center; }
+.room-count-error { display: block; margin-top: 12rpx; color: #b83b2a; font-size: 24rpx; text-align: center; }
 .quick-entries { display: grid; grid-template-columns: repeat(4, 1fr); margin: 40rpx 32rpx 0; padding: 16rpx 0; }
 .quick-entries .quick-entry { display: flex; width: 100%; flex-direction: column; align-items: center; gap: 16rpx; box-sizing: border-box; margin: 0; padding: 0; color: #231f1d; background: transparent; font-size: 24rpx; font-weight: 500; line-height: 1.4; }
 .quick-entries .quick-entry + .quick-entry { box-sizing: border-box; border-left: 1rpx solid rgba(232, 224, 212, .8); }
