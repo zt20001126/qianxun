@@ -61,7 +61,9 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
         } finally {
             long durationMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAt);
             String query = sanitizeQuery(request.getQueryString());
-            String body = request.getRequestURI().startsWith("/api/payment/wechat/notify/")
+            String body = request.getRequestURI().startsWith("/api/admin/agent/")
+                    ? "[agent content omitted]"
+                    : request.getRequestURI().startsWith("/api/payment/wechat/notify/")
                     ? "[wechat notification omitted]"
                     : getRequestBody(cachedRequest);
             String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);

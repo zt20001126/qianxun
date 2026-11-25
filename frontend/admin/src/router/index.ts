@@ -13,6 +13,7 @@ export const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: 'home', component: () => import('../views/home/index.vue'), meta: { title: '经营总览' } },
+        { path: 'assistant', component: () => import('../views/assistant/index.vue'), meta: { title: '智能助手' } },
         { path: 'room-calendar', component: () => import('../views/calendar/index.vue'), meta: { title: '房态日历' } },
         { path: 'rooms', component: () => import('../views/rooms/index.vue'), meta: { title: '客房管理' } },
         { path: 'mall-products', component: () => import('../views/mall-products/index.vue'), meta: { title: '商品管理' } },

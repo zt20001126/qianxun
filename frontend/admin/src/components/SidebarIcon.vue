@@ -1,6 +1,7 @@
 <script setup lang="ts">
 type SidebarIconName =
   | 'overview'
+  | 'assistant'
   | 'calendar'
   | 'room'
   | 'orders'
@@ -30,7 +31,11 @@ defineProps<{ name: SidebarIconName }>()
     aria-hidden="true"
     focusable="false"
   >
-    <template v-if="name === 'overview'">
+    <template v-if="name === 'assistant'">
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v9a2.5 2.5 0 0 1-2.5 2.5H10l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 14.5z" />
+      <path d="M8 9h8M8 12.5h5" />
+    </template>
+    <template v-else-if="name === 'overview'">
       <rect x="3.5" y="3.5" width="7" height="7" rx="1" />
       <rect x="13.5" y="3.5" width="7" height="7" rx="1" />
       <rect x="3.5" y="13.5" width="7" height="7" rx="1" />

@@ -34,6 +34,7 @@ function openExternalOrder(): void {
       </div>
       <nav class="sidebar-nav" aria-label="主导航">
         <RouterLink to="/home" class="sidebar-nav-primary"><SidebarIcon name="overview" />经营总览</RouterLink>
+        <RouterLink to="/assistant" class="sidebar-nav-assistant"><SidebarIcon name="assistant" />智能助手</RouterLink>
         <RouterLink to="/room-calendar" class="sidebar-nav-primary"><SidebarIcon name="calendar" />房态日历</RouterLink>
         <RouterLink to="/rooms"><SidebarIcon name="room" />客房管理</RouterLink>
         <div class="mall-navigation">

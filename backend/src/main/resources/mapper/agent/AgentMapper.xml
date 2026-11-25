@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.agent.mapper.AgentMapper">
+ <select id="findOwned" resultType="com.qianxun.homestay.modules.agent.entity.AgentConversationEntity">SELECT * FROM agent_conversation WHERE id=#{id} AND admin_id=#{adminId}</select>
+ <select id="lockOwned" resultType="com.qianxun.homestay.modules.agent.entity.AgentConversationEntity">SELECT * FROM agent_conversation WHERE id=#{id} AND admin_id=#{adminId} FOR UPDATE</select>
+ <select id="listConversations" resultType="com.qianxun.homestay.modules.agent.entity.AgentConversationEntity">SELECT * FROM agent_conversation WHERE admin_id=#{adminId} ORDER BY updated_at DESC, id DESC LIMIT #{size} OFFSET #{offset}</select>
+ <select id="countConversations" resultType="long">SELECT COUNT(*) FROM agent_conversation WHERE admin_id=#{adminId}</select>
+ <select id="recentMessages" resultType="com.qianxun.homestay.modules.agent.entity.AgentMessageEntity">SELECT * FROM agent_message WHERE conversation_id=#{conversationId} ORDER BY id DESC LIMIT #{limit}</select>
+ <select id="listMessages" resultType="com.qianxun.homestay.modules.agent.entity.AgentMessageEntity">SELECT * FROM agent_message WHERE conversation_id=#{conversationId} ORDER BY id ASC LIMIT #{size} OFFSET #{offset}</select>
+ <select id="countMessages" resultType="long">SELECT COUNT(*) FROM agent_message WHERE conversation_id=#{conversationId}</select>
+ <select id="latestMessageId" resultType="long">SELECT MAX(id) FROM agent_message WHERE conversation_id=#{conversationId}</select>
+ <insert id="insertConversation" useGeneratedKeys="true" keyProperty="id">INSERT INTO agent_conversation (admin_id,title) VALUES (#{adminId},#{title})</insert>
+ <insert id="insertMessage" useGeneratedKeys="true" keyProperty="id">INSERT INTO agent_message (conversation_id,role,content) VALUES (#{conversationId},#{role},#{content})</insert>
+ <update id="touchConversation">UPDATE agent_conversation SET updated_at=CURRENT_TIMESTAMP(3) WHERE id=#{id}</update>
+</mapper>

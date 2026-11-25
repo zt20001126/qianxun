@@ -101,6 +101,10 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .sidebar-nav a:hover .sidebar-icon, .sidebar-nav a.router-link-active .sidebar-icon { color: var(--qx-primary); }
 .sidebar-nav a.sidebar-nav-primary { color: var(--qx-primary-dark); font-weight: 600; }
 .sidebar-nav a.sidebar-nav-primary .sidebar-icon { color: var(--qx-primary); }
+.sidebar-nav a.sidebar-nav-assistant { color: #14546a; background: #e6f3f5; font-weight: 700; }
+.sidebar-nav a.sidebar-nav-assistant .sidebar-icon { color: #17687e; }
+.sidebar-nav a.sidebar-nav-assistant:hover, .sidebar-nav a.sidebar-nav-assistant.router-link-active { color: #fff; background: #236d7f; }
+.sidebar-nav a.sidebar-nav-assistant:hover .sidebar-icon, .sidebar-nav a.sidebar-nav-assistant.router-link-active .sidebar-icon { color: #fff; }
 .admin-main { min-width: 0; }
 .admin-topbar { display: flex; min-height: 78px; align-items: center; justify-content: space-between; padding: 12px 36px; border-bottom: 1px solid var(--qx-border); background: rgba(255, 255, 255, .88); }
 .topbar-heading strong { color: var(--qx-text); font-size: 14px; font-weight: 600; }
