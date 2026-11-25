@@ -3,6 +3,7 @@ package com.qianxun.homestay.modules.order.service.impl;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.util.ApiTime;
 import com.qianxun.homestay.modules.availability.service.AvailabilityService;
+import com.qianxun.homestay.modules.invitation.service.InvitationService;
 import com.qianxun.homestay.modules.channel.entity.ChannelEntity;
 import com.qianxun.homestay.modules.channel.mapper.ChannelMapper;
 import com.qianxun.homestay.modules.creator.entity.CreatorEntity;
@@ -63,6 +64,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
     private final AvailabilityService availabilityService;
     private final OrderNoGenerator orderNoGenerator;
     private final OrderRewardService orderRewardService;
+    private final InvitationService invitationService;
     private final BookerPortraitService bookerPortraitService;
     private final OrderAmountCalculator amountCalculator = new OrderAmountCalculator();
     private final OrderStateMachine stateMachine = new OrderStateMachine();
@@ -76,6 +78,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             AvailabilityService availabilityService,
             OrderNoGenerator orderNoGenerator,
             OrderRewardService orderRewardService,
+            InvitationService invitationService,
             BookerPortraitService bookerPortraitService) {
         this.orderMapper = orderMapper;
         this.orderAmountMapper = orderAmountMapper;
@@ -85,6 +88,7 @@ public class OrderCommandServiceImpl implements OrderCommandService {
         this.availabilityService = availabilityService;
         this.orderNoGenerator = orderNoGenerator;
         this.orderRewardService = orderRewardService;
+        this.invitationService = invitationService;
         this.bookerPortraitService = bookerPortraitService;
     }
 
@@ -256,10 +260,15 @@ public class OrderCommandServiceImpl implements OrderCommandService {
             }
         }
 
+        if (nextStatus == OrderStatus.COMPLETED && order.getMemberId() != null) {
+            // 同一会员的多个订单须先串行化，再修改状态和积分，避免锁顺序反转。
+            invitationService.lockRewardMember(order.getMemberId());
+        }
         orderMapper.updateStatus(orderId, nextStatus.name());
         if (nextStatus == OrderStatus.COMPLETED) {
             // 完成状态与积分奖励共用事务；奖励失败则状态也回滚，避免漏发。
             orderRewardService.rewardIfEligible(orderId);
+            invitationService.recordReward(order.getMemberId(), orderId);
         }
         OrderViewEntity updated = orderMapper.findViewById(orderId);
         return new OrderStatusVO(updated.getId(), updated.getStatus(), ApiTime.fromShanghai(updated.getUpdatedAt()));

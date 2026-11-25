@@ -6,7 +6,7 @@
     <view wx:if="{{loading}}" class="state">加载中…</view>
     <view wx:elif="{{error}}" class="state" bindtap="load">{{error}}，点击重试</view>
     <view wx:elif="{{!records.length}}" class="state">暂无邀请记录</view>
-    <view wx:for="{{records}}" wx:key="index" class="record"><text>{{item.masked_phone}}</text><text class="time">{{item.displayTime}}</text></view>
+    <view wx:for="{{records}}" wx:key="index" class="record"><view class="record-person"><text>{{item.masked_phone}}</text><text class="time">{{item.displayTime}}</text></view><text class="order-status {{item.has_completed_order ? 'complete' : 'pending'}}">{{item.has_completed_order ? '已下单' : '未下单'}}</text></view>
     <view wx:if="{{loadingMore}}" class="state">加载中…</view>
   </view>
 </view>

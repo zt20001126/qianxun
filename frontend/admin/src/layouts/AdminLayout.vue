@@ -46,6 +46,7 @@ function openExternalOrder(): void {
           </div>
         </div>
         <RouterLink to="/orders" class="sidebar-nav-primary"><SidebarIcon name="orders" />订单管理</RouterLink>
+        <RouterLink to="/invitations" class="sidebar-nav-primary"><SidebarIcon name="members" />邀请记录</RouterLink>
         <RouterLink to="/members" class="sidebar-nav-primary"><SidebarIcon name="members" />会员管理</RouterLink>
         <RouterLink to="/portraits" class="sidebar-nav-primary"><SidebarIcon name="portraits" />顾客画像</RouterLink>
         <RouterLink to="/points"><SidebarIcon name="points" />积分流水</RouterLink>

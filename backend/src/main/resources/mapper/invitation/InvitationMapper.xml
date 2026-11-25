@@ -11,7 +11,65 @@
     </insert>
     <select id="count" resultType="long">SELECT COUNT(*) FROM member_invitation WHERE inviter_member_id = #{inviterId}</select>
     <select id="findPage" resultType="com.qianxun.homestay.modules.invitation.entity.InvitationRecordEntity">
-        SELECT m.phone, i.created_at FROM member_invitation i JOIN members m ON m.id = i.invitee_member_id
+        SELECT m.phone, i.created_at, (i.reward_order_id IS NOT NULL) AS has_completed_order FROM member_invitation i JOIN members m ON m.id = i.invitee_member_id
         WHERE i.inviter_member_id = #{inviterId} ORDER BY i.created_at DESC, i.id DESC LIMIT #{size} OFFSET #{offset}
     </select>
+    <select id="lockMember" resultType="long">SELECT id FROM members WHERE id = #{memberId} FOR UPDATE</select>
+    <!-- Flyway 的 installed_on 为秒精度 TIMESTAMP；向后取整一秒避免纳入启用前支付。 -->
+    <select id="findRewardEffectiveAt" resultType="java.time.LocalDateTime">
+        SELECT TIMESTAMPADD(SECOND, TIMESTAMPDIFF(SECOND, NOW(), UTC_TIMESTAMP()),
+                            DATE_ADD(DATE_ADD(installed_on, INTERVAL 8 HOUR), INTERVAL 1 SECOND))
+        FROM flyway_schema_history WHERE version = '20' AND success = TRUE
+    </select>
+    <select id="lockRelation" resultType="long">
+        SELECT id FROM member_invitation WHERE invitee_member_id = #{memberId} FOR UPDATE
+    </select>
+    <select id="findEligibleAmount" resultType="java.math.BigDecimal">
+        SELECT a.paid_amount FROM orders o
+        JOIN order_amount a ON a.order_id = o.id
+        JOIN member_invitation i ON i.id = #{relationId} AND i.invitee_member_id = o.member_id
+        WHERE o.id = #{orderId} AND o.status = 'COMPLETED' AND i.reward_order_id IS NULL
+          AND EXISTS (SELECT 1 FROM payments p WHERE p.order_id = o.id AND p.status = 'SUCCESS'
+                      AND p.paid_at &gt;= #{effectiveAt} AND p.paid_at &gt; i.created_at)
+    </select>
+    <update id="recordReward">
+        UPDATE member_invitation SET reward_order_id = #{orderId}, reward_amount = #{rewardAmount}
+        WHERE id = #{relationId} AND reward_order_id IS NULL
+    </update>
+    <sql id="adminInvitationFilter">
+        <where>
+            <if test="phone != null and phone != ''">
+                AND (inviter.phone LIKE CONCAT('%', #{phone}, '%') OR invitee.phone LIKE CONCAT('%', #{phone}, '%'))
+            </if>
+            <choose>
+                <when test="rewardStatus.name() == 'NO_REWARD'">AND i.reward_order_id IS NULL</when>
+                <when test="rewardStatus.name() == 'UNISSUED'">AND i.reward_order_id IS NOT NULL AND i.reward_issued = FALSE</when>
+                <when test="rewardStatus.name() == 'ISSUED'">AND i.reward_order_id IS NOT NULL AND i.reward_issued = TRUE</when>
+            </choose>
+        </where>
+    </sql>
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*) FROM member_invitation i
+        JOIN members inviter ON inviter.id = i.inviter_member_id
+        JOIN members invitee ON invitee.id = i.invitee_member_id
+        <include refid="adminInvitationFilter"/>
+    </select>
+    <select id="findAdminPage" resultType="com.qianxun.homestay.modules.invitation.entity.AdminInvitationRecordEntity">
+        SELECT i.id, inviter.id AS inviter_id, inviter.phone AS inviter_phone,
+               invitee.id AS invitee_id, invitee.phone AS invitee_phone, i.created_at AS bound_at,
+               o.order_no, a.paid_amount, i.reward_amount, i.reward_issued
+        FROM member_invitation i
+        JOIN members inviter ON inviter.id = i.inviter_member_id
+        JOIN members invitee ON invitee.id = i.invitee_member_id
+        LEFT JOIN orders o ON o.id = i.reward_order_id
+        LEFT JOIN order_amount a ON a.order_id = o.id
+        <include refid="adminInvitationFilter"/>
+        ORDER BY i.created_at DESC, i.id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="hasReward" resultType="integer">
+        SELECT (reward_order_id IS NOT NULL) FROM member_invitation WHERE id = #{id}
+    </select>
+    <update id="setIssued">
+        UPDATE member_invitation SET reward_issued = TRUE WHERE id = #{id} AND reward_order_id IS NOT NULL
+    </update>
 </mapper>

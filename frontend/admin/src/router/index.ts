@@ -18,6 +18,7 @@ export const router = createRouter({
         { path: 'mall-products', component: () => import('../views/mall-products/index.vue'), meta: { title: '商品管理' } },
         { path: 'mall-orders', component: () => import('../views/mall-orders/index.vue'), meta: { title: '商品订单' } },
         { path: 'orders', component: () => import('../views/orders/index.vue'), meta: { title: '订单管理' } },
+        { path: 'invitations', component: () => import('../views/invitations/index.vue'), meta: { title: '邀请记录' } },
         { path: 'members', component: () => import('../views/members/index.vue'), meta: { title: '会员管理' } },
         { path: 'portraits', component: () => import('../views/portraits/index.vue'), meta: { title: '顾客画像' } },
         { path: 'points', component: () => import('../views/points/index.vue'), meta: { title: '积分流水' } },

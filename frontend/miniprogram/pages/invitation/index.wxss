@@ -6,3 +6,8 @@
 .share { margin:32rpx 0; border-radius:32rpx; color:#fff; background:#98501f; font-size:32rpx; }.share::after { border:0; }.disabled { opacity:.5; }
 .card { padding:32rpx; background:#fffcf9; border-radius:32rpx; }.heading { display:flex; justify-content:space-between; font-weight:600; }.count { color:#98501f; }
 .record { display:flex; justify-content:space-between; padding:28rpx 0; border-bottom:1rpx solid #efe5dc; }.time,.state { color:#7a726b; font-size:26rpx; }.state { padding:50rpx 0; text-align:center; }
+
+.record-person { display:flex; flex-direction:column; gap:8rpx; }
+.order-status { align-self:center; font-size:24rpx; font-weight:500; }
+.order-status.pending { color:#b83b2a; }
+.order-status.complete { color:#4e7a65; }

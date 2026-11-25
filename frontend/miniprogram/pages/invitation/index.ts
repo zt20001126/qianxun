@@ -7,8 +7,9 @@ Page({
   data: { code: '', records: [] as DisplayRecord[], total: 0, page: 1, loading: false, loadingMore: false, error: '' },
   onLoad() {
     wx.hideShareMenu({ menus: ['shareAppMessage'] })
-    void this.load()
   },
+  // 返回页面时刷新完成状态，避免停留期间订单完成后仍显示旧状态。
+  onShow() { void this.load() },
   async load() {
     if (this.data.loading) return
     this.setData({ loading: true, error: '' })
