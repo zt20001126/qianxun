@@ -3,6 +3,7 @@
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import SidebarIcon from '../components/SidebarIcon.vue'
+import FloatingAssistant from '../components/FloatingAssistant.vue'
 import { useAuthStore } from '../stores/auth'
 import { formatChineseDate, shanghaiDate } from '../utils/operations'
 
@@ -66,7 +67,7 @@ function openExternalOrder(): void {
       </div>
     </aside>
 
-    <div class="admin-main">
+    <div class="admin-main" :class="{ 'admin-main-assistant': route.path === '/assistant' }">
       <header class="admin-topbar" :class="{ 'admin-topbar-dashboard': isPrototypeShell }">
         <div class="topbar-heading">
           <div class="topbar-title-line">
@@ -81,8 +82,9 @@ function openExternalOrder(): void {
           <button class="button button-primary" type="button" @click="openExternalOrder">＋ 录入第三方订单</button>
         </div>
       </header>
-      <main class="admin-content" :class="{ 'admin-content-dashboard': isPrototypeShell }"><RouterView /></main>
+      <main class="admin-content" :class="{ 'admin-content-dashboard': isPrototypeShell, 'admin-content-assistant': route.path === '/assistant' }"><RouterView /></main>
     </div>
+    <FloatingAssistant />
   </div>
 </template>
 

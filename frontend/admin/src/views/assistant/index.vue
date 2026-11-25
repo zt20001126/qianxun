@@ -4,6 +4,8 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { agentApi } from '../../api/agent'
 import type { AgentConversation, AgentMessage, AgentPart } from '../../types/agent'
 
+const props = withDefaults(defineProps<{ floating?: boolean }>(), { floating: false })
+const historyOpen = ref(false)
 const conversations = ref<AgentConversation[]>([])
 const conversationPage = ref(0)
 const conversationTotal = ref(0)
@@ -98,6 +100,7 @@ function newConversation(): void {
   messageError.value = ''
   sendError.value = ''
   messagePage.value = 1
+  historyOpen.value = false
 }
 function localMessage(role: AgentMessage['role'], parts: AgentPart[]): AgentMessage {
   return { id: temporaryId--, role, content: { parts }, created_at: new Date().toISOString() }
@@ -134,10 +137,11 @@ onMounted(() => { void loadConversations(true) })
 </script>
 
 <template>
-  <section class="assistant-page" aria-label="智能助手">
-    <header class="assistant-heading">
-      <div><h1>智能助手</h1><p>整理想法、撰写文案，或随时提出问题。</p></div>
-    </header>
+  <section class="assistant-page" :class="{ 'assistant-page-floating': props.floating, 'assistant-history-open': historyOpen }" aria-label="智能助手">
+    <div v-if="props.floating" class="floating-actions">
+      <button type="button" class="floating-action" :disabled="sending" @click="newConversation">＋ 新对话</button>
+      <button type="button" class="floating-action" :class="{ active: historyOpen }" :aria-expanded="historyOpen" @click="historyOpen = !historyOpen">{{ historyOpen ? '返回对话' : '历史会话' }}</button>
+    </div>
     <div class="assistant-workspace">
       <aside class="conversation-panel" aria-label="会话列表">
         <div class="conversation-heading"><h2>会话</h2><button type="button" class="new-chat" :disabled="sending" @click="newConversation"><span aria-hidden="true">＋</span> 新对话</button></div>
@@ -145,7 +149,7 @@ onMounted(() => { void loadConversations(true) })
         <div class="conversation-list">
           <p v-if="listLoading && !conversations.length" class="list-note" role="status">正在加载会话…</p>
           <p v-else-if="!conversations.length && !listError" class="list-note">还没有会话，发送消息开始吧。</p>
-          <button v-for="item in conversations" :key="item.id" type="button" class="conversation-item" :class="{ selected: activeId === item.id }" :disabled="sending" :aria-current="activeId === item.id ? 'true' : undefined" @click="openConversation(item.id)">
+          <button v-for="item in conversations" :key="item.id" type="button" class="conversation-item" :class="{ selected: activeId === item.id }" :disabled="sending" :aria-current="activeId === item.id ? 'true' : undefined" @click="openConversation(item.id); historyOpen = false">
             <span class="conversation-title">{{ item.title || '未命名会话' }}</span>
             <span class="conversation-date">{{ new Date(item.updated_at).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' }) }}</span>
           </button>
@@ -175,8 +179,8 @@ onMounted(() => { void loadConversations(true) })
         </div>
         <form class="composer" @submit.prevent="send">
           <p v-if="sendError" class="inline-error send-error" role="alert">{{ sendError }}</p>
-          <label class="sr-only" for="assistant-message">输入消息</label>
-          <textarea id="assistant-message" v-model="draft" maxlength="10000" rows="3" placeholder="输入你的问题，Enter 发送，Shift + Enter 换行" :disabled="sending" @keydown="onComposerKeydown" />
+          <label class="sr-only" :for="props.floating ? 'floating-assistant-message' : 'assistant-message'">输入消息</label>
+          <textarea :id="props.floating ? 'floating-assistant-message' : 'assistant-message'" v-model="draft" maxlength="10000" rows="3" placeholder="输入你的问题，Enter 发送，Shift + Enter 换行" :disabled="sending" @keydown="onComposerKeydown" />
           <div class="composer-footer"><span>内容由 AI 生成，请注意核实。</span><button type="submit" class="send-button" :disabled="!canSend">{{ sending ? '发送中…' : '发送消息' }}</button></div>
         </form>
       </div>
@@ -185,10 +189,8 @@ onMounted(() => { void loadConversations(true) })
 </template>
 
 <style scoped>
-.assistant-page { display: grid; gap: 22px; }
-.assistant-heading h1 { font-size: 27px; letter-spacing: .04em; }
-.assistant-heading p { margin: 8px 0 0; color: #665f59; font-size: 13px; }
-.assistant-workspace { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 650px; height: calc(100vh - 210px); overflow: hidden; border: 1px solid #e0e8e8; border-radius: 14px; background: #fff; }
+.assistant-page { display: flex; min-width: 0; min-height: 0; flex: 1; flex-direction: column; }
+.assistant-workspace { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 0; flex: 1; overflow: hidden; background: #fff; }
 .conversation-panel { display: flex; min-height: 0; flex-direction: column; padding: 22px 15px; border-right: 1px solid #e5eded; background: #f8fbfb; }
 .conversation-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .conversation-heading h2, .chat-header h2 { margin: 0; color: #263c40; font-size: 15px; font-weight: 700; }
@@ -239,6 +241,20 @@ button:focus-visible { outline: 3px solid #78b6c2; outline-offset: 2px; }
 .earlier { justify-self: center; }
 .send-error { margin: 0 0 9px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
-@media (max-width: 800px) { .assistant-workspace { grid-template-columns: 180px minmax(0, 1fr); height: 70vh; min-height: 520px; } .message-area { padding: 20px; } .chat-header { padding: 17px 20px; } }
+.floating-actions { display: flex; gap: 8px; padding: 12px 16px; border-bottom: 1px solid #e8eeee; }
+.floating-action { min-height: 36px; flex: 1; border: 1px solid #c6dcdf; border-radius: 7px; color: #205e6d; background: #f2f8f8; font-size: 13px; font-weight: 600; }
+.floating-action:hover:not(:disabled), .floating-action.active { background: #dceff1; }
+.assistant-page-floating .assistant-workspace { display: flex; min-height: 0; height: auto; flex: 1; }
+.assistant-page-floating .conversation-panel { display: none; width: 100%; border-right: 0; }
+.assistant-page-floating.assistant-history-open .conversation-panel { display: flex; }
+.assistant-page-floating.assistant-history-open .chat-panel { display: none; }
+.assistant-page-floating .conversation-list { display: grid; max-height: none; }
+.assistant-page-floating .chat-panel { width: 100%; min-height: 0; flex: 1; }
+.assistant-page-floating .chat-header { padding: 14px 18px; }
+.assistant-page-floating .message-area { min-height: 0; padding: 18px; }
+.assistant-page-floating .message-list { gap: 18px; }
+.assistant-page-floating .composer { padding: 12px 16px 16px; }
+.assistant-page-floating .composer textarea { min-height: 58px; resize: none; }
+@media (max-width: 850px) { .assistant-workspace { grid-template-columns: 180px minmax(0, 1fr); height: 70vh; min-height: 520px; flex: none; } .message-area { padding: 20px; } .chat-header { padding: 17px 20px; } }
 @media (max-width: 560px) { .assistant-workspace { display: flex; height: auto; min-height: 0; flex-direction: column; } .conversation-panel { padding: 14px; border-right: 0; border-bottom: 1px solid #e5eded; } .conversation-hint { margin-bottom: 8px; } .conversation-list { display: flex; max-height: 120px; overflow: auto; } .conversation-item { min-width: 140px; } .chat-panel { min-height: 520px; } .message-area { min-height: 300px; } .composer { padding: 14px; } }
 </style>

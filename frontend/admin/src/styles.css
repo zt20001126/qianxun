@@ -119,6 +119,12 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .account-name { flex: 1; color: var(--qx-text); font-size: 13px; font-weight: 600; }
 .admin-account .text-button { padding: 8px 0 8px 4px; white-space: nowrap; }
 .admin-content { width: min(100%, 1320px); margin: 0 auto; padding: 34px 36px 54px; }
+/* 智能助手使用可用工作区，消息区域独立滚动。 */
+@media (min-width: 851px) {
+  .admin-main-assistant { display: flex; height: 100vh; height: 100dvh; flex-direction: column; }
+  .admin-main-assistant .admin-topbar { flex: 0 0 auto; }
+  .admin-content.admin-content-assistant { display: flex; width: 100%; min-height: 0; flex: 1; padding: 0; }
+}
 .catalog-page { display: grid; gap: 18px; }
 .page-heading-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 2px; }
 .page-eyebrow { margin: 0 0 7px; color: #66868d; font-size: 10px; letter-spacing: .16em; }
@@ -236,6 +242,7 @@ h1 { margin: 0; color: var(--qx-primary-dark); font-family: "Noto Serif SC", "So
 .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; padding-top: 4px; }
 
 @media (max-width: 850px) {
+  .admin-content.admin-content-assistant { width: 100%; padding: 0; }
   .admin-layout { grid-template-columns: 1fr; }
   .admin-sidebar { position: static; height: auto; padding: 12px 18px; border-right: 0; border-bottom: 1px solid var(--qx-border); }
   .sidebar-brand { padding: 0 0 12px; }
