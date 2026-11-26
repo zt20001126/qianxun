@@ -1,5 +1,7 @@
 package com.qianxun.homestay.modules.report.service.impl;
 
+import com.qianxun.homestay.modules.report.vo.RoomDateStatusVO;
+
 import com.qianxun.homestay.modules.channel.mapper.ChannelMapper;
 import com.qianxun.homestay.modules.creator.mapper.CreatorMapper;
 import com.qianxun.homestay.modules.expense.mapper.ExpenseMapper;
@@ -86,6 +88,18 @@ public class ReportServiceImpl implements ReportService {
                 metrics.occupancyRate());
         int occupiedRooms = (int) roomCards.stream().filter(room -> room.orderId() != null).count();
         return new DashboardVO(date, occupiedRooms, roomCards.size(), roomCards, monthSummary);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<RoomDateStatusVO> roomDateStatuses(LocalDate date) {
+        // 连住夜晚的日历标记不包含订单状态，需要同时保留原状态供智能体准确解释。
+        return reportMapper.findDashboardRooms(date, CANCELLED_STATUS).stream().map(room -> {
+            DashboardRoomVO calendar = toDashboardRoom(room, date);
+            return new RoomDateStatusVO(
+                    calendar.roomNumber(), calendar.status(), room.getOrderStatus(),
+                    calendar.guestName(), calendar.checkIn(), calendar.checkOut());
+        }).toList();
     }
 
     @Override

@@ -6,6 +6,8 @@ import com.qianxun.homestay.modules.report.vo.TodayBusinessDataVO;
 import com.qianxun.homestay.modules.report.vo.ReportDimensionVO;
 import com.qianxun.homestay.modules.report.vo.ReportOverviewVO;
 import com.qianxun.homestay.modules.report.vo.RoomReportDimensionVO;
+import com.qianxun.homestay.modules.report.vo.RoomDateStatusVO;
+import java.util.List;
 import java.time.LocalDate;
 import java.time.YearMonth;
 
@@ -14,6 +16,9 @@ public interface ReportService {
 
     /** 查询指定日期房态及指定月份的经营总览。 */
     DashboardVO dashboard(LocalDate date, YearMonth month);
+
+    /** 查询指定住宿日期的房态及订单摘要。 */
+    List<RoomDateStatusVO> roomDateStatuses(LocalDate date);
 
     /** 按日看板口径查询指定日期的经营汇总。 */
     TodayBusinessDataVO dailyBusinessData(LocalDate date);

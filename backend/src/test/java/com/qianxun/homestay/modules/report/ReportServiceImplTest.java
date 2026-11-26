@@ -184,6 +184,31 @@ class ReportServiceImplTest {
         assertThat(result.paidAmount()).isEqualTo("0.00");
     }
 
+    @Test
+    void roomDateQueryPreservesOrderStatusOnLaterNightWithoutLoadingMonthlyReports() {
+        LocalDate date = LocalDate.of(2026, 2, 1);
+        DashboardRoomEntity booked = new DashboardRoomEntity();
+        booked.setRoomNumber("101"); booked.setOrderId(1L); booked.setGuestName("张先生");
+        booked.setCheckIn(date.minusDays(1)); booked.setCheckOut(date.plusDays(1));
+        booked.setOrderStatus(OrderStatus.PENDING_CHECKIN.name());
+        DashboardRoomEntity blocked = new DashboardRoomEntity();
+        blocked.setRoomNumber("102"); blocked.setBlockId(2L);
+        DashboardRoomEntity free = new DashboardRoomEntity(); free.setRoomNumber("103");
+        when(reportMapper.findDashboardRooms(date, CANCELLED_STATUS)).thenReturn(List.of(booked, blocked, free));
+
+        var result = service.roomDateStatuses(date);
+
+        assertThat(result.get(0).status()).isEqualTo("OCCUPIED");
+        assertThat(result.get(0).orderStatus()).isEqualTo("PENDING_CHECKIN");
+        assertThat(result.get(0).guestName()).isEqualTo("张先生");
+        assertThat(result.get(0).checkIn()).isEqualTo(date.minusDays(1));
+        assertThat(result.get(0).checkOut()).isEqualTo(date.plusDays(1));
+        assertThat(result.get(1).status()).isEqualTo("BLOCKED");
+        assertThat(result.get(2).status()).isEqualTo("AVAILABLE");
+        org.mockito.Mockito.verify(reportMapper).findDashboardRooms(date, CANCELLED_STATUS);
+        org.mockito.Mockito.verifyNoMoreInteractions(reportMapper);
+    }
+
     private void prepare(
             YearMonth month,
             List<RoomEntity> rooms,

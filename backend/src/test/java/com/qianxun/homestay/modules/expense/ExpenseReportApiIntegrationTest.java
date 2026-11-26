@@ -61,9 +61,34 @@ class ExpenseReportApiIntegrationTest {
     private JdbcTemplate jdbcTemplate;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private com.qianxun.homestay.modules.report.service.ReportService reportService;
 
     private String adminToken;
     private long roomId;
+
+    @Test
+    void roomDateQueryHonorsCheckoutCrossMonthCancellationAndBlocks() {
+        jdbcTemplate.update("INSERT INTO room (number, name, floor, price, capacity, enabled) VALUES ('102', '测试房', 1, 300, 2, 1)");
+        Long secondRoom = jdbcTemplate.queryForObject("SELECT id FROM room WHERE number = '102'", Long.class);
+        jdbcTemplate.update("INSERT INTO room_block (room_id, start_date, end_date) VALUES (?, '2026-12-01', '2026-12-02')", secondRoom);
+        jdbcTemplate.update("INSERT INTO orders (order_no, room_id, channel_id, guest_name, check_in, check_out, status) VALUES (?, ?, 2, ?, ?, ?, ?)",
+                "QX202611300001", roomId, "跨月客人", LocalDate.of(2026, 11, 30), LocalDate.of(2026, 12, 2), "PENDING_CHECKIN");
+        jdbcTemplate.update("INSERT INTO orders (order_no, room_id, channel_id, guest_name, check_in, check_out, status) VALUES (?, ?, 2, ?, ?, ?, ?)",
+                "QX202612020001", roomId, "新客人", LocalDate.of(2026, 12, 2), LocalDate.of(2026, 12, 3), "PENDING_CONFIRM");
+        jdbcTemplate.update("INSERT INTO orders (order_no, room_id, channel_id, guest_name, check_in, check_out, status) VALUES (?, ?, 2, ?, ?, ?, ?)",
+                "QX202612010001", secondRoom, "取消客人", LocalDate.of(2026, 12, 1), LocalDate.of(2026, 12, 2), "CANCELLED");
+
+        var first = reportService.roomDateStatuses(LocalDate.of(2026, 12, 1));
+        assertThat(first.get(0).status()).isEqualTo("OCCUPIED");
+        assertThat(first.get(0).orderStatus()).isEqualTo("PENDING_CHECKIN");
+        assertThat(first.get(0).guestName()).isEqualTo("跨月客人");
+        assertThat(first.get(1).status()).isEqualTo("BLOCKED");
+        assertThat(first.get(1).guestName()).isNull();
+        var checkout = reportService.roomDateStatuses(LocalDate.of(2026, 12, 2));
+        assertThat(checkout.get(0).guestName()).isEqualTo("新客人");
+        assertThat(checkout.get(1).status()).isEqualTo("AVAILABLE");
+    }
 
     @DynamicPropertySource
     static void registerDatabaseProperties(DynamicPropertyRegistry registry) {

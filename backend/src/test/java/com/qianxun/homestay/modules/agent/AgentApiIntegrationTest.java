@@ -97,4 +97,29 @@ class AgentApiIntegrationTest {
         org.junit.jupiter.api.Assertions.assertTrue(data.has("paid_amount"));
         org.junit.jupiter.api.Assertions.assertFalse(data.has("guest_name"));
     }
+
+    @Test void queriesRoomStatusThroughRegisteredTool() throws Exception {
+        jdbc.update("INSERT INTO admin(username,password_hash,enabled) VALUES ('agent_room_test','hash',1)");
+        Long admin = jdbc.queryForObject("SELECT id FROM admin WHERE username='agent_room_test'", Long.class);
+        jdbc.update("INSERT INTO room (number, name, floor, price, capacity, enabled) VALUES ('909', '测试房', 1, 300, 2, 1)");
+        Long room = jdbc.queryForObject("SELECT id FROM room WHERE number='909'", Long.class);
+        jdbc.update("INSERT INTO orders (order_no, room_id, channel_id, guest_name, check_in, check_out, status) VALUES ('QX202611300909', ?, 2, '测试预订人', '2026-11-30', '2026-12-02', 'PENDING_CHECKIN')", room);
+        when(model.generate(anyList())).thenReturn(
+                new AgentModelResult(null, "get_room_status_by_date", json.readTree("{\"date\":\"2026-12-01\",\"room_number\":\"909\"}"), "room-call"),
+                new AgentModelResult("909 房待入住", null, null));
+        mvc.perform(post("/api/admin/agent/chat").contentType("application/json").content("{\"message\":\"查房态\"}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/admin/agent/chat").header("Authorization", "Bearer " + jwt.issueAdminToken(admin))
+                        .contentType("application/json").content("{\"message\":\"查 909 房态\"}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.answer").value("909 房待入住"));
+        var captor = org.mockito.ArgumentCaptor.forClass(java.util.List.class);
+        org.mockito.Mockito.verify(model, org.mockito.Mockito.times(2)).generate(captor.capture());
+        var messages = captor.getAllValues().get(1);
+        var result = (com.qianxun.homestay.modules.agent.core.schema.AgentModelMessage) messages.get(messages.size() - 1);
+        var roomResult = json.readTree(result.content()).path("rooms").get(0);
+        org.junit.jupiter.api.Assertions.assertEquals("测试预订人", roomResult.path("guest_name").asText());
+        org.junit.jupiter.api.Assertions.assertEquals("PENDING_CHECKIN", roomResult.path("order_status").asText());
+        org.junit.jupiter.api.Assertions.assertEquals("2026-11-30", roomResult.path("check_in").asText());
+        org.junit.jupiter.api.Assertions.assertFalse(roomResult.has("phone"));
+    }
 }
