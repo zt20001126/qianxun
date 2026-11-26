@@ -2,6 +2,7 @@
 /** 管理员智能助手：会话历史、自由文本提问与对话。 */
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { agentApi } from '../../api/agent'
+import { renderAssistantMarkdown } from '../../utils/assistantMarkdown'
 import type { AgentConversation, AgentMessage, AgentPart, AgentQuestion, AgentChatResult } from '../../types/agent'
 
 const props = withDefaults(defineProps<{ floating?: boolean }>(), { floating: false })
@@ -210,7 +211,7 @@ onMounted(() => { void loadConversations(true) })
             <article v-for="message in messages" :key="message.id" class="message-row" :class="{ 'message-user': message.role === 'user' }">
               <div class="message-avatar" aria-hidden="true">{{ message.role === 'user' ? '我' : '芊' }}</div>
               <div class="message-body"><div class="message-label">{{ message.role === 'user' ? '你' : '智能助手' }}</div>
-                <div class="message-bubble"><template v-for="(part, index) in message.content.parts" :key="index"><p v-if="part.type === 'text'">{{ part.text }}</p><div v-else-if="part.type === 'questions'" class="question-list">
+                <div class="message-bubble"><template v-for="(part, index) in message.content.parts" :key="index"><template v-if="part.type === 'text'"><p v-if="message.role === 'user'">{{ part.text }}</p><div v-else class="assistant-markdown" v-html="renderAssistantMarkdown(part.text)"></div></template><div v-else-if="part.type === 'questions'" class="question-list">
                   <fieldset v-for="question in part.questions" :key="question.id" class="question-field" :disabled="!isPendingQuestion(message)">
                     <legend>{{ question.title }}</legend>
                     <template v-if="question.type === 'single_choice'">
@@ -275,6 +276,16 @@ onMounted(() => { void loadConversations(true) })
 .message-bubble { padding: 12px 15px; border-radius: 4px 12px 12px 12px; color: #283a3c; background: #f2f6f6; font-size: 14px; line-height: 1.75; overflow-wrap: anywhere; }
 .message-user .message-bubble { border-radius: 12px 4px 12px 12px; color: #fff; background: #337a8b; }
 .message-bubble p { margin: 0; white-space: pre-wrap; }
+.assistant-markdown :deep(p) { margin: 0 0 0.65em; white-space: normal; }
+.assistant-markdown :deep(ul), .assistant-markdown :deep(ol) { margin: 0 0 0.65em; padding-left: 1.5em; }
+.assistant-markdown :deep(li p) { margin: 0; }
+.assistant-markdown :deep(h1), .assistant-markdown :deep(h2), .assistant-markdown :deep(h3), .assistant-markdown :deep(h4), .assistant-markdown :deep(h5), .assistant-markdown :deep(h6) { margin: 0 0 0.5em; font-size: 1em; }
+.assistant-markdown :deep(pre) { overflow-x: auto; white-space: pre; }
+.assistant-markdown :deep(blockquote) { margin: 0 0 0.65em; padding-left: 0.8em; border-left: 3px solid #b9d4d9; }
+.assistant-markdown :deep(a) { color: #175e70; text-decoration: underline; }
+.assistant-markdown :deep(table) { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; }
+.assistant-markdown :deep(th), .assistant-markdown :deep(td) { padding: 4px 8px; border: 1px solid #cbdada; }
+.assistant-markdown :deep(> :last-child) { margin-bottom: 0; }
 .question-list { display: grid; gap: 10px; }
 .question-field { min-width: 0; margin: 0; padding: 0; border: 0; }
 .question-field legend { padding: 0; font-weight: 600; }
