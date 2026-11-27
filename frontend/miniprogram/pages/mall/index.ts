@@ -5,7 +5,14 @@ import { listMallProducts, type MallProduct } from '../../services/mall'
 const MALL_PRODUCT_PAGE_SIZE = 100
 
 Page({
-  data: { products: [] as MallProduct[], loading: false, error: '' },
+  data: { products: [] as MallProduct[], loading: false, error: '', statusBarHeight: 0, navigationHeight: 44 },
+  onLoad() {
+    // 以真实状态栏和胶囊位置确定标题栏高度。
+    const statusBarHeight = wx.getSystemInfoSync().statusBarHeight || 0
+    const capsule = wx.getMenuButtonBoundingClientRect()
+    const navigationHeight = capsule.height ? (capsule.top - statusBarHeight) * 2 + capsule.height : 44
+    this.setData({ statusBarHeight, navigationHeight })
+  },
   onShow() { void this.loadProducts() },
   async onPullDownRefresh() { await this.loadProducts(); wx.stopPullDownRefresh() },
   onRetry() { void this.loadProducts() },
