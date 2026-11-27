@@ -434,3 +434,18 @@
   font-weight: 500;
   line-height: 1;
 }
+
+/* 浅色水乡装饰不参与布局，也不遮挡流水操作。 */
+.logs-page { position:relative; overflow:hidden; background:linear-gradient(#faecde,#faf7f2 480rpx); }
+.logs-bottom-art { position:absolute; bottom:0; left:0; width:100%; height:200rpx; opacity:.35; pointer-events:none; }
+.summary-card,.logs-heading,.month-groups,.logs-state,.logs-empty,.back-member-button { position:relative; }
+.summary-card,.month-card { background:#fffcf9; border-color:rgba(255,255,255,.85); }
+.summary-label { color:#55463c; }
+.summary-value,.log-delta { font-family:serif; }
+.month-header { position:relative; background:#f7e9da; font-family:serif; font-size:27rpx; }
+.log-row { padding:25rpx 28rpx; }
+.log-title { font-size:26rpx; }
+.log-meta { color:#7a726b; font-size:21rpx; }
+.log-icon-wrap.is-negative { background:#faeadb; }
+.log-icon-wrap.is-positive { background:#ecf2e9; }
+.rule-dialog { max-height:calc(100vh - 80rpx); overflow-y:auto; }

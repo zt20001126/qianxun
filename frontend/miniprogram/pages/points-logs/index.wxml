@@ -1,11 +1,12 @@
 <view class="logs-page">
+  <image class="logs-bottom-art" src="/assets/login-card-river.svg" mode="scaleToFill" />
   <view class="summary-card">
     <view class="summary-left">
       <view class="summary-icon-circle">
         <qx-icon name="coins" size="40" />
       </view>
       <view class="summary-copy">
-        <text class="summary-label">我的积分</text>
+        <text class="summary-label">可用积分</text>
         <text class="summary-value">{{availablePointsDisplay}}</text>
       </view>
     </view>
@@ -14,8 +15,8 @@
       <view class="summary-right-main">
         <qx-icon name="gift" size="32" />
         <view class="summary-usage">
-          <text class="summary-usage-title">积分可用于</text>
-          <text class="summary-usage-desc">抵扣房费（最高20%）</text>
+          <text class="summary-usage-title">可抵扣房费</text>
+          <text class="summary-usage-desc">最高20%</text>
         </view>
       </view>
       <qx-icon name="chevron-right-gray" size="32" />
@@ -25,9 +26,9 @@
   <view class="logs-heading">
     <view class="heading-left">
       <view class="heading-mark"></view>
-      <text class="heading-title">积分明细</text>
+      <text class="heading-title">积分记录</text>
     </view>
-    <text class="heading-count">共 {{total}} 条记录</text>
+    <text class="heading-count">共 {{total}} 条</text>
   </view>
 
   <view wx:if="{{loading && logs.length === 0}}" class="logs-state">正在读取积分流水…</view>
@@ -43,15 +44,14 @@
     <view wx:for="{{monthGroups}}" wx:key="month" class="month-card">
       <view class="month-header">{{item.month}}</view>
       <view class="month-list">
-        <view wx:for="{{item.items}}" wx:for-item="log" wx:key="id" class="log-row">
+        <view wx:for="{{item.items}}" wx:for-item="log" wx:key="id" class="log-row" bindtap="onLogTap" data-source="{{log.source_label}}">
           <view class="log-left">
             <view class="log-icon-wrap {{log.is_positive ? 'is-positive' : 'is-negative'}}">
               <qx-icon name="{{log.icon_name}}" size="32" />
             </view>
             <view class="log-copy">
               <text class="log-title">{{log.type_label}}</text>
-              <text class="log-source">{{log.source_label}}</text>
-              <text class="log-meta">{{log.created_label}} · 余额 {{log.balance_after}}</text>
+              <text class="log-meta">{{log.created_label}} · 余额 {{log.balance_label}}</text>
             </view>
           </view>
           <text class="log-delta {{log.is_positive ? 'delta-positive' : 'delta-negative'}}">{{log.points_label}}</text>

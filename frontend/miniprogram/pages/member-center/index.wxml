@@ -1,4 +1,8 @@
 <view class="member-page">
+  <image class="member-scene" src="/assets/profile/header-bg.webp" mode="aspectFill" />
+  <view class="member-scene-fade" />
+  <image class="member-bottom-art" src="/assets/login-card-river.svg" mode="scaleToFill" />
+  <view class="member-navigation" style="padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px;">会员中心</view>
   <view wx:if="{{loading && !member}}" class="page-state">正在读取会员资料…</view>
   <view wx:elif="{{errorMessage && !member}}" class="page-state page-state-error">
     <text>{{errorMessage}}</text>
@@ -19,7 +23,7 @@
               <text class="member-tier-name">{{currentTierName}}</text>
               <text class="member-current-badge">当前等级</text>
             </view>
-            <text class="member-benefit">享受 {{currentRate}}积分=¥1 房费抵扣 · 永久保级</text>
+            <text class="member-benefit">{{currentRate}}积分抵¥1 · 永久保级</text>
           </view>
         </view>
 
@@ -38,10 +42,10 @@
         <view class="points-grid">
           <view class="points-item growth-item">
             <view class="points-icon growth-icon">
-              <image src="/assets/member-trending-up.svg" mode="aspectFit" />
+              <image src="/assets/member-coins.svg" mode="aspectFit" />
             </view>
             <view class="points-copy">
-              <text class="points-label">累计成长积分</text>
+              <text class="points-label">成长积分</text>
               <text class="points-number growth-number">{{growthPointsDisplay}}</text>
             </view>
           </view>
@@ -64,10 +68,9 @@
             <view class="feature-icon-box">
               <image src="/assets/member-coins.svg" mode="aspectFit" />
             </view>
-            <text class="feature-title">积分流水</text>
+            <text class="feature-title">积分明细</text>
           </view>
           <view class="feature-extra">
-            <text>查看明细</text>
             <image src="/assets/member-chevron-right.svg" mode="aspectFit" />
           </view>
         </view>
@@ -77,10 +80,9 @@
             <view class="feature-icon-box">
               <image src="/assets/member-book-open.svg" mode="aspectFit" />
             </view>
-            <text class="feature-title">积分规则说明</text>
+            <text class="feature-title">积分规则</text>
           </view>
           <view class="feature-extra">
-            <text>获取/抵扣/返还</text>
             <image src="/assets/member-chevron-right.svg" mode="aspectFit" />
           </view>
         </view>
@@ -90,58 +92,49 @@
         <view class="tier-heading">
           <view class="tier-heading-main">
             <view class="tier-heading-mark"></view>
-            <text class="tier-heading-title">会员等级与兑换比例</text>
+            <text class="tier-heading-title">会员权益</text>
           </view>
-          <text class="tier-heading-note">单笔最高抵扣房费 {{maxDiscountRateLabel}}</text>
+          <text class="tier-heading-note">最高抵扣{{maxDiscountRateLabel}}房费</text>
         </view>
 
         <view class="tier-grid">
-          <view wx:for="{{tierRows}}" wx:key="min_points" class="tier-item {{item.is_current ? 'tier-current' : ''}}">
+          <view wx:for="{{tierRows}}" wx:key="min_points" class="tier-item tier-{{index}} {{item.is_current ? 'tier-current' : ''}}">
             <image class="tier-crown" src="{{item.is_current ? '/assets/member-crown-gold.svg' : '/assets/member-crown-wood.svg'}}" mode="aspectFit" />
             <text class="tier-name">{{item.matrix_name}}</text>
             <text class="tier-threshold">{{item.range_label}}</text>
-            <view class="tier-rate"><text>{{item.points_per_yuan}}分=¥1</text></view>
+            <view class="tier-rate"><text>{{item.points_per_yuan}}积分抵¥1</text></view>
           </view>
         </view>
 
-        <text class="tier-footnote">• 订单完成后按实付金额每满 ¥1 发 1 积分；历史消费补发计入成长积分，赠送补偿仅增可用积分，积分永久有效且不降级。</text>
+
       </view>
     </view>
   </block>
 
   <view wx:if="{{showPointsRuleModal}}" class="points-modal-overlay">
     <view class="points-modal">
-      <text class="points-modal-title">会员等级与积分规则</text>
+      <view class="modal-heading"><text class="points-modal-title">会员与积分规则</text><view class="modal-x" bindtap="onPointsRuleClose">×</view></view>
 
       <view class="points-modal-table">
         <view class="points-modal-table-header">
           <text>会员等级</text>
-          <text>成长积分门槛</text>
+          <text>成长积分</text>
           <text>抵扣比例</text>
         </view>
         <view wx:for="{{tierRows}}" wx:key="min_points" class="points-modal-table-row">
-          <text class="modal-tier-name">{{item.member_name}}</text>
+          <view class="modal-tier-name"><image class="modal-tier-icon" src="/assets/member-crown-wood.svg" mode="aspectFit" /><text>{{item.member_name}}</text></view>
           <text class="modal-tier-range">{{item.modal_range_label}}</text>
-          <text class="modal-tier-rate">{{item.points_per_yuan}}积分 = ¥1</text>
+          <text class="modal-tier-rate">{{item.points_per_yuan}}积分抵¥1</text>
         </view>
       </view>
 
       <view class="points-modal-rules">
-        <view class="points-modal-rule">
-          <text class="points-modal-bullet">• </text><view><text class="points-modal-rule-title">消费获得积分：</text>订单完成后按实付金额满 ¥1 发 1 积分（向下取整）。</view>
-        </view>
-        <view class="points-modal-rule">
-          <text class="points-modal-bullet">• </text><view><text class="points-modal-rule-title">单笔抵扣上限：</text>可用积分最高抵扣单笔房费的 <text class="points-modal-discount">{{maxDiscountRateLabel}}</text>。</view>
-        </view>
-        <view class="points-modal-rule">
-          <text class="points-modal-bullet">• </text><view><text class="points-modal-rule-title">取消订单返还：</text>自助取消退款成功后，已抵扣积分全额退回账户。</view>
-        </view>
-        <view class="points-modal-rule">
-          <text class="points-modal-bullet">• </text><view><text class="points-modal-rule-title">永久有效保级：</text>积分不设有效期，消耗可用积分不降低会员等级。</view>
-        </view>
+        <view class="points-modal-rule"><image src="/assets/member-coins.svg" /><view><text class="points-modal-rule-title">积分获取</text><text>订单完成后，实付每满¥1得1积分（向下取整）。历史补发计入成长积分，赠送仅增加可用积分。</text></view></view>
+        <view class="points-modal-rule"><image src="/assets/icons/ticket.svg" /><view><text class="points-modal-rule-title">积分抵扣</text><text>单笔最高抵扣房费的 <text class="points-modal-discount">{{maxDiscountRateLabel}}</text>。</text></view></view>
+        <view class="points-modal-rule"><image src="/assets/orders-rotate-ccw.svg" /><view><text class="points-modal-rule-title">积分返还</text><text>自助取消退款成功后，抵扣积分全额退回。</text></view></view>
+        <view class="points-modal-rule"><image src="/assets/icons/award-celadon.svg" /><view><text class="points-modal-rule-title">永久有效</text><text>积分永久有效，消费积分不影响会员等级。</text></view></view>
       </view>
-
-      <button class="points-modal-close" bindtap="onPointsRuleClose">我明白了</button>
+      <button class="points-modal-close" bindtap="onPointsRuleClose">我知道了</button>
     </view>
   </view>
 </view>

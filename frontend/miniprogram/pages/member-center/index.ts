@@ -26,6 +26,8 @@ interface MemberCenterData {
   upgradeHint: string
   progressWidth: string
   maxDiscountRateLabel: string
+  statusBarHeight: number
+  navigationHeight: number
   showPointsRuleModal: boolean
 }
 
@@ -88,11 +90,18 @@ Page({
     upgradeHint: '',
     progressWidth: '0%',
     maxDiscountRateLabel: '20%',
+    statusBarHeight: 0,
+    navigationHeight: 44,
     showPointsRuleModal: false,
   } as MemberCenterData,
 
   onLoad() {
-    wx.setNavigationBarTitle({ title: '会员中心' })
+    // 使用系统胶囊位置计算标题栏，避免与原生控件重叠。
+    const system = wx.getSystemInfoSync()
+    const statusBarHeight = system.statusBarHeight || 0
+    const capsule = wx.getMenuButtonBoundingClientRect()
+    const navigationHeight = capsule.height ? (capsule.top - statusBarHeight) * 2 + capsule.height : 44
+    this.setData({ statusBarHeight, navigationHeight })
   },
 
   onShow() {
@@ -122,7 +131,7 @@ Page({
         availablePointsDisplay: formatPoints(member.points),
         currentTierName: currentTier?.member_name || `${getTierBaseName(member.level)}会员`,
         currentRate: currentTier?.points_per_yuan || 0,
-        upgradeTitle: hasNextTier ? `升级至${nextTier?.member_name}` : '已达最高尊享等级',
+        upgradeTitle: hasNextTier ? `升级至${nextTier?.member_name}` : '已达最高等级',
         upgradeHint: hasNextTier
           ? `距离升级还差 ${member.next_level_points} 成长积分`
           : '尊享全店最高抵扣比例',

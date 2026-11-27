@@ -8,6 +8,7 @@ interface DisplayLog extends PointsLog {
   type_label: string
   points_label: string
   created_label: string
+  balance_label: string
   source_label: string
   icon_name: string
   is_positive: boolean
@@ -32,11 +33,11 @@ interface PointsLogsData {
 }
 
 const typeLabels: Record<PointsLog['type'], string> = {
-  ORDER_REWARD: '订单完成奖励',
-  HISTORY_REWARD: '历史消费补发',
+  ORDER_REWARD: '消费奖励',
+  HISTORY_REWARD: '消费积分补发',
   GIFT: '赠送/补偿积分',
-  REDEEM: '抵扣订单房费',
-  RETURN: '取消订单返还',
+  REDEEM: '积分抵扣',
+  RETURN: '积分返还',
   ADJUST: '积分调整',
 }
 
@@ -95,7 +96,7 @@ Page({
   } as PointsLogsData,
 
   onLoad() {
-    wx.setNavigationBarTitle({ title: '积分流水' })
+    wx.setNavigationBarTitle({ title: '积分明细' })
     void this.loadInitial()
   },
 
@@ -138,7 +139,8 @@ Page({
           ...log,
           month_label: formatMonthLabel(log.created_at),
           type_label: typeLabels[log.type] || '积分变动',
-          points_label: `${isPositive ? '+' : ''}${log.points}`,
+          points_label: `${isPositive ? '+' : log.points < 0 ? '−' : ''}${formatNumber(Math.abs(log.points))}`,
+          balance_label: formatNumber(log.balance_after),
           created_label: formatShortTime(log.created_at),
           source_label: log.remark || (log.order_id ? `订单 #${log.order_id}` : '积分业务记录'),
           icon_name: getLogIcon(log.type, isPositive),
@@ -157,6 +159,12 @@ Page({
     } finally {
       this.setData({ loading: false, loadingMore: false })
     }
+  },
+
+  // 显示流水备注或关联订单，保留列表中省略的来源信息。
+  onLogTap(event: WechatMiniprogram.TouchEvent) {
+    const source = String(event.currentTarget.dataset.source || '')
+    if (source) wx.showModal({ title: '积分记录', content: source, showCancel: false })
   },
 
   onRetryTap() {
