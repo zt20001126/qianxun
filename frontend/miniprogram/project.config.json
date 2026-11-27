@@ -2,7 +2,7 @@
   "description": "芊浔民宿微信小程序：第一阶段认证",
   "miniprogramRoot": "./",
   "compileType": "miniprogram",
-  "appid": "wx4cca0f5e70d52aca",
+  "appid": "wxf90658647aceb51c",
   "projectname": "qianxun-miniprogram",
   "setting": {
     "urlCheck": false,
@@ -36,50 +36,176 @@
   "simulatorPluginLibVersion": {},
   "packOptions": {
     "ignore": [
-      { "type": "file", "value": "assets/member-default-avatar.png" },
-      { "type": "file", "value": "assets/login-baijianlou-hero.webp" }
+      {
+        "type": "file",
+        "value": "assets/member-default-avatar.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/login-baijianlou-hero.webp"
+      }
     ],
     "include": [
-      { "type": "file", "value": "assets/login-baijianlou-hero.jpg" },
-      { "type": "file", "value": "assets/login-card-crest.svg" },
-      { "type": "file", "value": "assets/login-card-house.svg" },
-      { "type": "file", "value": "assets/login-card-bamboo.svg" },
-      { "type": "file", "value": "assets/login-card-river.svg" },
-      { "type": "file", "value": "assets/login-wechat.svg" },
-      { "type": "file", "value": "assets/decoration-baijianlou-houses.jpg" },
-      { "type": "file", "value": "assets/member-default-avatar.jpg" },
-      { "type": "file", "value": "assets/tab-home.png" },
-      { "type": "file", "value": "assets/tab-home-active.png" },
-      { "type": "file", "value": "assets/tab-orders.png" },
-      { "type": "file", "value": "assets/tab-orders-active.png" },
-      { "type": "file", "value": "assets/tab-mall.png" },
-      { "type": "file", "value": "assets/tab-mall-active.png" },
-      { "type": "file", "value": "assets/my-room-orders.svg" },
-      { "type": "file", "value": "assets/my-mall-orders.svg" },
-      { "type": "file", "value": "assets/tab-member.png" },
-      { "type": "file", "value": "assets/tab-member-active.png" },
-      { "type": "file", "value": "assets/tab-my.png" },
-      { "type": "file", "value": "assets/tab-my-active.png" },
-      { "type": "file", "value": "assets/orders-x-circle.svg" },
-      { "type": "file", "value": "assets/orders-clock.svg" },
-      { "type": "file", "value": "assets/orders-alert-circle.svg" },
-      { "type": "file", "value": "assets/orders-phone-call.svg" },
-      { "type": "file", "value": "assets/orders-rotate-ccw.svg" },
-      { "type": "file", "value": "assets/orders-chevron-right.svg" },
-      { "type": "file", "value": "assets/orders-calendar.svg" },
-      { "type": "file", "value": "assets/orders-phone-call-white.svg" },
-      { "type": "file", "value": "assets/payment-wallet.svg" },
-      { "type": "file", "value": "assets/my-crown.svg" },
-      { "type": "file", "value": "assets/my-headphones.svg" },
-      { "type": "file", "value": "assets/member-crown-watermark.svg" },
-      { "type": "file", "value": "assets/member-crown-gold.svg" },
-      { "type": "file", "value": "assets/member-crown-wood.svg" },
-      { "type": "file", "value": "assets/member-trending-up.svg" },
-      { "type": "file", "value": "assets/member-wallet.svg" },
-      { "type": "file", "value": "assets/member-chevron-right.svg" },
-      { "type": "file", "value": "assets/member-coins.svg" },
-      { "type": "file", "value": "assets/member-book-open.svg" },
-      { "type": "folder", "value": "assets/icons" }
+      {
+        "type": "file",
+        "value": "assets/login-baijianlou-hero.jpg"
+      },
+      {
+        "type": "file",
+        "value": "assets/login-card-crest.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/login-card-house.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/login-card-bamboo.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/login-card-river.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/login-wechat.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/decoration-baijianlou-houses.jpg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-default-avatar.jpg"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-home.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-home-active.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-orders.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-orders-active.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-mall.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-mall-active.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/my-room-orders.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/my-mall-orders.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-member.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-member-active.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-my.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/tab-my-active.png"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-x-circle.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-clock.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-alert-circle.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-phone-call.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-rotate-ccw.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-chevron-right.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-calendar.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/orders-phone-call-white.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/payment-wallet.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/my-crown.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/my-headphones.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-crown-watermark.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-crown-gold.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-crown-wood.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-trending-up.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-wallet.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-chevron-right.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-coins.svg"
+      },
+      {
+        "type": "file",
+        "value": "assets/member-book-open.svg"
+      },
+      {
+        "type": "folder",
+        "value": "assets/icons"
+      }
     ]
   },
   "editorSetting": {}
