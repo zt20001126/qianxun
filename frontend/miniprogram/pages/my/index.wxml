@@ -1,13 +1,13 @@
 <view class="my-page">
-  <image class="page-scene" src="/assets/profile/header-bg.webp" mode="aspectFill" />
+  <image class="page-scene" src="/assets/profile/header-bg.jpg" mode="aspectFill" />
   <view class="page-scene-fade" />
-  <view class="page-footer"><image class="footer-image" src="/assets/profile/header-bg.webp" mode="aspectFill" /><view class="footer-fade" /></view>
+  <view class="page-footer"><image class="footer-image" src="/assets/profile/header-bg.jpg" mode="aspectFill" /><view class="footer-fade" /></view>
   <view class="my-navigation" style="padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px;">
     <text>我的</text>
   </view>
   <view class="my-modules">
     <view class="profile-card" bindtap="onProfileTap" hover-class="card-pressed">
-      <image class="profile-background" src="/assets/profile/header-bg.webp" mode="aspectFill" />
+      <image class="profile-background" src="/assets/profile/header-bg.jpg" mode="aspectFill" />
       <view class="profile-gradient" />
       <view class="profile-main">
         <image class="profile-avatar" src="/assets/member-default-avatar.jpg" mode="aspectFill" />

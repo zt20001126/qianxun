@@ -1,5 +1,5 @@
 <view class="member-page">
-  <image class="member-scene" src="/assets/profile/header-bg.webp" mode="aspectFill" />
+  <image class="member-scene" src="/assets/profile/header-bg.jpg" mode="aspectFill" />
   <view class="member-scene-fade" />
   <image class="member-bottom-art" src="/assets/login-card-river.svg" mode="scaleToFill" />
   <view class="member-navigation" style="padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px;">会员中心</view>

@@ -1,6 +1,6 @@
 <view class="mall-page">
-  <view class="mall-scene"><image src="/assets/profile/header-bg.webp" mode="aspectFill" /><view class="mall-scene-fade" /></view>
-  <view class="mall-footer"><image src="/assets/profile/header-bg.webp" mode="aspectFill" /><view class="mall-footer-fade" /></view>
+  <view class="mall-scene"><image src="/assets/profile/header-bg.jpg" mode="aspectFill" /><view class="mall-scene-fade" /></view>
+  <view class="mall-footer"><image src="/assets/profile/header-bg.jpg" mode="aspectFill" /><view class="mall-footer-fade" /></view>
   <view class="mall-navigation" style="padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px;">商城</view>
   <view class="mall-content">
     <view class="mall-title-row"><view class="title-rail"></view><text class="mall-title">芊浔好物</text><image class="mall-cloud" src="/assets/mall-cloud.svg" mode="aspectFit" /></view>
