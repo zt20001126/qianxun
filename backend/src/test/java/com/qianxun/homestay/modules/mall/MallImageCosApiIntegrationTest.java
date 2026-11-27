@@ -88,7 +88,8 @@ class MallImageCosApiIntegrationTest {
     @Test
     void rejectsMissingFilePartAsBadRequest() throws Exception {
         mvc.perform(multipart(PATH).header("Authorization", "Bearer " + jwt.issueAdminToken(1L)))
-                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value(400));
+                .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("请求参数不正确"));
         verifyNoInteractions(cos);
     }
 

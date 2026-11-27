@@ -11,6 +11,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 /**
  * 将请求参数、业务错误及 HTTP 方法错误转换为统一响应结构。
@@ -32,9 +33,10 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(exception.getStatus().value(), exception.getMessage()));
     }
 
+    /** 将参数校验失败和缺少请求字段统一映射为 400。 */
     @ExceptionHandler({MethodArgumentNotValidException.class, ConstraintViolationException.class,
             HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
-            MissingServletRequestParameterException.class})
+            MissingServletRequestParameterException.class, MissingServletRequestPartException.class})
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception exception) {
         String message = "请求参数不正确";
         if (exception instanceof MethodArgumentNotValidException validationException
