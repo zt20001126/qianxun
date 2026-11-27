@@ -1,51 +1,41 @@
 <view class="my-page">
+  <image class="page-scene" src="/assets/profile/header-bg.webp" mode="aspectFill" />
+  <view class="page-scene-fade" />
+  <view class="page-footer"><image class="footer-image" src="/assets/profile/header-bg.webp" mode="aspectFill" /><view class="footer-fade" /></view>
+  <view class="my-navigation" style="padding-top: {{statusBarHeight}}px; height: {{navigationHeight}}px;">
+    <text>我的</text>
+  </view>
   <view class="my-modules">
-    <view class="profile-card" bindtap="onProfileTap">
-      <image class="profile-background" src="/assets/login-baijianlou-hero.jpg" mode="aspectFill" />
+    <view class="profile-card" bindtap="onProfileTap" hover-class="card-pressed">
+      <image class="profile-background" src="/assets/profile/header-bg.webp" mode="aspectFill" />
       <view class="profile-gradient" />
       <view class="profile-main">
         <image class="profile-avatar" src="/assets/member-default-avatar.jpg" mode="aspectFill" />
         <view class="profile-copy">
-          <view class="profile-identity">
-            <text class="profile-name">{{nickname}}</text>
-            <text class="profile-phone">{{maskedPhone}}</text>
-          </view>
-          <view class="profile-level">
-            <image class="crown-icon" src="/assets/my-crown.svg" mode="aspectFit" />
-            <text class="profile-level-name">{{levelLabel}}</text>
-          </view>
+          <text class="profile-name">{{nickname}}</text>
+          <text class="profile-phone">{{maskedPhone}}</text>
+          <view class="profile-level"><image class="crown-icon" src="/assets/my-crown.svg" mode="aspectFit" /><text>{{levelLabel}}</text></view>
         </view>
       </view>
-      <image class="profile-watermark" src="/assets/my-crown.svg" mode="aspectFit" />
     </view>
-
     <view class="contact-list">
-    <view class="contact-card" bindtap="onRoomOrdersTap">
-      <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-room-orders.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">房间订单</text><text class="contact-phone">查看房间预订记录</text></view></view>
-      <view class="contact-arrow" />
-    </view>
-    <view class="contact-card" bindtap="onMallOrdersTap">
-      <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-mall-orders.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">商城订单</text><text class="contact-phone">查看商品购买记录</text></view></view>
-      <view class="contact-arrow" />
-    </view>
-    <view class="contact-card invitation-card" bindtap="onInvitationTap">
-      <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-invitation.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">邀请好友</text><text class="contact-phone">邀请好友，共赴水乡</text></view></view>
-      <view class="contact-arrow" />
-    </view>
-    <view class="contact-card" bindtap="onContactTap">
-      <view class="contact-main">
-        <view class="contact-icon-box">
-          <image class="contact-icon" src="/assets/my-headphones.svg" mode="aspectFit" />
-        </view>
-        <view class="contact-copy">
-          <text class="contact-title">联系我们</text>
-          <text class="contact-phone">{{contactPhone}}</text>
-        </view>
+      <view class="contact-card" bindtap="onRoomOrdersTap" hover-class="card-pressed">
+        <image class="contact-art" src="/assets/icons/bed-double.svg" mode="aspectFit" />
+        <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-room-orders.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">房间订单</text><text class="contact-phone">查看房间预订记录</text></view></view><view class="contact-arrow" />
       </view>
-      <view class="contact-arrow" />
+      <view class="contact-card" bindtap="onMallOrdersTap" hover-class="card-pressed">
+        <image class="contact-art" src="/assets/icons/gift.svg" mode="aspectFit" />
+        <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-mall-orders.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">商城订单</text><text class="contact-phone">查看商品购买记录</text></view></view><view class="contact-arrow" />
+      </view>
+      <view class="contact-card" bindtap="onInvitationTap" hover-class="card-pressed">
+        <image class="contact-art bridge-art" src="/assets/login-card-river.svg" mode="aspectFit" />
+        <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-invitation.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">邀请好友</text><text class="contact-phone">邀请好友，共赴水乡</text></view></view><view class="contact-arrow" />
+      </view>
+      <view class="contact-card" bindtap="onContactTap" hover-class="card-pressed">
+        <image class="contact-art bamboo-art" src="/assets/login-card-bamboo.svg" mode="aspectFit" />
+        <view class="contact-main"><view class="contact-icon-box"><image class="contact-icon" src="/assets/my-headphones.svg" mode="aspectFit" /></view><view class="contact-copy"><text class="contact-title">联系我们</text><text class="contact-phone">{{contactPhone}}</text></view></view><view class="contact-arrow" />
+      </view>
     </view>
-
-    </view>
-    <button class="logout-button" bindtap="onLogoutTap"><image class="logout-icon" src="/assets/my-logout.svg" mode="aspectFit" /><text>退出登录</text></button>
+    <button class="logout-button" bindtap="onLogoutTap"><view class="logout-line" /><image class="logout-icon" src="/assets/my-logout.svg" mode="aspectFit" /><text>退出登录</text><view class="logout-line logout-line-right" /></button>
   </view>
 </view>

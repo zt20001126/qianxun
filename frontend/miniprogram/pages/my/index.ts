@@ -11,6 +11,8 @@ interface MyPageData {
   maskedPhone: string
   levelLabel: string
   contactPhone: string
+  statusBarHeight: number
+  navigationHeight: number
 }
 
 function getPhoneSuffix(phone: string): string {
@@ -43,7 +45,7 @@ function formatCachedLevel(growthPoints: number): string {
   return '普通会员'
 }
 
-function toPageData(member: Pick<AppMember, 'phone' | 'level'>): MyPageData {
+function toPageData(member: Pick<AppMember, 'phone' | 'level'>): Pick<MyPageData, 'nickname' | 'maskedPhone' | 'levelLabel' | 'contactPhone'> {
   return {
     nickname: `尾号 ${getPhoneSuffix(member.phone)}`,
     maskedPhone: maskPhone(member.phone),
@@ -58,10 +60,17 @@ Page({
     maskedPhone: '',
     levelLabel: '',
     contactPhone: STORE_CONTACT_PHONE_LABEL,
+    statusBarHeight: 0,
+    navigationHeight: 44,
   } as MyPageData,
 
   onLoad() {
-    wx.setNavigationBarTitle({ title: '我的' })
+    // 以系统状态栏和胶囊位置计算导航高度，避免遮挡原生控件。
+    const system = wx.getSystemInfoSync()
+    const statusBarHeight = system.statusBarHeight || 0
+    const capsule = wx.getMenuButtonBoundingClientRect()
+    const navigationHeight = capsule.height ? (capsule.top - statusBarHeight) * 2 + capsule.height : 44
+    this.setData({ statusBarHeight, navigationHeight })
   },
 
   onShow() {
