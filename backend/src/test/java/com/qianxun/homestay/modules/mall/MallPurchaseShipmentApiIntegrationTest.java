@@ -82,6 +82,16 @@ class MallPurchaseShipmentApiIntegrationTest {
     }
 
     @Test
+    void seededImagesUseCosAfterMigration() throws Exception {
+        String images = jdbc.queryForObject("SELECT CAST(images AS CHAR) FROM mall_product WHERE name = ?", String.class, "蚕丝被");
+        JsonNode list = objectMapper.readTree(images);
+        assertThat(list).hasSize(5);
+        for (JsonNode image : list) {
+            assertThat(image.asText()).startsWith("https://qianxun-1536638067.cos.ap-shanghai.myqcloud.com/");
+        }
+    }
+
+    @Test
     void memberCanPayForSnapshotAndAdminCanShipAndCompleteIt() throws Exception {
         long productId = createProduct("初始蚕丝被", "199.00");
 

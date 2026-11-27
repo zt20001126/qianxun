@@ -10,9 +10,17 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
 
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.ObjectMetadata;
+import com.qcloud.cos.model.InitiateMultipartUploadRequest;
+import com.qcloud.cos.model.InitiateMultipartUploadResult;
+import com.qcloud.cos.model.UploadPartRequest;
+import com.qcloud.cos.model.UploadPartResult;
+import com.qcloud.cos.model.CompleteMultipartUploadRequest;
+import com.qcloud.cos.model.AbortMultipartUploadRequest;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.config.CosProperties;
 import com.qianxun.homestay.modules.storage.service.impl.CosStorageServiceImpl;
@@ -91,6 +99,38 @@ class CosStorageServiceImplTest {
             assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatus());
             assertFalse(exception.getMessage().contains("secret-detail"));
             verify(clients.constructed().get(0)).shutdown();
+        }
+    }
+
+    @Test
+    void uploadsLargeObjectsInParts() {
+        CosStorageServiceImpl service = new CosStorageServiceImpl(configured());
+        try (MockedConstruction<COSClient> clients = mockConstruction(COSClient.class, (client, context) -> {
+            InitiateMultipartUploadResult start = new InitiateMultipartUploadResult();
+            start.setUploadId("upload-id");
+            when(client.initiateMultipartUpload(any(InitiateMultipartUploadRequest.class))).thenReturn(start);
+            when(client.uploadPart(any(UploadPartRequest.class))).thenReturn(new UploadPartResult());
+        })) {
+            byte[] content = new byte[8 * 1024 * 1024 + 1];
+            service.upload("large.png", new ByteArrayInputStream(content), content.length, "image/png");
+            COSClient client = clients.constructed().get(0);
+            verify(client, times(2)).uploadPart(any(UploadPartRequest.class));
+            verify(client).completeMultipartUpload(any(CompleteMultipartUploadRequest.class));
+            verify(client).shutdown();
+        }
+    }
+
+    @Test
+    void abortsMultipartUploadWhenSourceIsIncomplete() {
+        CosStorageServiceImpl service = new CosStorageServiceImpl(configured());
+        try (MockedConstruction<COSClient> clients = mockConstruction(COSClient.class, (client, context) -> {
+            InitiateMultipartUploadResult start = new InitiateMultipartUploadResult();
+            start.setUploadId("upload-id");
+            when(client.initiateMultipartUpload(any(InitiateMultipartUploadRequest.class))).thenReturn(start);
+        })) {
+            assertThrows(BusinessException.class, () -> service.upload("large.png",
+                    new ByteArrayInputStream(new byte[0]), 8 * 1024 * 1024 + 1, "image/png"));
+            verify(clients.constructed().get(0)).abortMultipartUpload(any(AbortMultipartUploadRequest.class));
         }
     }
 

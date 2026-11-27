@@ -1,5 +1,5 @@
 /** 南浔周边游玩页：展示用户提供的古镇一日游路线图。 */
-const GUIDE_IMAGE = 'https://qianxunminsu.oss-cn-shanghai.aliyuncs.com/miniprogram/guides/nanxun-one-day-guide-81227d1e37b84e88895d1b858e5a2b7a.jpg'
+const GUIDE_IMAGE = 'https://qianxun-1536638067.cos.ap-shanghai.myqcloud.com/miniprogram/guides/nanxun-one-day-guide-81227d1e37b84e88895d1b858e5a2b7a.jpg'
 
 Page({
   data: {

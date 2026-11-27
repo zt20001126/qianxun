@@ -250,8 +250,8 @@ function messageOf(error: unknown, fallback: string): string {
               <textarea v-model="form.facilities_text" rows="3" placeholder="全屋智能&#10;独立卫浴" />
             </label>
             <label class="form-span">图片地址（每行一项）
-              <textarea v-model="form.images_text" rows="3" placeholder="请输入 HTTPS 图片地址或已有 OSS URI" />
-              <small>后台保存图片地址；私有 OSS 图片由小程序接口生成短期读取链接。</small>
+              <textarea v-model="form.images_text" rows="3" placeholder="请输入 HTTPS 图片地址" />
+              <small>后台保存图片地址，请填写可访问的图片链接。</small>
             </label>
             <label class="form-span">房间介绍
               <textarea v-model="form.description" rows="4" placeholder="填写房间介绍" />

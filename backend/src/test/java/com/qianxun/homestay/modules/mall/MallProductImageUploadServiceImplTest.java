@@ -2,20 +2,51 @@ package com.qianxun.homestay.modules.mall;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.qianxun.homestay.common.exception.BusinessException;
-import com.qianxun.homestay.config.OssProperties;
 import com.qianxun.homestay.modules.mall.service.impl.MallProductImageUploadServiceImpl;
+import com.qianxun.homestay.modules.storage.service.CosStorageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 
 class MallProductImageUploadServiceImplTest {
 
-    private final MallProductImageUploadServiceImpl service = new MallProductImageUploadServiceImpl(new OssProperties());
+    private final CosStorageService cos = mock(CosStorageService.class);
+    private final MallProductImageUploadServiceImpl service = new MallProductImageUploadServiceImpl(cos);
 
     @Test
-    void acceptsCommonImageSignaturesBeforeCheckingOssConfiguration() {
+    void uploadsValidatedImagesToCosWhenSelected() {
+        MallProductImageUploadServiceImpl selected = new MallProductImageUploadServiceImpl(cos);
+        when(cos.publicUrl(anyString())).thenAnswer(invocation -> "https://example.com/" + invocation.getArgument(0));
+        String url = selected.upload(new MockMultipartFile("file", "image.png", "image/png",
+                new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}));
+        assertTrue(url.startsWith("https://example.com/mall/products/"));
+        assertTrue(url.endsWith(".png"));
+        verify(cos).upload(anyString(), any(), anyLong(), org.mockito.ArgumentMatchers.eq("image/png"));
+    }
+
+    @Test
+    void cosFailureDoesNotFallBackToOss() {
+        MallProductImageUploadServiceImpl selected = new MallProductImageUploadServiceImpl(cos);
+        when(cos.publicUrl(anyString())).thenReturn("https://example.com/a.jpg");
+        doThrow(new BusinessException(HttpStatus.BAD_GATEWAY, "腾讯云 COS 上传失败")).when(cos)
+                .upload(anyString(), any(), anyLong(), anyString());
+        BusinessException exception = assertThrows(BusinessException.class, () -> selected.upload(
+                new MockMultipartFile("file", "image.jpg", "image/jpeg", new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff})));
+        assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatus());
+    }
+
+    @Test
+    void acceptsCommonImageSignatures() {
         byte[][] signatures = {
                 {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF},
                 {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A},
@@ -24,10 +55,10 @@ class MallProductImageUploadServiceImplTest {
                 {0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50}
         };
 
+        when(cos.publicUrl(anyString())).thenReturn("https://example.com/image");
         for (byte[] signature : signatures) {
-            BusinessException exception = assertThrows(BusinessException.class,
-                    () -> service.upload(new MockMultipartFile("file", "image", "application/octet-stream", signature)));
-            assertEquals(HttpStatus.SERVICE_UNAVAILABLE, exception.getStatus());
+            assertEquals("https://example.com/image", service.upload(
+                    new MockMultipartFile("file", "image", "application/octet-stream", signature)));
         }
     }
 
