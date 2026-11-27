@@ -44,7 +44,7 @@
 | `frontend/miniprogram/assets/login-baijianlou-hero.webp` | 民宿介绍页头图 | `aspectFill` |
 | `frontend/miniprogram/assets/decoration-baijianlou-houses.jpg` | 可订房间页顶部 | `aspectFill`，与房间卡片列表构成页面顶部区域 |
 | `frontend/miniprogram/assets/decoration-baijianlou-houses.webp` | 民宿介绍页步行场景卡片 | `aspectFill` |
-| `frontend/miniprogram/assets/nanxun-one-day-guide.jpg` | 周边游玩页面，由页面 TypeScript 常量引用 | 作为南浔一日游攻略图片 |
+| `COS /miniprogram/guides/nanxun-one-day-guide-70985dd84719a4ce.webp` | 周边游玩页面，由页面 TypeScript 常量引用 | 作为南浔一日游攻略图片 |
 
 除「我的」页面本次经用户确认的专用调整外，不得更换上述图片或改变其他页面中的展示位置、尺寸、裁剪、遮罩及叠放关系。
 
