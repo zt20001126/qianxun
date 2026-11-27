@@ -38,6 +38,10 @@
     "ignore": [
       {
         "type": "file",
+        "value": "assets/nanxun-one-day-guide.jpg"
+      },
+      {
+        "type": "file",
         "value": "assets/member-default-avatar.png"
       },
       {
