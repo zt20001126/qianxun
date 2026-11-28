@@ -41,9 +41,9 @@
 | 图片 | 当前引用位置 | 当前呈现 |
 | --- | --- | --- |
 | `frontend/miniprogram/assets/login-baijianlou-hero.jpg` | 首页主视觉和南浔横幅、登录、邀请页、支付成功页、「我的」名片背景 | 多处使用 `aspectFill`；各页面的容器尺寸、位置、裁剪和遮罩都是现有视觉的一部分 |
-| `frontend/miniprogram/assets/login-baijianlou-hero.webp` | 民宿介绍页头图 | `aspectFill` |
+| `frontend/miniprogram/assets/inn-intro/entrance.webp` | 民宿介绍页头图 | 门头实拍，`aspectFill`，使用渐变保证品牌文字可读 |
+| `frontend/miniprogram/assets/inn-intro/courtyard.webp` | 民宿介绍页庭院卡片 | 公共庭院实拍，按 16:9 展示 |
 | `frontend/miniprogram/assets/decoration-baijianlou-houses.jpg` | 可订房间页顶部 | `aspectFill`，与房间卡片列表构成页面顶部区域 |
-| `frontend/miniprogram/assets/decoration-baijianlou-houses.webp` | 民宿介绍页步行场景卡片 | `aspectFill` |
 | `COS /miniprogram/guides/nanxun-one-day-guide-70985dd84719a4ce.webp` | 周边游玩页面，由页面 TypeScript 常量引用 | 作为南浔一日游攻略图片 |
 
 除「我的」页面本次经用户确认的专用调整外，不得更换上述图片或改变其他页面中的展示位置、尺寸、裁剪、遮罩及叠放关系。
@@ -102,6 +102,11 @@
 
 - 入住和退房使用等宽日期列，两列之间显示方向和住宿晚数。整个日期区打开预订日历。
 - 查房按钮保持茶棕色，可订数量以按钮内的小标签显示。四个快捷入口沿用圆形图标底和列间分隔线。
+
+### 民宿介绍
+
+- 保留顶部原有品牌名称、英文标识和标语，背景使用民宿门头实拍。正文只使用民宿公共空间的实拍照片，当前使用庭院照片。
+- 内容突出庭院、入住服务、周边和到店信息。底部保留「查看客房」。
 
 ### 「我的」页面
 
