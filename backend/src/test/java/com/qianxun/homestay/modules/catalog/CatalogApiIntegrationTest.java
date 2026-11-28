@@ -49,6 +49,14 @@ class CatalogApiIntegrationTest {
             .withUsername("qianxun")
             .withPassword("qianxun-test-password");
 
+    @Container
+    private static final org.testcontainers.containers.GenericContainer<?> REDIS =
+            new org.testcontainers.containers.GenericContainer<>("redis:7.4.7-alpine").withExposedPorts(6379);
+
+    @org.springframework.test.context.bean.override.mockito.MockitoSpyBean
+    private com.qianxun.homestay.modules.room.mapper.RoomMapper roomMapper;
+    @Autowired
+    private com.qianxun.homestay.common.cache.DisplayCacheService cache;
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -60,6 +68,8 @@ class CatalogApiIntegrationTest {
 
     @DynamicPropertySource
     static void registerDatabaseProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.redis.host", REDIS::getHost);
+        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
         registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
         registry.add("spring.datasource.username", MYSQL::getUsername);
         registry.add("spring.datasource.password", MYSQL::getPassword);
@@ -71,6 +81,7 @@ class CatalogApiIntegrationTest {
     void resetStageTwoData() throws Exception {
         jdbcTemplate.update("DELETE FROM creators");
         jdbcTemplate.update("DELETE FROM room");
+        cache.invalidateAfterCommit("rooms");
         jdbcTemplate.update("UPDATE channels SET enabled = 1");
         jdbcTemplate.update("DELETE FROM admin");
         jdbcTemplate.update("INSERT INTO admin (username, password_hash, enabled) VALUES (?, ?, 1)",
@@ -83,6 +94,7 @@ class CatalogApiIntegrationTest {
         long availableRoomId = insertRoom("101", "枕澜大床房", 1, "198.00", true);
         long disabledRoomId = insertRoom("102", "浅溪双床房", 1, "218.00", false);
 
+        org.mockito.Mockito.clearInvocations(roomMapper);
         mockMvc.perform(get("/api/app/rooms"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.list.length()").value(1))
@@ -96,6 +108,7 @@ class CatalogApiIntegrationTest {
                 .andExpect(jsonPath("$.data.name").value("枕澜大床房"))
                 .andExpect(jsonPath("$.data.facilities[0]").value("地暖"));
 
+        org.mockito.Mockito.verify(roomMapper, org.mockito.Mockito.times(1)).findEnabled();
         mockMvc.perform(get("/api/app/rooms/{id}", disabledRoomId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404));

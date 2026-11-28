@@ -1,9 +1,13 @@
 package com.qianxun.homestay.modules.room.service.impl;
 
 import com.qianxun.homestay.common.exception.BusinessException;
+import com.qianxun.homestay.common.cache.DisplayCacheService;
+import com.qianxun.homestay.config.DisplayCacheProperties;
+import java.util.Arrays;
 import com.qianxun.homestay.common.util.ApiTime;
 import com.qianxun.homestay.modules.availability.service.AvailabilityService;
 import com.qianxun.homestay.modules.room.dto.RoomSaveRequest;
+import com.qianxun.homestay.modules.room.dto.RoomCatalogCacheDTO;
 import com.qianxun.homestay.modules.room.entity.RoomEntity;
 import com.qianxun.homestay.modules.room.mapper.RoomMapper;
 import com.qianxun.homestay.modules.room.service.RoomImageUrlService;
@@ -26,6 +30,9 @@ public class RoomServiceImpl implements RoomService {
 
     private static final Set<String> PROPERTY_ROOM_NUMBERS = Set.of("101", "102", "103", "201", "202", "203");
 
+    private static final String CACHE_DOMAIN = "rooms";
+    private final DisplayCacheProperties cacheProperties;
+    private final DisplayCacheService cache;
     private final RoomMapper roomMapper;
     private final RoomImageUrlService roomImageUrlService;
     private final AvailabilityService availabilityService;
@@ -33,7 +40,9 @@ public class RoomServiceImpl implements RoomService {
     public RoomServiceImpl(
             RoomMapper roomMapper,
             RoomImageUrlService roomImageUrlService,
-            AvailabilityService availabilityService) {
+            AvailabilityService availabilityService, DisplayCacheService cache, DisplayCacheProperties cacheProperties) {
+        this.cacheProperties = cacheProperties;
+        this.cache = cache;
         this.roomMapper = roomMapper;
         this.roomImageUrlService = roomImageUrlService;
         this.availabilityService = availabilityService;
@@ -56,24 +65,24 @@ public class RoomServiceImpl implements RoomService {
         }
         if (checkIn != null) {
             availabilityService.validateMiniProgramRange(checkIn, checkOut);
-            return roomMapper.findEnabled().stream()
-                    .filter(room -> availabilityService.isAvailable(room.getId(), checkIn, checkOut))
+            return enabledRooms().stream()
+                    .filter(room -> availabilityService.isAvailable(room.id(), checkIn, checkOut))
                     .map(room -> toAppSummaryVO(room, true))
                     .toList();
         }
-        return roomMapper.findEnabled().stream().map(room -> toAppSummaryVO(room, null)).toList();
+        return enabledRooms().stream().map(room -> toAppSummaryVO(room, null)).toList();
     }
 
     @Override
     public AppRoomDetailVO getAppRoom(Long id) {
-        RoomEntity room = roomMapper.findEnabledById(id);
+        RoomCatalogCacheDTO room = enabledRooms().stream().filter(item -> item.id().equals(id)).findFirst().orElse(null);
         if (room == null) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "房间不存在");
         }
         return new AppRoomDetailVO(
-                room.getId(), room.getNumber(), room.getName(), room.getFloor(), formatPrice(room.getPrice()),
-                room.getCapacity(), room.getBedInfo(), room.getArea(), emptyIfNull(room.getFacilities()),
-                roomImageUrlService.resolveForApp(room.getImages()), room.getDescription());
+                room.id(), room.number(), room.name(), room.floor(), formatPrice(room.price()),
+                room.capacity(), room.bedInfo(), room.area(), emptyIfNull(room.facilities()),
+                roomImageUrlService.resolveForApp(room.images()), room.description());
     }
 
     @Override
@@ -86,6 +95,7 @@ public class RoomServiceImpl implements RoomService {
         }
         try {
             roomMapper.insert(room);
+            cache.invalidateAfterCommit(CACHE_DOMAIN);
         } catch (DuplicateKeyException exception) {
             throw new BusinessException(HttpStatus.CONFLICT, "房号已存在");
         }
@@ -104,6 +114,7 @@ public class RoomServiceImpl implements RoomService {
         }
         try {
             roomMapper.update(room);
+            cache.invalidateAfterCommit(CACHE_DOMAIN);
         } catch (DuplicateKeyException exception) {
             throw new BusinessException(HttpStatus.CONFLICT, "房号已存在");
         }
@@ -115,7 +126,14 @@ public class RoomServiceImpl implements RoomService {
     public RoomAdminVO setRoomEnabled(Long id, boolean enabled) {
         requireRoom(id);
         roomMapper.updateEnabled(id, enabled);
+        cache.invalidateAfterCommit(CACHE_DOMAIN);
         return getAdminRoom(id);
+    }
+
+    /** 复用客房基础资料，可订状态仍实时查询。 */
+    private List<RoomCatalogCacheDTO> enabledRooms() {
+        return Arrays.asList(cache.get(CACHE_DOMAIN, "catalog", cacheProperties.getRoomTtl(), RoomCatalogCacheDTO[].class,
+                () -> roomMapper.findEnabled().stream().map(RoomCatalogCacheDTO::from).toArray(RoomCatalogCacheDTO[]::new)));
     }
 
     private RoomEntity requireRoom(Long id) {
@@ -159,10 +177,10 @@ public class RoomServiceImpl implements RoomService {
                 ApiTime.fromShanghai(room.getCreatedAt()), ApiTime.fromShanghai(room.getUpdatedAt()));
     }
 
-    private AppRoomSummaryVO toAppSummaryVO(RoomEntity room, Boolean available) {
+    private AppRoomSummaryVO toAppSummaryVO(RoomCatalogCacheDTO room, Boolean available) {
         return new AppRoomSummaryVO(
-                room.getId(), room.getNumber(), room.getName(), formatPrice(room.getPrice()), room.getCapacity(),
-                room.getBedInfo(), roomImageUrlService.resolveForApp(room.getImages()), available);
+                room.id(), room.number(), room.name(), formatPrice(room.price()), room.capacity(),
+                room.bedInfo(), roomImageUrlService.resolveForApp(room.images()), available);
     }
 
     private String formatPrice(BigDecimal price) {

@@ -1,6 +1,12 @@
 spring:
   application:
     name: qianxun-homestay-backend
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      connect-timeout: 300ms
+      timeout: 200ms
   servlet:
     multipart:
       max-file-size: -1
@@ -31,6 +37,9 @@ server:
   shutdown: graceful
 
 management:
+  health:
+    redis:
+      enabled: false
   endpoints:
     web:
       exposure:
@@ -46,6 +55,13 @@ mybatis:
     map-underscore-to-camel-case: true
 
 app:
+  display-cache:
+    room-ttl: 120s
+    product-ttl: 120s
+    page-ttl: 30s
+    image-ttl: 50m
+    page-size: 20
+    max-pages: 5
   agent:
     base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
     api-key: ${DEEPSEEK_API_KEY:}

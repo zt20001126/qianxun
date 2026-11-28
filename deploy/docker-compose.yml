@@ -1,6 +1,11 @@
 name: qianxun
 
 services:
+  redis:
+    image: redis:7.4.7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru", "--save", "", "--appendonly", "no"]
+
   mysql:
     image: ${DOCKER_REGISTRY_PREFIX:-docker.m.daocloud.io}/library/mysql:8.0
     restart: unless-stopped
@@ -32,6 +37,8 @@ services:
       mysql:
         condition: service_healthy
     environment:
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       DATABASE_URL: ${DATABASE_URL:-jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-qianxun}?user=${MYSQL_USER:-qianxun}&password=${MYSQL_PASSWORD:-qianxun}&useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&connectionTimeZone=Asia/Shanghai}
       JWT_SECRET: ${JWT_SECRET:?请在所选环境的 env 文件中设置 JWT_SECRET}
       APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:8081,http://localhost:5173}
