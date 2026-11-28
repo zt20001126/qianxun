@@ -6,16 +6,21 @@
 .footer-fade { background:linear-gradient(to bottom,#faf7f2,rgba(250,247,242,.68)); }
 .my-navigation { position:relative; z-index:1; box-sizing:content-box; display:flex; align-items:center; justify-content:center; color:#16110f; font-size:36rpx; font-weight:600; }
 .my-modules { position:relative; z-index:1; padding:170rpx 32rpx 110rpx; }
-.profile-card { position:relative; display:flex; align-items:center; min-height:208rpx; overflow:hidden; box-sizing:border-box; padding:28rpx 40rpx; border:2rpx solid rgba(255,255,255,.9); border-radius:40rpx; background:#ead6c6; box-shadow:0 12rpx 32rpx rgba(93,56,31,.1); }
-.profile-background,.profile-gradient { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
-.profile-gradient { background:linear-gradient(90deg,rgba(245,225,209,.98) 0%,rgba(245,225,209,.93) 42%,rgba(245,225,209,.12) 100%); }
-.profile-main { position:relative; display:flex; align-items:center; min-width:0; gap:24rpx; }
-.profile-avatar { width:120rpx; height:120rpx; flex:none; border:4rpx solid #fff; border-radius:50%; background:#f3ede2; }
+
+/* 会员卡：深茶棕卡面叠加水乡建筑暗纹，标题、资料与等级分三层排列。 */
+.profile-card { position:relative; display:flex; flex-direction:column; min-height:348rpx; overflow:hidden; box-sizing:border-box; padding:34rpx 42rpx 36rpx; border:2rpx solid #a7805d; border-radius:32rpx; background:#4a2d1d; box-shadow:0 20rpx 50rpx rgba(52,36,24,.26); }
+.card-bg { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+.card-heading { position:relative; z-index:1; display:flex; justify-content:space-between; align-items:center; line-height:1.1; color:#efcf9a; }
+.card-brand { font-family:"Songti SC",serif; font-size:38rpx; font-weight:700; letter-spacing:4rpx; }
+.card-label { padding-bottom:6rpx; border-bottom:1rpx solid rgba(200,157,103,.55); font-size:22rpx; letter-spacing:4rpx; }
+.profile-main { position:relative; z-index:1; display:flex; align-items:center; min-width:0; gap:12rpx; margin-top:34rpx; }
+.profile-avatar { width:84rpx; height:84rpx; flex:none; border:2rpx solid rgba(224,186,130,.64); border-radius:50%; background:#f3ede2; }
 .profile-copy { display:flex; min-width:0; flex-direction:column; align-items:flex-start; }
-.profile-name { max-width:310rpx; overflow:hidden; color:#49382e; font-size:38rpx; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
-.profile-phone { color:#6a584d; font-size:25rpx; }
-.profile-level { display:flex; align-items:center; gap:8rpx; margin-top:10rpx; padding:5rpx 18rpx; border:2rpx solid #fff5e6; border-radius:999rpx; color:#fff9ef; background:linear-gradient(100deg,#d79951,#8b4d25); font-size:23rpx; white-space:nowrap; }
-.crown-icon { width:28rpx; height:28rpx; }
+.profile-name { max-width:310rpx; overflow:hidden; color:#fffaf1; font-size:40rpx; font-weight:600; line-height:1.22; text-overflow:ellipsis; white-space:nowrap; }
+.profile-phone { margin-top:4rpx; color:#e5c8a7; font-size:24rpx; }
+.profile-level { position:relative; z-index:1; display:flex; align-items:center; align-self:flex-start; gap:10rpx; margin-top:auto; padding:22rpx 0 0; border:0; color:#efcf9a; background:transparent; font-size:24rpx; font-weight:600; line-height:1; white-space:nowrap; }
+.crown-icon { width:26rpx; height:26rpx; flex:none; }
+
 .contact-list { margin-top:32rpx; border-radius:36rpx; box-shadow:0 12rpx 30rpx rgba(93,56,31,.08); }
 .contact-card { position:relative; display:flex; min-height:130rpx; box-sizing:border-box; align-items:center; justify-content:space-between; overflow:hidden; padding:20rpx 30rpx; border:2rpx solid rgba(255,255,255,.95); border-radius:34rpx; background:rgba(255,252,249,.8); }
 .contact-card + .contact-card { margin-top:-2rpx; }

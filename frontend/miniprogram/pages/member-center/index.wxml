@@ -12,7 +12,8 @@
   <block wx:if="{{member && rules}}">
     <view class="member-content">
       <view class="member-card">
-        <image class="member-watermark" src="/assets/member-crown-watermark.svg" mode="aspectFit" />
+        <image class="card-bg" src="/assets/profile/member-card-bg.jpg" mode="scaleToFill" />
+        <view class="card-heading"><text class="card-brand">芊浔民宿</text><text class="card-label">会员卡</text></view>
 
         <view class="member-header">
           <view class="member-emblem">
@@ -21,7 +22,6 @@
           <view class="member-heading-copy">
             <view class="member-title-row">
               <text class="member-tier-name">{{currentTierName}}</text>
-              <text class="member-current-badge">当前等级</text>
             </view>
             <text class="member-benefit">{{currentRate}}积分抵¥1 · 永久保级</text>
           </view>

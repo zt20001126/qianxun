@@ -7,16 +7,13 @@
   </view>
   <view class="my-modules">
     <view class="profile-card" bindtap="onProfileTap" hover-class="card-pressed">
-      <image class="profile-background" src="/assets/profile/header-bg.jpg" mode="aspectFill" />
-      <view class="profile-gradient" />
+      <image class="card-bg" src="/assets/profile/member-card-bg.jpg" mode="scaleToFill" />
+      <view class="card-heading"><text class="card-brand">芊浔民宿</text><text class="card-label">会员卡</text></view>
       <view class="profile-main">
         <image class="profile-avatar" src="/assets/member-default-avatar.jpg" mode="aspectFill" />
-        <view class="profile-copy">
-          <text class="profile-name">{{nickname}}</text>
-          <text class="profile-phone">{{maskedPhone}}</text>
-          <view class="profile-level"><image class="crown-icon" src="/assets/my-crown.svg" mode="aspectFit" /><text>{{levelLabel}}</text></view>
-        </view>
+        <view class="profile-copy"><text class="profile-name">{{nickname}}</text><text class="profile-phone">{{maskedPhone}}</text></view>
       </view>
+      <view class="profile-level"><image class="crown-icon" src="/assets/member-crown-gold.svg" mode="aspectFit" /><text>{{levelLabel}}</text></view>
     </view>
     <view class="contact-list">
       <view class="contact-card" bindtap="onRoomOrdersTap" hover-class="card-pressed">
