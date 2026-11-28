@@ -35,8 +35,8 @@
         <text class="product-description">{{product.description}}</text>
       </view>
 
-      <detail-image-list wx:if="{{imageCount}}" images="{{product.images}}" />
     </view>
+    <detail-image-list wx:if="{{imageCount}}" images="{{product.images}}" />
   </view>
 
   <view wx:if="{{product && !loading && !errorMessage}}" class="detail-footer">

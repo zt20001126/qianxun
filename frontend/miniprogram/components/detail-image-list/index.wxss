@@ -1,25 +1,24 @@
-.detail-image-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20rpx;
-  margin-top: 40rpx;
+:host {
+  display: block;
 }
 
-.detail-image-slot {
+.detail-image-list {
+  width: 100%;
+}
+
+/* 未加载时保留可观测的占位高度，加载后由原图比例撑开。 */
+.detail-image-slot.is-pending {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 502.5rpx;
+  height: 500rpx;
   overflow: hidden;
-  border-radius: 24rpx;
   background: #faf7f2;
 }
 
 .detail-image {
   display: block;
   width: 100%;
-  height: 100%;
 }
 
 .image-retry {

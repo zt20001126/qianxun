@@ -84,6 +84,8 @@ test('下方图集仅在图片有可见面积时绑定原地址，并支持加�
   const markup = read('components/detail-image-list/index.wxml')
   assert.match(markup, /wx:for="{{images}}"/)
   assert.match(markup, /<image\s+wx:if="{{states\[index\] === 'loading' \|\| states\[index\] === 'loaded'}}"[\s\S]*?src="{{item}}"/)
+  assert.match(markup, /states\[index\] === 'loaded' \? '' : 'is-pending'/)
+  assert.match(markup, /mode="widthFix"/)
 })
 
 for (const [pageName, itemName] of [['room-detail', 'room'], ['mall-detail', 'product']]) {
@@ -101,9 +103,11 @@ for (const [pageName, itemName] of [['room-detail', 'room'], ['mall-detail', 'pr
     assert.deepEqual(page.data.openedSlides, [true, true, true])
 
     const markup = read(`pages/${pageName}/index.wxml`)
+    assert.match(markup, /<swiper class="(?:room|product)-gallery"/)
     assert.ok(markup.includes('<image wx:if="{{openedSlides[index]}}" class="gallery-image" src="{{item}}"'))
     const album = markup.indexOf(`<detail-image-list wx:if="{{imageCount}}" images="{{${itemName}.images}}" />`)
     assert.ok(album > markup.indexOf('介绍</text>'))
+    assert.match(markup.slice(album), /^<detail-image-list[^>]+\/>\s*<\/view>\s*<view[^>]+class="detail-footer"/)
     assert.ok(album < markup.indexOf('class="detail-footer"'))
     assert.match(read(`pages/${pageName}/index.wxss`), /\.detail-footer\s*{[^}]*position: fixed/)
   })

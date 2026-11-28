@@ -66,8 +66,8 @@
       <view wx:elif="{{availabilityError}}" class="availability-state availability-error">{{availabilityError}}</view>
       <view wx:elif="{{availability && !availability.available}}" class="availability-state availability-error">所选日期区间暂不可订</view>
 
-      <detail-image-list wx:if="{{imageCount}}" images="{{room.images}}" />
     </view>
+    <detail-image-list wx:if="{{imageCount}}" images="{{room.images}}" />
   </view>
 
   <view wx:if="{{room && !loading && !errorMessage}}" class="detail-footer">

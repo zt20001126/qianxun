@@ -1,10 +1,10 @@
 <view class="detail-image-list">
-  <view wx:for="{{images}}" wx:key="*this" class="detail-image-slot" data-index="{{index}}">
+  <view wx:for="{{images}}" wx:key="*this" class="detail-image-slot {{states[index] === 'loaded' ? '' : 'is-pending'}}" data-index="{{index}}">
     <image
       wx:if="{{states[index] === 'loading' || states[index] === 'loaded'}}"
       class="detail-image"
       src="{{item}}"
-      mode="aspectFit"
+      mode="widthFix"
       data-index="{{index}}"
       bind:load="onImageLoad"
       bind:error="onImageError" />
