@@ -26,7 +26,10 @@
 .price { display: flex; align-items: baseline; white-space: nowrap; }
 .price text:first-child { color: #b83b2a; font-size: 34rpx; font-weight: 700; }
 .price text:last-child { margin-left: 5rpx; color: #7a726b; font-size: 22rpx; }
-.room-card-bottom .detail-button { display: flex; flex: 0 0 156rpx; width: 156rpx; min-width: 156rpx; max-width: 156rpx; height: 88rpx; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0; border-radius: 24rpx; color: #fff; background: #8b4d25; box-shadow: 0 4rpx 12rpx rgba(35, 31, 29, .08); font-size: 24rpx; font-weight: 500; line-height: 1; white-space: nowrap; }
+/* 缩小按钮的可见底色，保留至少 44px 的点击范围并与价格垂直居中。 */
+.room-card-bottom .detail-button { position: relative; display: flex; flex: 0 0 156rpx; width: 156rpx; min-width: 156rpx; max-width: 156rpx; height: 88rpx; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0; border-radius: 16rpx; color: #fff; background: transparent; font-size: 24rpx; font-weight: 500; line-height: 1; white-space: nowrap; }
+.detail-button::before { content: ""; position: absolute; top: 50%; right: 0; left: 0; height: 64rpx; transform: translateY(-50%); border-radius: 16rpx; background: #8b4d25; box-shadow: 0 4rpx 12rpx rgba(35, 31, 29, .08); pointer-events: none; }
+.detail-button-label { position: relative; }
 .detail-button::after, .retry-button::after, .change-date-button::after { border: 0; }
 .rooms-state, .rooms-empty { display: flex; min-height: 260rpx; flex-direction: column; align-items: center; justify-content: center; gap: 24rpx; padding: 40rpx; border: 1rpx solid #e8e0d4; border-radius: 32rpx; color: #7a726b; background: #fff; font-size: 22rpx; text-align: center; }
 .rooms-error { color: #b83b2a; }

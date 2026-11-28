@@ -43,7 +43,7 @@
           </view>
           <view class="room-card-bottom">
             <view class="price"><text>¥{{item.priceLabel}}</text><text>/晚</text></view>
-            <button class="detail-button" data-room-id="{{item.id}}" catchtap="onRoomTap">查看详情</button>
+            <button class="detail-button" data-room-id="{{item.id}}" catchtap="onRoomTap"><text class="detail-button-label">查看详情</text></button>
           </view>
         </view>
       </view>
