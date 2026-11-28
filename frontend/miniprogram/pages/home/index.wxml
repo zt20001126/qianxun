@@ -15,30 +15,38 @@
   </view>
 
   <view class="booking-card">
-    <view class="date-selector" bindtap="onCalendarOpen">
+    <button
+      class="date-selector"
+      hover-class="date-selector-pressed"
+      aria-label="入住 {{checkInLabel}} {{checkInWeek}}，退房 {{checkOutLabel}} {{checkOutWeek}}，共 {{nights}} 晚，选择日期"
+      bindtap="onCalendarOpen">
       <view class="date-side">
         <text class="date-caption">入住日期</text>
-        <view class="date-value-row">
-          <text class="date-main">{{checkInLabel}}</text>
-          <text class="date-week">{{checkInWeek}}</text>
-        </view>
+        <text class="date-main">{{checkInLabel}}</text>
+        <text class="date-week">{{checkInWeek}}</text>
       </view>
-      <qx-icon name="arrow-right" size="32" />
+      <view class="stay-summary">
+        <qx-icon name="arrow-right" size="28" />
+        <text class="nights-pill">共 {{nights}} 晚</text>
+      </view>
       <view class="date-side date-side-out">
         <text class="date-caption">退房日期</text>
-        <view class="date-value-row date-value-row-out">
-          <text class="date-main">{{checkOutLabel}}</text>
-          <text class="date-week">{{checkOutWeek}}</text>
-        </view>
+        <text class="date-main">{{checkOutLabel}}</text>
+        <text class="date-week">{{checkOutWeek}}</text>
       </view>
-    </view>
+    </button>
 
-    <view class="nights-row" bindtap="onCalendarOpen">
-      <view class="nights-pill"><qx-icon name="moon" size="27" /><text>共 {{nights}} 晚</text></view>
-    </view>
-
-    <button class="search-button" loading="{{roomsLoading}}" bindtap="onSearchTap">
-      {{roomsLoading ? '正在查询房态…' : searchButtonLabel}}
+    <button
+      class="search-button"
+      hover-class="search-button-pressed"
+      loading="{{roomsLoading}}"
+      aria-label="{{roomsLoading ? '正在查询房态' : roomsError ? '查询房间' : searchButtonLabel}}"
+      bindtap="onSearchTap">
+      <text wx:if="{{roomsLoading}}">正在查询房态…</text>
+      <block wx:else>
+        <text>查询房间</text>
+        <text wx:if="{{!roomsError}}" class="search-room-count">{{roomCount}} 间可订</text>
+      </block>
     </button>
     <text wx:if="{{roomsError}}" class="room-count-error">房态读取失败，进入列表可重试</text>
   </view>
