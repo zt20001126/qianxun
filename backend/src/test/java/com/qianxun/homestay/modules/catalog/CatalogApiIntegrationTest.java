@@ -222,6 +222,8 @@ class CatalogApiIntegrationTest {
     @Test
     void adminRoomCrudEnforcesRoleFixedRoomNumbersUniquenessAndListingState() throws Exception {
         long existingRoomId = insertRoom("101", "101 房间", 1, "198.00", true);
+        jdbcTemplate.update("UPDATE room SET images = JSON_ARRAY(?, ?) WHERE id = ?",
+                "https://images.example/101.jpg", "https://images.example/detail.jpg", existingRoomId);
 
         mockMvc.perform(get("/api/admin/rooms"))
                 .andExpect(status().isUnauthorized())
@@ -247,7 +249,7 @@ class CatalogApiIntegrationTest {
                   "bed_info":"单人床 1.5m × 2",
                   "area":30.00,
                   "facilities":["地暖","独立卫浴"],
-                  "images":["https://images.example/102.jpg"],
+                  "images":["https://images.example/102.jpg","https://images.example/detail.jpg"],
                   "description":"双床客房"
                 }
                 """;
@@ -276,14 +278,31 @@ class CatalogApiIntegrationTest {
 
         String updateRequest = createRequest.replace("102", "101")
                 .replace("浅溪双床房", "枕澜雅致大床房")
-                .replace("218.00", "228.00");
+                .replace("218.00", "228.00")
+                .replace("\"https://images.example/101.jpg\",\"https://images.example/detail.jpg\"",
+                        "\"https://images.example/detail.jpg\",\"https://images.example/101.jpg\"");
+        // 先读取小程序资料，确认重新排序后也能读到更新后的展示数据。
+        mockMvc.perform(get("/api/app/rooms/{id}", existingRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.images[0]").value("https://images.example/101.jpg"))
+                .andExpect(jsonPath("$.data.images[1]").value("https://images.example/detail.jpg"));
         mockMvc.perform(put("/api/admin/rooms/{id}", existingRoomId)
                         .header("Authorization", bearer(adminToken))
                         .contentType("application/json")
                         .content(updateRequest))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value("枕澜雅致大床房"))
-                .andExpect(jsonPath("$.data.price").value("228.00"));
+                .andExpect(jsonPath("$.data.price").value("228.00"))
+                .andExpect(jsonPath("$.data.images[0]").value("https://images.example/detail.jpg"));
+
+        mockMvc.perform(get("/api/app/rooms/{id}", existingRoomId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.images[0]").value("https://images.example/detail.jpg"))
+                .andExpect(jsonPath("$.data.images[1]").value("https://images.example/101.jpg"));
+        mockMvc.perform(get("/api/app/rooms"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.list[0].number").value("101"))
+                .andExpect(jsonPath("$.data.list[0].images[0]").value("https://images.example/detail.jpg"));
 
         mockMvc.perform(put("/api/admin/rooms/{id}/enabled", existingRoomId)
                         .header("Authorization", bearer(adminToken))

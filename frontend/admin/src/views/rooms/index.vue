@@ -26,6 +26,9 @@ interface RoomForm {
 const rooms = ref<Room[]>([])
 const loading = ref(false)
 const saving = ref(false)
+const uploading = ref(false)
+const imageInput = ref<HTMLInputElement | null>(null)
+const imageUploadError = ref('')
 const errorMessage = ref('')
 const successMessage = ref('')
 const dialogOpen = ref(false)
@@ -33,6 +36,8 @@ const calendarOpen = ref<boolean | null>(null)
 const editingRoom = ref<Room | null>(null)
 const busyRoomIds = ref<number[]>([])
 const form = reactive<RoomForm>(emptyForm())
+const roomImages = computed(() => splitLines(form.images_text))
+const imageControlsDisabled = computed(() => saving.value || uploading.value)
 
 const availableNumbers = computed(() => ROOM_NUMBERS.filter((number) =>
   !rooms.value.some((room) => room.number === number && room.id !== editingRoom.value?.id),
@@ -67,6 +72,7 @@ function beginAdd(): void {
   editingRoom.value = null
   Object.assign(form, emptyForm(), { number: availableNumbers.value[0] || '' })
   errorMessage.value = ''
+  imageUploadError.value = ''
   successMessage.value = ''
   dialogOpen.value = true
 }
@@ -87,16 +93,57 @@ function beginEdit(room: Room): void {
     description: room.description || '',
   })
   errorMessage.value = ''
+  imageUploadError.value = ''
   successMessage.value = ''
   dialogOpen.value = true
 }
 
 function closeDialog(): void {
-  if (!saving.value) dialogOpen.value = false
+  if (!imageControlsDisabled.value) dialogOpen.value = false
+}
+
+/** 依次追加上传成功的地址，保持选择顺序，单张失败时继续处理其余图片。 */
+async function uploadImages(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files ?? [])
+  input.value = ''
+  if (!files.length || imageControlsDisabled.value) return
+
+  uploading.value = true
+  imageUploadError.value = ''
+  const failedFiles: string[] = []
+  try {
+    for (const file of files) {
+      try {
+        const url = await roomApi.uploadImage(file)
+        form.images_text = [...roomImages.value, url].join('\n')
+      } catch (error) {
+        failedFiles.push(`${file.name}（${messageOf(error, '上传失败')}）`)
+      }
+    }
+    if (failedFiles.length) imageUploadError.value = `请重新选择上传失败的图片：${failedFiles.join('、')}`
+  } finally {
+    uploading.value = false
+  }
+}
+
+/** 图片地址与排序列表共用同一份表单数据。 */
+function moveImage(index: number, offset: number): void {
+  const target = index + offset
+  if (imageControlsDisabled.value || target < 0 || target >= roomImages.value.length) return
+  const images = [...roomImages.value]
+  const [image] = images.splice(index, 1)
+  images.splice(target, 0, image)
+  form.images_text = images.join('\n')
+}
+
+function removeImage(index: number): void {
+  if (imageControlsDisabled.value) return
+  form.images_text = roomImages.value.filter((_, position) => position !== index).join('\n')
 }
 
 async function saveRoom(): Promise<void> {
-  if (saving.value) return
+  if (imageControlsDisabled.value) return
   const price = form.price.trim()
   const holidayPrice = form.holiday_price.trim()
   const pricePattern = /^\d{1,10}(?:\.\d{1,2})?$/
@@ -133,7 +180,7 @@ async function saveRoom(): Promise<void> {
     bed_info: form.bed_info.trim() || null,
     area: form.area ? Number(form.area) : null,
     facilities: splitLines(form.facilities_text),
-    images: splitLines(form.images_text),
+    images: roomImages.value,
     description: form.description.trim() || null,
   }
 
@@ -242,7 +289,7 @@ function messageOf(error: unknown, fallback: string): string {
       <section class="form-dialog" role="dialog" aria-modal="true" :aria-label="editingRoom ? '编辑客房' : '新增客房'">
         <header class="dialog-header">
           <div><p class="page-eyebrow">ROOM PROFILE</p><h2>{{ editingRoom ? '编辑客房' : '新增客房' }}</h2></div>
-          <button class="icon-button" type="button" aria-label="关闭" @click="closeDialog">×</button>
+          <button class="icon-button" type="button" aria-label="关闭" :disabled="imageControlsDisabled" @click="closeDialog">×</button>
         </header>
         <form class="catalog-form" @submit.prevent="saveRoom">
           <div class="form-grid">
@@ -276,17 +323,44 @@ function messageOf(error: unknown, fallback: string): string {
             <label class="form-span">设施（每行一项）
               <textarea v-model="form.facilities_text" rows="3" placeholder="全屋智能&#10;独立卫浴" />
             </label>
-            <label class="form-span">图片地址（每行一项）
-              <textarea v-model="form.images_text" rows="3" placeholder="请输入 HTTPS 图片地址" />
-              <small>后台保存图片地址，请填写可访问的图片链接。</small>
-            </label>
+            <div class="form-span room-image-field" role="group" aria-labelledby="room-images-label">
+              <label id="room-images-label" for="room-image-input">客房图片</label>
+              <input id="room-image-input" ref="imageInput" type="file" hidden multiple :disabled="imageControlsDisabled"
+                accept="image/jpeg,image/png,image/gif,image/bmp,image/webp" @change="uploadImages" />
+              <div class="room-image-toolbar">
+                <button class="button button-outline" type="button" :disabled="imageControlsDisabled" @click="imageInput?.click()">
+                  {{ uploading ? '上传中…' : '选择并上传图片' }}
+                </button>
+                <small>支持 JPG、PNG、GIF、BMP、WebP。保存后，第一张作为小程序房型封面。</small>
+              </div>
+              <p v-if="imageUploadError" class="room-image-error" role="alert">{{ imageUploadError }}</p>
+              <ol v-if="roomImages.length" class="room-image-list">
+                <li v-for="(image, index) in roomImages" :key="`${index}:${image}`">
+                  <img v-if="/^https?:\/\//.test(image)" :src="image" :alt="`客房图片 ${index + 1}`" loading="lazy" />
+                  <span class="room-image-position" :title="image">{{ index === 0 ? '封面' : `图片 ${index + 1}` }}</span>
+                  <button class="button button-quiet" type="button" :disabled="index === 0 || imageControlsDisabled"
+                    :aria-label="`上移第 ${index + 1} 张图片`" @click="moveImage(index, -1)">上移</button>
+                  <button class="button button-quiet" type="button" :disabled="index === roomImages.length - 1 || imageControlsDisabled"
+                    :aria-label="`下移第 ${index + 1} 张图片`" @click="moveImage(index, 1)">下移</button>
+                  <button class="button button-quiet" type="button" :disabled="imageControlsDisabled"
+                    :aria-label="`移除第 ${index + 1} 张图片`" @click="removeImage(index)">移除</button>
+                </li>
+              </ol>
+              <small v-else>还没有客房图片。</small>
+              <details>
+                <summary>编辑图片地址</summary>
+                <label>图片地址（每行一项）
+                  <textarea v-model="form.images_text" rows="3" placeholder="请输入 HTTPS 图片地址" :disabled="imageControlsDisabled" />
+                </label>
+              </details>
+            </div>
             <label class="form-span">房间介绍
               <textarea v-model="form.description" rows="4" placeholder="填写房间介绍" />
             </label>
           </div>
           <footer class="dialog-actions">
-            <button class="button button-outline" type="button" :disabled="saving" @click="closeDialog">取消</button>
-            <button class="button button-primary" type="submit" :disabled="saving">{{ saving ? '保存中…' : '保存客房' }}</button>
+            <button class="button button-outline" type="button" :disabled="imageControlsDisabled" @click="closeDialog">取消</button>
+            <button class="button button-primary" type="submit" :disabled="imageControlsDisabled">{{ saving ? '保存中…' : '保存客房' }}</button>
           </footer>
         </form>
       </section>
@@ -296,4 +370,29 @@ function messageOf(error: unknown, fallback: string): string {
 
 <style scoped>
 .room-heading-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.room-image-field { display: grid; gap: 10px; }
+.room-image-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.room-image-field small { color: var(--qx-muted); }
+.room-image-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.room-image-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 8px;
+  border: 1px solid var(--qx-border);
+  border-radius: 10px;
+}
+.room-image-list img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; }
+.room-image-position { flex: 1; min-width: 42px; font-size: 12px; }
+.room-image-field summary { width: fit-content; color: var(--qx-primary); cursor: pointer; font-size: 12px; }
+.room-image-field details[open] > label { margin-top: 8px; }
+.room-image-error { margin: 0; color: var(--qx-danger); font-size: 12px; overflow-wrap: anywhere; }
 </style>

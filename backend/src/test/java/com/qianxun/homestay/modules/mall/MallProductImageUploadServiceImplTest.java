@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.modules.mall.service.impl.MallProductImageUploadServiceImpl;
 import com.qianxun.homestay.modules.storage.service.CosStorageService;
+import com.qianxun.homestay.modules.storage.service.impl.CatalogImageUploadServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
@@ -21,13 +22,13 @@ import org.springframework.mock.web.MockMultipartFile;
 class MallProductImageUploadServiceImplTest {
 
     private final CosStorageService cos = mock(CosStorageService.class);
-    private final MallProductImageUploadServiceImpl service = new MallProductImageUploadServiceImpl(cos);
+    private final MallProductImageUploadServiceImpl service =
+            new MallProductImageUploadServiceImpl(new CatalogImageUploadServiceImpl(cos));
 
     @Test
     void uploadsValidatedImagesToCosWhenSelected() {
-        MallProductImageUploadServiceImpl selected = new MallProductImageUploadServiceImpl(cos);
         when(cos.publicUrl(anyString())).thenAnswer(invocation -> "https://example.com/" + invocation.getArgument(0));
-        String url = selected.upload(new MockMultipartFile("file", "image.png", "image/png",
+        String url = service.upload(new MockMultipartFile("file", "image.png", "image/png",
                 new byte[] {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A}));
         assertTrue(url.startsWith("https://example.com/mall/products/"));
         assertTrue(url.endsWith(".png"));
@@ -36,11 +37,10 @@ class MallProductImageUploadServiceImplTest {
 
     @Test
     void cosFailureDoesNotFallBackToOss() {
-        MallProductImageUploadServiceImpl selected = new MallProductImageUploadServiceImpl(cos);
         when(cos.publicUrl(anyString())).thenReturn("https://example.com/a.jpg");
         doThrow(new BusinessException(HttpStatus.BAD_GATEWAY, "腾讯云 COS 上传失败")).when(cos)
                 .upload(anyString(), any(), anyLong(), anyString());
-        BusinessException exception = assertThrows(BusinessException.class, () -> selected.upload(
+        BusinessException exception = assertThrows(BusinessException.class, () -> service.upload(
                 new MockMultipartFile("file", "image.jpg", "image/jpeg", new byte[] {(byte) 0xff, (byte) 0xd8, (byte) 0xff})));
         assertEquals(HttpStatus.BAD_GATEWAY, exception.getStatus());
     }
