@@ -272,8 +272,9 @@ class AvailabilityApiIntegrationTest {
     @Test
     void appRangeChecksRejectPastAndOutOfWindowDatesButAllowCheckoutBoundary() throws Exception {
         LocalDate today = LocalDate.now(BUSINESS_ZONE);
-        LocalDate checkIn = today.plusDays(58);
-        LocalDate lastDate = today.plusDays(59);
+        // 今天是第 1 天，第 89 天入住、第 90 天退房可订。
+        LocalDate checkIn = today.plusDays(88);
+        LocalDate lastDate = today.plusDays(89);
 
         mockMvc.perform(post("/api/app/rooms/availability-check")
                         .contentType("application/json")
@@ -291,7 +292,13 @@ class AvailabilityApiIntegrationTest {
 
         mockMvc.perform(get("/api/app/rooms")
                         .param("check_in", checkIn.toString())
-                        .param("check_out", today.plusDays(60).toString()))
+                        .param("check_out", lastDate.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.list.length()").value(1));
+
+        mockMvc.perform(get("/api/app/rooms")
+                        .param("check_in", checkIn.toString())
+                        .param("check_out", lastDate.plusDays(1).toString()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value(422));
 
@@ -300,6 +307,29 @@ class AvailabilityApiIntegrationTest {
                         .content("{\"room_id\":" + roomId + ",\"check_in\":\"" + today.plusDays(2)
                                 + "\",\"check_out\":\"" + today.plusDays(2) + "\"}"))
                 .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void appAvailabilityCalendarIncludesDay90ButExcludesDay91() throws Exception {
+        LocalDate lastDate = LocalDate.now(BUSINESS_ZONE).plusDays(89);
+        LocalDate outsideDate = lastDate.plusDays(1);
+        // 封房跨过日期窗口上限，以验证月历会截断窗口外的房态。
+        jdbcTemplate.update(
+                "INSERT INTO room_block (room_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+                roomId, lastDate, outsideDate.plusDays(1), "预订窗口边界");
+
+        YearMonth lastMonth = YearMonth.from(lastDate);
+        mockMvc.perform(get("/api/app/rooms/{id}/availability", roomId).param("month", lastMonth.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.unavailable_dates.length()").value(1))
+                .andExpect(jsonPath("$.data.unavailable_dates[0]").value(lastDate.toString()));
+
+        YearMonth outsideMonth = YearMonth.from(outsideDate);
+        if (!lastMonth.equals(outsideMonth)) {
+            mockMvc.perform(get("/api/app/rooms/{id}/availability", roomId).param("month", outsideMonth.toString()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.unavailable_dates").isEmpty());
+        }
     }
 
     @Test

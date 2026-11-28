@@ -1,6 +1,6 @@
-/** 小程序共用的北京时间和 60 天住宿日期窗口计算。 */
+/** 小程序共用的北京时间和住宿日期窗口计算。 */
 const SHANGHAI_OFFSET_MILLISECONDS = 8 * 60 * 60 * 1000
-const BOOKING_WINDOW_DAYS = 60
+const BOOKING_WINDOW_DAYS = 90
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 export interface BookingDateWindow {

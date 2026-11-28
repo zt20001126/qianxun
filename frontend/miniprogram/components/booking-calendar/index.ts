@@ -1,4 +1,4 @@
-/** 小程序共享的未来 60 天入住与退房日期抽屉。 */
+/** 小程序共享的入住与退房日期抽屉。 */
 import { getFullyUnavailableDates, getRoomAvailability } from '../../services/rooms'
 import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
 

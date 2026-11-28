@@ -4,7 +4,6 @@
       <button class="calendar-close" bindtap="onCloseTap"><text class="calendar-close-glyph">×</text></button>
       <view class="calendar-heading">
         <text class="calendar-title">选择入住与退房日期</text>
-        <text class="calendar-subtitle">仅开放北京时间今日起未来 60 个自然日预订</text>
       </view>
       <view class="nights-badge"><qx-icon name="moon" size="24" /><text wx:if="{{nights > 0}}">共 {{nights}} 晚</text><text wx:else>待选退房</text></view>
     </view>

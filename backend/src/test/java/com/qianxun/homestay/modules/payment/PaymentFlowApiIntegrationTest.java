@@ -126,6 +126,22 @@ class PaymentFlowApiIntegrationTest {
     }
 
     @Test
+    void prepayAllowsCheckoutOnDay90AndRejectsDay91() throws Exception {
+        LocalDate lastCheckout = LocalDate.now(BUSINESS_ZONE).plusDays(89);
+        LocalDate checkIn = lastCheckout.minusDays(2);
+        // 先检查越界请求，避免已有锁房影响断言。
+        mockMvc.perform(post("/api/app/payments/prepay")
+                        .header("Authorization", bearer(memberToken))
+                        .contentType("application/json")
+                        .content(prepayRequestBody(checkIn, lastCheckout.plusDays(1))))
+                .andExpect(status().isUnprocessableEntity());
+
+        JsonNode prepay = prepay(prepayRequestBody(checkIn, lastCheckout));
+        assertThat(prepay.path("booking_id").asLong()).isPositive();
+        assertThat(prepay.path("room_amount").asText()).isEqualTo("200.00");
+    }
+
+    @Test
     void prepayAndRepeatedMockPayCreateOneOrderAndConsumePointsOnce() throws Exception {
         JsonNode prepay = prepay();
         String paymentNo = prepay.path("payment_no").asText();
@@ -547,7 +563,10 @@ class PaymentFlowApiIntegrationTest {
 
     private String prepayRequestBody() throws Exception {
         LocalDate checkIn = LocalDate.now(BUSINESS_ZONE).plusDays(10);
-        LocalDate checkOut = checkIn.plusDays(2);
+        return prepayRequestBody(checkIn, checkIn.plusDays(2));
+    }
+
+    private String prepayRequestBody(LocalDate checkIn, LocalDate checkOut) throws Exception {
         return objectMapper.writeValueAsString(Map.of(
                 "room_id", roomId,
                 "check_in", checkIn,

@@ -13,7 +13,7 @@ public interface AvailabilityService {
     /** 校验入住、退房日期构成有效住宿区间。 */
     void validateStayRange(LocalDate checkIn, LocalDate checkOut);
 
-    /** 校验小程序日期落在北京时间起算的连续 60 个自然日内。 */
+    /** 校验小程序日期落在北京时间起算的连续 90 个自然日内。 */
     void validateMiniProgramRange(LocalDate checkIn, LocalDate checkOut);
 
     /** 判断指定住宿区间是否未被订单、封房或有效锁房占用。 */
@@ -22,7 +22,7 @@ public interface AvailabilityService {
     /** 返回指定窗口内不可订的住宿夜晚。 */
     List<LocalDate> findUnavailableDates(Long roomId, LocalDate startDate, LocalDate endDate);
 
-    /** 查询小程序月历，并截断到未来 60 天窗口。 */
+    /** 查询小程序月历，并截断到未来 90 天窗口。 */
     AppRoomAvailabilityVO getAppRoomAvailability(Long roomId, YearMonth month);
 
     /** 复核日期区间并计算当前基础房价总额。 */

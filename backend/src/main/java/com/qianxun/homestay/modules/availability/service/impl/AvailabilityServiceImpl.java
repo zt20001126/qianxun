@@ -30,7 +30,8 @@ import org.springframework.stereotype.Service;
 public class AvailabilityServiceImpl implements AvailabilityService {
 
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Shanghai");
-    private static final int BOOKING_WINDOW_DAYS = 60;
+    /** 小程序预订日期窗口，包含北京时间当天。 */
+    private static final int BOOKING_WINDOW_DAYS = 90;
 
     private final AvailabilityMapper availabilityMapper;
     private final RoomMapper roomMapper;
@@ -57,7 +58,8 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         LocalDate lastSelectableDate = today.plusDays(BOOKING_WINDOW_DAYS - 1L);
         if (checkIn.isBefore(today) || checkOut.isBefore(today)
                 || checkIn.isAfter(lastSelectableDate) || checkOut.isAfter(lastSelectableDate)) {
-            throw new BusinessException(HttpStatus.UNPROCESSABLE_ENTITY, "入住和退房日期须在未来 60 天内");
+            throw new BusinessException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "入住和退房日期须在北京时间从今天起的 %d 天内".formatted(BOOKING_WINDOW_DAYS));
         }
     }
 

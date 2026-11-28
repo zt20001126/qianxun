@@ -63,7 +63,6 @@ Page({
   } as OrdersPageData,
 
   onLoad() {
-    wx.setNavigationBarTitle({ title: '房间订单' })
     void this.loadOrders()
   },
 

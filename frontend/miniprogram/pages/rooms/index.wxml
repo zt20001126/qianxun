@@ -17,7 +17,6 @@
 
     <view class="rooms-title-row">
       <view class="rooms-title-left"><view class="title-rail"></view><text class="rooms-title">可订房间（{{rooms.length}}/6间）</text></view>
-      <text class="rooms-subtitle">已自动过滤占用房源</text>
     </view>
 
     <view wx:if="{{loading}}" class="rooms-state">正在为你寻一间雅室…</view>

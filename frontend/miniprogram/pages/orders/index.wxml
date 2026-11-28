@@ -2,7 +2,7 @@
   <view class="orders-heading">
     <view class="heading-title">
       <view class="heading-mark"></view>
-      <text class="heading-copy">全部订单（{{total}}）</text>
+      <text class="heading-copy">房间订单（{{total}}）</text>
     </view>
   </view>
 
