@@ -8,7 +8,7 @@
     <view wx:if="{{room.images.length}}" class="gallery-wrap">
       <swiper class="room-gallery" circular current="{{imageIndex}}" duration="280" bindchange="onGalleryChange">
         <swiper-item wx:for="{{room.images}}" wx:key="*this">
-          <image class="gallery-image" src="{{item}}" mode="aspectFill" />
+          <image wx:if="{{openedSlides[index]}}" class="gallery-image" src="{{item}}" mode="aspectFill" />
         </swiper-item>
       </swiper>
       <view class="gallery-gradient"></view>
@@ -65,6 +65,8 @@
       <view wx:if="{{checkingAvailability}}" class="availability-state">正在复核整段日期…</view>
       <view wx:elif="{{availabilityError}}" class="availability-state availability-error">{{availabilityError}}</view>
       <view wx:elif="{{availability && !availability.available}}" class="availability-state availability-error">所选日期区间暂不可订</view>
+
+      <detail-image-list wx:if="{{imageCount}}" images="{{room.images}}" />
     </view>
   </view>
 

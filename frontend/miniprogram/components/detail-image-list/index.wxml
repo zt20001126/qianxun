@@ -1,0 +1,17 @@
+<view class="detail-image-list">
+  <view wx:for="{{images}}" wx:key="*this" class="detail-image-slot" data-index="{{index}}">
+    <image
+      wx:if="{{states[index] === 'loading' || states[index] === 'loaded'}}"
+      class="detail-image"
+      src="{{item}}"
+      mode="aspectFit"
+      data-index="{{index}}"
+      bind:load="onImageLoad"
+      bind:error="onImageError" />
+    <button
+      wx:elif="{{states[index] === 'failed'}}"
+      class="image-retry"
+      data-index="{{index}}"
+      bindtap="onImageRetry">图片加载失败，点击重试</button>
+  </view>
+</view>

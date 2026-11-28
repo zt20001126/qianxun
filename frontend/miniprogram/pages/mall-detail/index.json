@@ -4,7 +4,8 @@
   "navigationBarTextStyle": "black",
   "backgroundColor": "#FAF7F2",
   "usingComponents": {
-    "qx-icon": "../../components/icon/index"
+    "qx-icon": "../../components/icon/index",
+    "detail-image-list": "../../components/detail-image-list/index"
   },
   "enablePullDownRefresh": true
 }

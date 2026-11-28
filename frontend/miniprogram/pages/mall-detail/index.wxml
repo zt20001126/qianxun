@@ -8,7 +8,7 @@
     <view wx:if="{{product.images.length}}" class="gallery-wrap">
       <swiper class="product-gallery" circular current="{{imageIndex}}" duration="280" bindchange="onGalleryChange">
         <swiper-item wx:for="{{product.images}}" wx:key="*this">
-          <image class="gallery-image" src="{{item}}" mode="aspectFill" />
+          <image wx:if="{{openedSlides[index]}}" class="gallery-image" src="{{item}}" mode="aspectFill" />
         </swiper-item>
       </swiper>
       <view class="gallery-gradient"></view>
@@ -34,6 +34,8 @@
         <view class="section-heading"><view class="section-rail"></view><text>商品介绍</text></view>
         <text class="product-description">{{product.description}}</text>
       </view>
+
+      <detail-image-list wx:if="{{imageCount}}" images="{{product.images}}" />
     </view>
   </view>
 

@@ -1,0 +1,36 @@
+.detail-image-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 40rpx;
+}
+
+.detail-image-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 502.5rpx;
+  overflow: hidden;
+  border-radius: 24rpx;
+  background: #faf7f2;
+}
+
+.detail-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.image-retry {
+  margin: 0;
+  padding: 0 24rpx;
+  color: #8b4d25;
+  background: transparent;
+  font-size: 24rpx;
+  line-height: 88rpx;
+}
+
+.image-retry::after {
+  border: 0;
+}

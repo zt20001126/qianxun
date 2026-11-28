@@ -7,6 +7,7 @@ interface MallDetailPageData {
   errorMessage: string
   imageIndex: number
   imageCount: number
+  openedSlides: boolean[]
   priceLabel: string
   buying: boolean
 }
@@ -18,6 +19,7 @@ Page({
     errorMessage: '',
     imageIndex: 0,
     imageCount: 0,
+    openedSlides: [true],
     priceLabel: '',
     buying: false,
   } as MallDetailPageData,
@@ -48,6 +50,7 @@ Page({
         product,
         imageIndex: 0,
         imageCount: product.images.length,
+        openedSlides: [true],
         priceLabel: formatPrice(product.price),
       })
       wx.setNavigationBarTitle({ title: product.name })
@@ -59,7 +62,7 @@ Page({
   },
 
   onGalleryChange(event: WechatMiniprogram.SwiperChange) {
-    this.setData({ imageIndex: event.detail.current })
+    this.showGallerySlide(event.detail.current)
   },
 
   onGalleryStep(event: WechatMiniprogram.TouchEvent) {
@@ -67,7 +70,12 @@ Page({
     if (!product || product.images.length <= 1) return
     const delta = Number(event.currentTarget.dataset.delta)
     const imageIndex = (this.data.imageIndex + delta + product.images.length) % product.images.length
-    this.setData({ imageIndex })
+    this.showGallerySlide(imageIndex)
+  },
+
+  /** 访问某张轮播图时才挂载图片，已访问的图片继续保留。 */
+  showGallerySlide(imageIndex: number) {
+    this.setData({ imageIndex, [`openedSlides[${imageIndex}]`]: true })
   },
 
   /** 携带商品标识进入购买信息页。 */

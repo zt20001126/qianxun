@@ -10,6 +10,7 @@ interface RoomDetailPageData {
   errorMessage: string
   imageIndex: number
   imageCount: number
+  openedSlides: boolean[]
   checkIn: string
   checkOut: string
   checkInLabel: string
@@ -30,6 +31,7 @@ Page({
     errorMessage: '',
     imageIndex: 0,
     imageCount: 0,
+    openedSlides: [true],
     checkIn: '',
     checkOut: '',
     checkInLabel: '',
@@ -87,6 +89,7 @@ Page({
         facilities: room.facilities.slice(0, 4).map((label) => ({ label, icon: getFacilityIcon(label) })),
         imageIndex: 0,
         imageCount: room.images.length,
+        openedSlides: [true],
       })
       wx.setNavigationBarTitle({ title: room.name })
     } catch (error) {
@@ -97,7 +100,7 @@ Page({
   },
 
   onGalleryChange(event: WechatMiniprogram.SwiperChange) {
-    this.setData({ imageIndex: event.detail.current })
+    this.showGallerySlide(event.detail.current)
   },
 
   onGalleryStep(event: WechatMiniprogram.TouchEvent) {
@@ -105,7 +108,12 @@ Page({
     if (!room || room.images.length <= 1) return
     const delta = Number(event.currentTarget.dataset.delta)
     const imageIndex = (this.data.imageIndex + delta + room.images.length) % room.images.length
-    this.setData({ imageIndex })
+    this.showGallerySlide(imageIndex)
+  },
+
+  /** 访问某张轮播图时才挂载图片，已访问的图片继续保留。 */
+  showGallerySlide(imageIndex: number) {
+    this.setData({ imageIndex, [`openedSlides[${imageIndex}]`]: true })
   },
 
   onCalendarOpen() {

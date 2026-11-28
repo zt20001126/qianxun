@@ -5,7 +5,8 @@
   "backgroundColor": "#FAF7F2",
   "usingComponents": {
     "qx-icon": "../../components/icon/index",
-    "booking-calendar": "../../components/booking-calendar/index"
+    "booking-calendar": "../../components/booking-calendar/index",
+    "detail-image-list": "../../components/detail-image-list/index"
   },
   "enablePullDownRefresh": true
 }
