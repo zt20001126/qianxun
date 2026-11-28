@@ -41,8 +41,8 @@
 | 图片 | 当前引用位置 | 当前呈现 |
 | --- | --- | --- |
 | `frontend/miniprogram/assets/login-baijianlou-hero.jpg` | 首页主视觉和南浔横幅、登录、邀请页、支付成功页、「我的」名片背景 | 多处使用 `aspectFill`；各页面的容器尺寸、位置、裁剪和遮罩都是现有视觉的一部分 |
-| `frontend/miniprogram/assets/inn-intro/entrance.webp` | 民宿介绍页头图 | 门头实拍，`aspectFill`，使用渐变保证品牌文字可读 |
-| `frontend/miniprogram/assets/inn-intro/courtyard.webp` | 民宿介绍页庭院卡片 | 公共庭院实拍，按 16:9 展示 |
+| `frontend/miniprogram/assets/inn-intro/entrance.jpg` | 民宿介绍页头图 | 门头实拍，`aspectFill`，使用渐变保证品牌文字可读 |
+| `frontend/miniprogram/assets/inn-intro/courtyard.jpg` | 民宿介绍页庭院卡片 | 公共庭院实拍，按 16:9 展示 |
 | `frontend/miniprogram/assets/decoration-baijianlou-houses.jpg` | 可订房间页顶部 | `aspectFill`，与房间卡片列表构成页面顶部区域 |
 | `COS /miniprogram/guides/nanxun-one-day-guide-70985dd84719a4ce.webp` | 周边游玩页面，由页面 TypeScript 常量引用 | 作为南浔一日游攻略图片 |
 

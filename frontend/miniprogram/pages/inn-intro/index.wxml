@@ -1,6 +1,6 @@
 <view class="intro-page">
   <view class="intro-hero">
-    <image class="intro-hero-image" src="/assets/inn-intro/entrance.webp" mode="aspectFill" aria-label="芊浔民宿门头实拍" />
+    <image class="intro-hero-image" src="/assets/inn-intro/entrance.jpg" mode="aspectFill" aria-label="芊浔民宿门头实拍" />
     <view class="intro-hero-wash"></view>
     <view class="intro-hero-copy">
       <text class="intro-eyebrow">MISTVILLA · NANXUN</text>
@@ -18,7 +18,7 @@
     <view class="section-block">
       <text class="section-title">民宿庭院</text>
       <view class="courtyard-card card">
-        <image class="courtyard-image" src="/assets/inn-intro/courtyard.webp" mode="widthFix" lazy-load="{{true}}" aria-label="民宿公共庭院实拍" />
+        <image class="courtyard-image" src="/assets/inn-intro/courtyard.jpg" mode="widthFix" lazy-load="{{true}}" aria-label="民宿公共庭院实拍" />
         <text class="courtyard-caption">院里有遮阳伞和桌椅，逛完古镇可以回来歇歇脚。</text>
       </view>
     </view>
