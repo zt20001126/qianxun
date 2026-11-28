@@ -587,7 +587,7 @@
 .tier-card { padding:24rpx 18rpx; }
 .tier-grid { gap:10rpx; }
 .tier-item { padding:16rpx 2rpx; }
-.tier-rate { font-size:18rpx; letter-spacing:-1rpx; }
+.tier-rate { font-size:18rpx; }
 .points-modal-overlay { padding:24rpx; backdrop-filter:none; }
 .points-modal { max-height:calc(100vh - 80rpx); overflow-y:auto; padding:32rpx 36rpx; background:#fffbf6; }
 .modal-heading { display:flex; align-items:center; justify-content:space-between; }

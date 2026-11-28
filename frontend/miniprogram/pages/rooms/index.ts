@@ -41,7 +41,7 @@ Page({
 
   loadSequence: 0,
 
-  async onLoad(options: Record<string, string | undefined>) {
+  onLoad(options: Record<string, string | undefined>) {
     const window = getBookingDateWindow()
     const requestedIn = options.check_in || window.today
     const requestedOut = options.check_out || addDays(requestedIn, 1)
@@ -60,7 +60,11 @@ Page({
       checkOutWeek: formatWeek(checkOut),
       nights: daysBetween(checkIn, checkOut),
     })
-    await this.loadRooms()
+  },
+
+  // 返回列表时，重新检查原行程的锁房、支付和退款结果。
+  onShow() {
+    return this.loadRooms()
   },
 
   async loadRooms() {

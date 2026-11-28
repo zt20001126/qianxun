@@ -75,11 +75,15 @@ Page({
     guide: { tag: '', title: '', body: '', extra: '' },
   } as HomePageData,
 
+  roomLoadSequence: 0,
+
   onShow() {
     void consumePendingInvitation()
+    // 从预订或订单页面返回时，重新查询当前行程的可订数量。
+    return this.loadAvailableRooms(this.data.checkIn, this.data.checkOut)
   },
 
-  async onLoad() {
+  onLoad() {
     const { today, lastSelectableDate, lastCheckInDate } = getBookingDateWindow()
     const checkOut = addDays(today, 1)
     this.setData({
@@ -94,7 +98,6 @@ Page({
       checkOutWeek: formatWeek(checkOut),
       nights: 1,
     })
-    await this.loadAvailableRooms(today, checkOut)
   },
 
   onPullDownRefresh() {
@@ -103,21 +106,24 @@ Page({
   },
 
   async loadAvailableRooms(checkIn: string, checkOut: string) {
+    const sequence = ++this.roomLoadSequence
     this.setData({ roomsLoading: true, roomsError: '' })
     try {
       const rooms: AppRoomSummary[] = await listRooms(checkIn, checkOut)
+      if (sequence !== this.roomLoadSequence) return
       this.setData({
         roomCount: rooms.length,
         searchButtonLabel: '查询房间（' + rooms.length + '间可订）',
       })
     } catch (error) {
+      if (sequence !== this.roomLoadSequence) return
       this.setData({
         roomCount: 0,
         searchButtonLabel: '查询房间（0间可订）',
         roomsError: error instanceof Error ? error.message : '房态读取失败',
       })
     } finally {
-      this.setData({ roomsLoading: false })
+      if (sequence === this.roomLoadSequence) this.setData({ roomsLoading: false })
     }
   },
 

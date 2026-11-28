@@ -75,7 +75,7 @@
       <text class="currency">¥</text><text class="price-number">{{availability.room_amount}}</text><text class="price-caption">所选{{nights}}晚</text>
     </view>
     <text wx:else class="price-caption">{{checkingAvailability ? '正在查询房费…' : '房费待确认'}}</text>
-    <button class="book-button" loading="{{bookingLoading}}" disabled="{{bookingLoading || checkingAvailability}}" bindtap="onBookTap">立即预订</button>
+    <button class="book-button" loading="{{bookingLoading}}" disabled="{{bookingLoading || checkingAvailability}}" bindtap="onBookTap">{{availability && !availability.available ? '选择其他日期' : '立即预订'}}</button>
   </view>
 
   <booking-calendar

@@ -74,6 +74,11 @@ Page({
     if (this.data.room) await this.checkSelectedStay()
   },
 
+  /** 首次加载后，每次返回详情都复核所选日期。 */
+  onShow() {
+    if (this.data.room && !this.data.loading) return this.checkSelectedStay()
+  },
+
   async onPullDownRefresh() {
     await this.loadRoom()
     if (this.data.room) await this.checkSelectedStay()
@@ -158,6 +163,10 @@ Page({
 
   async onBookTap() {
     if (!this.data.room || this.data.bookingLoading || this.data.checkingAvailability) return
+    if (this.data.availability && !this.data.availability.available) {
+      this.onCalendarOpen()
+      return
+    }
     const quoteSequence = this.quoteSequence
     this.setData({ bookingLoading: true, availabilityError: '' })
     try {

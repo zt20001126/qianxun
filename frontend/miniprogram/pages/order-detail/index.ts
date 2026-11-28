@@ -219,7 +219,7 @@ Page({
       const result = await refundMyOrder(order.id)
       this.setData({ dialogType: 'none' })
       if (result.status === 'SUCCESS') {
-        wx.showToast({ title: '退款成功，订单已取消', icon: 'success' })
+        wx.showToast({ title: '退款成功', icon: 'success' })
         await this.loadOrder(order.id)
       } else if (result.status === 'FAILED') {
         wx.showToast({ title: '退款失败，请联系商家处理', icon: 'none' })
@@ -246,7 +246,7 @@ Page({
       try {
         const result = await getLatestRefund(orderId)
         if (result?.status === 'SUCCESS') {
-          wx.showToast({ title: '退款成功，订单已取消', icon: 'success' })
+          wx.showToast({ title: '退款成功', icon: 'success' })
           await this.loadOrder(orderId)
           return
         }
