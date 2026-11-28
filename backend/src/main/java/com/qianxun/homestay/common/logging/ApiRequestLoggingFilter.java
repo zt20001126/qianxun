@@ -34,7 +34,7 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiRequestLoggingFilter.class);
     private static final int REQUEST_BODY_CACHE_LIMIT = 64 * 1024;
     private static final Pattern SENSITIVE_TEXT_VALUE = Pattern.compile(
-            "(?i)(\\\"?(?:password|passwd|pwd|token|authorization|secret|access[_-]?key|api[_-]?key|credential|login[_-]?code|phone[_-]?code|js[_-]?code|openid|recipient[_-]?(?:name|phone)|shipping[_-]?address)\\\"?\\s*[:=]\\s*\\\"?)[^\\\"&,}\\s]*");
+            "(?i)(\\\"?(?:password|passwd|pwd|token|authorization|secret|access[_-]?key|api[_-]?key|credential|login[_-]?code|phone(?:[_-]?code)?|js[_-]?code|openid|recipient[_-]?(?:name|phone)|shipping[_-]?address)\\\"?\\s*[:=]\\s*\\\"?)[^\\\"&,}\\s]*");
 
     private final ObjectMapper objectMapper;
 
@@ -171,6 +171,8 @@ public class ApiRequestLoggingFilter extends OncePerRequestFilter {
                 || normalized.contains("credential")
                 || normalized.equals("code")
                 || normalized.endsWith("code")
+                // 仅手机号登录和客房预订共用 phone 字段。
+                || normalized.equals("phone")
                 || normalized.equals("recipientname")
                 || normalized.equals("recipientphone")
                 || normalized.equals("shippingaddress")

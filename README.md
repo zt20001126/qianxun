@@ -12,11 +12,14 @@
 
 ## 本地容器启动
 
-从模板创建本机配置，并为本机 JWT 随机生成至少 32 字节密钥：
+首次配置时从模板创建本机配置，并为本机 JWT 随机生成至少 32 字节密钥：
 
 ```powershell
 Copy-Item deploy/.env.example deploy/.env
-[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$jwtBytes = New-Object byte[] 32
+$jwtRandom = [Security.Cryptography.RandomNumberGenerator]::Create()
+try { $jwtRandom.GetBytes($jwtBytes) } finally { $jwtRandom.Dispose() }
+[Convert]::ToBase64String($jwtBytes)
 ```
 
 把生成值填入 `deploy/.env` 的 `JWT_SECRET`，然后启动本地开发容器：
@@ -29,7 +32,22 @@ docker compose --env-file deploy/.env -f deploy/docker-compose.yml logs -f backe
 
 服务器使用同一份 `deploy/.env.example` 作为配置模板，在服务器单独创建 `deploy/.env`；只需将数据库相关参数改为服务器的生产数据库配置。不要把服务器上的真实配置提交到 Git。
 
-管理后台经 Nginx 访问 `http://localhost:8081`，同域 `/api` 由 Nginx 转发到后端。后端健康检查地址为 `http://localhost:8080/actuator/health`，仅绑定本机回环地址。MySQL 映射在本机 `3307`，应用连接容器网络中的 `mysql:3306`。首次启动由 Flyway 创建表和七个固定渠道，并按迁移初始化管理员行；房间资料按实际环境通过后台创建或使用旧库导入脚本。
+管理后台经 Nginx 访问 `http://localhost:8081`，同域 `/api` 由 Nginx 转发到后端。后端健康检查地址为 `http://localhost:8080/actuator/health`，默认也可从局域网访问。MySQL 映射在本机 `3307`，应用连接容器网络中的 `mysql:3306`。首次启动由 Flyway 创建表、七个固定渠道和初始管理员记录。房间资料可通过后台创建或使用旧库导入脚本。邮件发送失败可在后端日志中按「邮件发送失败」查询。
+
+### 本机直接运行 Java 后端
+
+直接运行 Maven 或通过 IDE 启动时，请在启动进程中配置 `JWT_SECRET`。Compose 用的 `deploy/.env` 只由 Compose 读取。后端默认连接本机 MySQL 的 `3306` 端口。使用 Compose 的 MySQL 时，按本机开发库配置设置 `DATABASE_URL`，端口默认是 `3307`。
+
+```powershell
+$jwtBytes = New-Object byte[] 32
+$jwtRandom = [Security.Cryptography.RandomNumberGenerator]::Create()
+try { $jwtRandom.GetBytes($jwtBytes) } finally { $jwtRandom.Dispose() }
+$env:JWT_SECRET = [Convert]::ToBase64String($jwtBytes)
+$env:SERVER_PORT = '18080'
+mvn -f backend/pom.xml spring-boot:run
+```
+
+示例端口 `18080` 避免占用 Compose 默认使用的 `8080`。选择此端口联调时，前端 API 地址也应指向 `18080`。
 
 开发期间也可直接启动管理后台：
 

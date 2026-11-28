@@ -13,6 +13,7 @@ interface SuccessPageData {
   successCopySecond: string
   loading: boolean
   confirmed: boolean
+  errorMessage: string
 }
 
 Page({
@@ -27,9 +28,10 @@ Page({
     successCopySecond: '可在「我的订单」中查看。',
     loading: true,
     confirmed: false,
+    errorMessage: '',
   } as SuccessPageData,
 
-  async onLoad(options: Record<string, string | undefined>) {
+  onLoad(options: Record<string, string | undefined>) {
     const isMall = options.source === 'mall'
     const orderId = Number(options.order_id)
     const orderNo = options.order_no || ''
@@ -39,26 +41,25 @@ Page({
       return
     }
 
+    this.setData({
+      orderId, orderNo, paymentNo, isMall, loading: false,
+      loadingText: isMall ? '正在确认购买结果…' : '正在确认预订结果…',
+    })
+    return this.onRetryTap()
+  },
+
+  /** 仅重查已有交易，网络恢复后可继续确认原订单。 */
+  async onRetryTap() {
+    const { orderId, orderNo, paymentNo, isMall, loading, confirmed } = this.data
+    if (loading || confirmed || !paymentNo) return
+    this.setData({ loading: true, errorMessage: '' })
     try {
-      if (isMall) {
-        const payment = await getMallPaymentStatus(paymentNo)
-        if (payment.status !== 'SUCCESS' || payment.order_id !== orderId || payment.order_no !== orderNo) {
-          this.returnHome()
-          return
-        }
-      } else {
-        const payment = await getPaymentState(paymentNo)
-        if (payment.status !== 'SUCCESS' || payment.order_id !== orderId || payment.order_no !== orderNo) {
-          this.returnHome()
-          return
-        }
+      const payment = isMall ? await getMallPaymentStatus(paymentNo) : await getPaymentState(paymentNo)
+      if (payment.status !== 'SUCCESS' || payment.order_id !== orderId || payment.order_no !== orderNo) {
+        this.setData({ errorMessage: '暂时无法确认支付结果，请稍后查询' })
+        return
       }
       this.setData({
-        orderId,
-        orderNo,
-        paymentNo,
-        isMall,
-        loadingText: isMall ? '正在确认购买结果…' : '正在确认预订结果…',
         successTitle: isMall ? '购买成功' : '预订成功',
         successCopyFirst: isMall ? '您的芊浔好物已购买，' : '您的房间已预订，',
         successCopySecond: isMall ? '可在「商城订单」中查看。' : '可在「我的订单」中查看。',
@@ -66,8 +67,7 @@ Page({
       })
       wx.setNavigationBarTitle({ title: isMall ? '购买成功' : '预订成功' })
     } catch {
-      wx.showToast({ title: '暂时无法确认支付结果', icon: 'none' })
-      this.returnHome()
+      this.setData({ errorMessage: '暂时无法确认支付结果，请检查网络后重试' })
     } finally {
       this.setData({ loading: false })
     }
@@ -85,7 +85,7 @@ Page({
   onDetailTap() {
     if (this.data.confirmed && this.data.orderId) {
       if (this.data.isMall) {
-        wx.redirectTo({ url: '/pages/mall-orders/index' })
+        wx.redirectTo({ url: '/pages/mall-order-detail/index?id=' + this.data.orderId })
         return
       }
       wx.redirectTo({ url: '/pages/order-detail/index?id=' + this.data.orderId })

@@ -1,5 +1,14 @@
 <view class="success-page">
   <view wx:if="{{loading}}" class="success-loading">{{loadingText}}</view>
+  <view wx:elif="{{errorMessage}}" class="success-content success-content-error">
+    <view class="success-card">
+      <text class="success-copy">{{errorMessage}}</text>
+      <view class="success-actions">
+        <button class="order-button" bindtap="onRetryTap">重新查询支付状态</button>
+        <button class="home-button" bindtap="onHomeTap">返回首页</button>
+      </view>
+    </view>
+  </view>
   <view wx:elif="{{confirmed}}">
     <view class="success-hero">
       <image class="success-hero-image" src="../../assets/login-baijianlou-hero.jpg" mode="aspectFill" />

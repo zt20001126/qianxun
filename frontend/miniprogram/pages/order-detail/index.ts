@@ -5,6 +5,7 @@ import type { AppOrderDetail, OrderCancellationEligibility } from '../../types/b
 import { getOrderStatusLabel } from '../../types/booking'
 import { STORE_CONTACT_PHONE_LABEL } from '../../config'
 import { callBusinessPhone } from '../../utils/business-contact'
+import { averageRoomNightlyPrice } from '../../utils/money'
 
 type DialogType = 'none' | 'unavailable' | 'refund' | 'contact'
 
@@ -90,26 +91,6 @@ function addIntegerStrings(left: string, right: string): string {
   return result.replace(/^0+(?=\d)/, '')
 }
 
-function divideMoneyByNights(roomAmount: string | null, nights: number): string {
-  const normalizedAmount = normalizeMoney(roomAmount)
-  if (!normalizedAmount || !Number.isInteger(nights) || nights <= 0) return '—'
-  const [whole, fraction = ''] = normalizedAmount.split('.')
-  const cents = `${whole}${fraction}`.replace(/^0+(?=\d)/, '')
-  let remainder = 0
-  let quotient = ''
-
-  for (const digit of cents) {
-    const current = remainder * 10 + Number(digit)
-    quotient += String(Math.floor(current / nights))
-    remainder = current % nights
-  }
-
-  // 单店房价按房间固定夜价保存，房费总额应可被住宿晚数整除。
-  if (remainder !== 0) return '—'
-  const padded = quotient.padStart(3, '0')
-  return `${padded.slice(0, -2)}.${padded.slice(-2)}`
-}
-
 function getStatusHint(
   order: AppOrderDetail,
   cancellation: OrderCancellationEligibility | null,
@@ -193,7 +174,7 @@ Page({
         statusLabel: getOrderStatusLabel(order.status),
         statusHint: getStatusHint(order, cancellation, refundPending),
         refundPending,
-        unitPrice: divideMoneyByNights(roomAmount, order.nights),
+        unitPrice: averageRoomNightlyPrice(roomAmount, order.nights) ?? '—',
         roomAmountLabel: roomAmount ? formatMoney(roomAmount) : '—',
         discountAmountLabel: formatMoney(order.discount_amount),
         paidAmountLabel: formatMoney(order.paid_amount),

@@ -2,6 +2,7 @@
 import { getRoomDetail, listRooms } from '../../services/rooms'
 import type { AppRoomSummary } from '../../types/room'
 import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
+import { averageRoomNightlyPrice } from '../../utils/money'
 
 interface ListedRoom extends AppRoomSummary {
   area: number | null
@@ -69,9 +70,10 @@ Page({
     try {
       const summaries = await listRooms(checkIn, checkOut)
       const rooms = await Promise.all(summaries.map(async (room) => {
-        const priceLabel = room.room_amount != null && nights > 1
-          ? formatNightlyAverage(room.room_amount, nights)
-          : formatPrice(room.room_amount ?? room.price)
+        const price = room.room_amount != null && nights > 1
+          ? averageRoomNightlyPrice(room.room_amount, nights)
+          : (room.room_amount ?? room.price)
+        const priceLabel = price === null ? '—' : formatPrice(price)
         try {
           const detail = await getRoomDetail(room.id)
           return {
@@ -131,15 +133,6 @@ Page({
 
   noop() {},
 })
-
-/** 从后端房费合计按分四舍五入计算展示均价。 */
-function formatNightlyAverage(amount: string, nights: number): string {
-  const [yuan, fraction = ''] = amount.split('.')
-  const cents = Number(yuan + fraction.padEnd(2, '0'))
-  const averageCents = Math.floor((cents + Math.floor(nights / 2)) / nights)
-  const digits = String(averageCents).padStart(3, '0')
-  return formatPrice(`${digits.slice(0, -2)}.${digits.slice(-2)}`)
-}
 
 function formatPrice(price: string): string {
   return price.replace(/\.00$/, '')

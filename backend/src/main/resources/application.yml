@@ -40,6 +40,9 @@ management:
   health:
     redis:
       enabled: false
+    # 邮件发送失败由通知模块记录，SMTP 故障时订房和后台 API 仍可使用。
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:

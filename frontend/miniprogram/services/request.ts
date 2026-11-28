@@ -30,14 +30,17 @@ export function request<T>(options: RequestOptions): Promise<T> {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       success: (response) => {
-        if (response.statusCode === 401) {
-          clearSession()
-          redirectToLogin()
+        if (response.statusCode === 401 && token) {
+          // 只有当前请求使用的令牌仍生效时才退出，避免旧响应清除新登录会话。
+          if (getValidToken() === token) {
+            clearSession()
+            redirectToLogin()
+          }
           reject(new Error('登录状态已失效，请重新登录'))
           return
         }
         const body = response.data as ApiResponse<T>
-        if (response.statusCode < 200 || response.statusCode >= 300 || body.code !== 200) {
+        if (response.statusCode < 200 || response.statusCode >= 300 || body?.code !== 200) {
           reject(new Error(body?.message || '请求失败，请稍后重试'))
           return
         }

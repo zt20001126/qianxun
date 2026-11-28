@@ -159,10 +159,7 @@ Component({
         selectingStep = 'checkout'
       } else {
         // 退房当晚不占房，可选已满日期作退房；区间内的已满夜晚不可跨过。
-        if (hasUnavailableNight(this.data.months, checkIn, date)) {
-          wx.showToast({ title: '所选区间含已满日期', icon: 'none' })
-          return
-        }
+        if (!this.verifyStayNights(checkIn, date)) return
         checkOut = date
         selectingStep = 'checkin'
       }
@@ -214,14 +211,34 @@ Component({
     },
 
     onConfirmTap() {
-      const { tempCheckIn, tempCheckOut, today, maxDate, lastCheckInDate } = this.data
+      const { tempCheckIn, tempCheckOut } = this.data
+      const { today, lastSelectableDate, lastCheckInDate } = getBookingDateWindow()
       if (!tempCheckOut || tempCheckIn < today || tempCheckIn > lastCheckInDate
-        || tempCheckOut <= tempCheckIn || tempCheckOut > maxDate) return
-      if (hasUnavailableNight(this.data.months, tempCheckIn, tempCheckOut)) {
-        wx.showToast({ title: '所选区间含已满日期', icon: 'none' })
-        return
-      }
+        || tempCheckOut <= tempCheckIn || tempCheckOut > lastSelectableDate) return
+      if (!this.verifyStayNights(tempCheckIn, tempCheckOut)) return
       this.triggerEvent('confirm', { checkIn: tempCheckIn, checkOut: tempCheckOut })
+    },
+
+    /** 房态加载完成后再确认，跨月时只核对实际占用的住宿夜晚。 */
+    verifyStayNights(checkIn: string, checkOut: string): boolean {
+      const firstMonth = checkIn.slice(0, 7)
+      const lastMonth = addDays(checkOut, -1).slice(0, 7)
+      const stayMonths = this.data.months.filter(({ month }) => month >= firstMonth && month <= lastMonth)
+      if (stayMonths.some(({ error }) => !!error)) {
+        wx.showToast({ title: '房态读取失败，请关闭日历后重新打开', icon: 'none' })
+        return false
+      }
+      if (stayMonths.some(({ loading }) => loading)) {
+        wx.showToast({ title: '正在读取所选日期的房态', icon: 'none' })
+        return false
+      }
+      if (stayMonths.some(({ days }) => days.some((day) =>
+        day.unavailable && day.date >= checkIn && day.date < checkOut,
+      ))) {
+        wx.showToast({ title: '所选区间含已满日期', icon: 'none' })
+        return false
+      }
+      return true
     },
 
     noop() {},
@@ -306,13 +323,6 @@ function buildCalendarDays(
   }
 
   return days
-}
-
-/** 检查已加载日期中的占用区间，完整预订仍由接口复核。 */
-function hasUnavailableNight(months: CalendarMonth[], checkIn: string, checkOut: string): boolean {
-  return months.some((month) => month.days.some((day) =>
-    day.unavailable && day.date >= checkIn && day.date < checkOut,
-  ))
 }
 
 function formatNightlyPrice(price: string, showStartingPrice: boolean): string {

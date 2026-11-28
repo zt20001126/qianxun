@@ -7,6 +7,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import io.jsonwebtoken.security.Keys;
 import java.time.Instant;
 import java.util.Date;
@@ -19,6 +20,8 @@ import org.springframework.stereotype.Service;
 public class JwtServiceImpl implements JwtService {
 
     private static final int MEMBER_AUTH_VERSION = 2;
+    private static final int MIN_SIGNING_KEY_BYTES = 32;
+    private static final String JWT_SECRET_ERROR = "请设置 JWT_SECRET，使用 Base64 编码的至少 32 字节随机密钥";
 
     private final SecretKey signingKey;
     private final long memberExpirationSeconds;
@@ -35,10 +38,23 @@ public class JwtServiceImpl implements JwtService {
             @Value("${app.jwt.secret}") String base64Secret,
             @Value("${app.jwt.member-expiration-seconds}") long memberExpirationSeconds,
             @Value("${app.jwt.admin-expiration-seconds}") long adminExpirationSeconds) {
-        byte[] secretBytes = Decoders.BASE64.decode(base64Secret);
-        this.signingKey = Keys.hmacShaKeyFor(secretBytes);
+        this.signingKey = loadSigningKey(base64Secret);
         this.memberExpirationSeconds = memberExpirationSeconds;
         this.adminExpirationSeconds = adminExpirationSeconds;
+    }
+
+    /** 加载运行环境密钥，配置错误时在启动日志中提示配置项名称。 */
+    private static SecretKey loadSigningKey(String base64Secret) {
+        byte[] secretBytes;
+        try {
+            secretBytes = Decoders.BASE64.decode(base64Secret);
+        } catch (DecodingException exception) {
+            throw new IllegalStateException(JWT_SECRET_ERROR);
+        }
+        if (secretBytes.length < MIN_SIGNING_KEY_BYTES) {
+            throw new IllegalStateException(JWT_SECRET_ERROR);
+        }
+        return Keys.hmacShaKeyFor(secretBytes);
     }
 
     /**
