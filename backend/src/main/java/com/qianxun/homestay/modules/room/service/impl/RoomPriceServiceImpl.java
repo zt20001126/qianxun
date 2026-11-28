@@ -7,10 +7,13 @@ import com.qianxun.homestay.modules.room.mapper.HolidayPriceDateMapper;
 import com.qianxun.homestay.modules.room.service.RoomPriceService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -46,9 +49,25 @@ public class RoomPriceServiceImpl implements RoomPriceService {
         return amounts;
     }
 
+    @Override
+    public Map<LocalDate, BigDecimal> quoteNights(RoomEntity room, StayDateRange stay) {
+        Set<LocalDate> holidayDates = new HashSet<>(findHolidayNights(stay));
+        BigDecimal regularPrice = calculate(room, 1, 0);
+        BigDecimal holidayPrice = calculate(room, 1, 1);
+        Map<LocalDate, BigDecimal> amounts = new HashMap<>();
+        for (LocalDate date = stay.checkIn(); date.isBefore(stay.checkOut()); date = date.plusDays(1)) {
+            amounts.put(date, holidayDates.contains(date) ? holidayPrice : regularPrice);
+        }
+        return amounts;
+    }
+
     private long countHolidayNights(StayDateRange stay) {
+        return findHolidayNights(stay).size();
+    }
+
+    private List<LocalDate> findHolidayNights(StayDateRange stay) {
         // 退房当天不住宿，也就不计入任一价格档位。
-        return holidayPriceDateMapper.findDates(stay.checkIn(), stay.checkOut().minusDays(1)).size();
+        return holidayPriceDateMapper.findDates(stay.checkIn(), stay.checkOut().minusDays(1));
     }
 
     private BigDecimal calculate(RoomEntity room, long nights, long holidayNights) {

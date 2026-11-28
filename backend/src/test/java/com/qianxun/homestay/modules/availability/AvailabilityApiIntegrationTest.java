@@ -310,8 +310,39 @@ class AvailabilityApiIntegrationTest {
     }
 
     @Test
+    void appAvailabilityCalendarReturnsRegularAndHolidayPricesForAvailableNightsOnly() throws Exception {
+        LocalDate regular = LocalDate.now(BUSINESS_ZONE).withDayOfMonth(1).plusMonths(1);
+        LocalDate holiday = regular.plusDays(1);
+        LocalDate blocked = regular.plusDays(2);
+        jdbcTemplate.update("UPDATE room SET holiday_price = 168.50 WHERE id = ?", roomId);
+        jdbcTemplate.update("INSERT INTO holiday_price_date (holiday_date) VALUES (?), (?)", holiday, blocked);
+        jdbcTemplate.update(
+                "INSERT INTO room_block (room_id, start_date, end_date, reason) VALUES (?, ?, ?, ?)",
+                roomId, blocked, blocked.plusDays(1), "验证仅展示可订夜价");
+        jdbcTemplate.update("""
+                INSERT INTO room (number, name, floor, price, capacity, enabled)
+                VALUES ('102', '双床房', 1, 120.00, 2, 1)
+                """);
+        long fallbackRoomId = jdbcTemplate.queryForObject("SELECT id FROM room WHERE number = '102'", Long.class);
+        String month = YearMonth.from(regular).toString();
+
+        mockMvc.perform(get("/api/app/rooms/{id}/availability", roomId).param("month", month))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nightly_prices['" + regular + "']").value("100.00"))
+                .andExpect(jsonPath("$.data.nightly_prices['" + holiday + "']").value("168.50"))
+                .andExpect(jsonPath("$.data.nightly_prices['" + blocked + "']").doesNotExist())
+                .andExpect(jsonPath("$.data.unavailable_dates[0]").value(blocked.toString()));
+
+        mockMvc.perform(get("/api/app/rooms/{id}/availability", fallbackRoomId).param("month", month))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nightly_prices['" + holiday + "']").value("120.00"))
+                .andExpect(jsonPath("$.data.nightly_prices['" + blocked + "']").value("120.00"));
+    }
+
+    @Test
     void appAvailabilityCalendarIncludesDay90ButExcludesDay91() throws Exception {
         LocalDate lastDate = LocalDate.now(BUSINESS_ZONE).plusDays(89);
+        LocalDate lastNight = lastDate.minusDays(1);
         LocalDate outsideDate = lastDate.plusDays(1);
         // 封房跨过日期窗口上限，以验证月历会截断窗口外的房态。
         jdbcTemplate.update(
@@ -322,13 +353,21 @@ class AvailabilityApiIntegrationTest {
         mockMvc.perform(get("/api/app/rooms/{id}/availability", roomId).param("month", lastMonth.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.unavailable_dates.length()").value(1))
-                .andExpect(jsonPath("$.data.unavailable_dates[0]").value(lastDate.toString()));
+                .andExpect(jsonPath("$.data.unavailable_dates[0]").value(lastDate.toString()))
+                .andExpect(jsonPath("$.data.nightly_prices['" + lastDate + "']").doesNotExist())
+                .andExpect(jsonPath("$.data.nightly_prices['" + outsideDate + "']").doesNotExist());
+
+        mockMvc.perform(get("/api/app/rooms/{id}/availability", roomId)
+                        .param("month", YearMonth.from(lastNight).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nightly_prices['" + lastNight + "']").value("100.00"));
 
         YearMonth outsideMonth = YearMonth.from(outsideDate);
         if (!lastMonth.equals(outsideMonth)) {
             mockMvc.perform(get("/api/app/rooms/{id}/availability", roomId).param("month", outsideMonth.toString()))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.data.unavailable_dates").isEmpty());
+                    .andExpect(jsonPath("$.data.unavailable_dates").isEmpty())
+                    .andExpect(jsonPath("$.data.nightly_prices").isEmpty());
         }
     }
 

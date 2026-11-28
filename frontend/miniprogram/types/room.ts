@@ -19,11 +19,18 @@ export interface AppRoomDetail extends AppRoomSummary {
   description: string | null
 }
 
-/** R03 小程序月度房态，仅列出不可订住宿夜晚。 */
+/** R03 小程序单房月历。 */
 export interface AppRoomAvailability {
   room_id: number
   month: string
   unavailable_dates: string[]
+  /** 按日期索引的可订夜价，金额为两位小数的十进制字符串。 */
+  nightly_prices: Record<string, string>
+}
+
+/** 日历组件使用的月度房态，全店无上架房间时单独标记。 */
+export type CalendarAvailability = Pick<AppRoomAvailability, 'unavailable_dates' | 'nightly_prices'> & {
+  noRooms?: boolean
 }
 
 /** R04 日期区间复核结果。 */

@@ -22,7 +22,7 @@ public interface AvailabilityService {
     /** 返回指定窗口内不可订的住宿夜晚。 */
     List<LocalDate> findUnavailableDates(Long roomId, LocalDate startDate, LocalDate endDate);
 
-    /** 查询小程序月历，并截断到未来 90 天窗口。 */
+    /** 查询小程序月历的房态及可订夜价，并截断到未来 90 天窗口。 */
     AppRoomAvailabilityVO getAppRoomAvailability(Long roomId, YearMonth month);
 
     /** 复核日期区间并计算当前基础房价总额。 */

@@ -15,8 +15,8 @@
     </view>
 
     <view class="calendar-legend">
-      <view class="legend-item"><view class="legend-box available"></view><text>可预订</text></view>
-      <view class="legend-item"><view class="legend-box unavailable"></view><text>不可预订</text></view>
+      <view class="legend-item"><view class="legend-box available"></view><text>可订</text></view>
+      <view class="legend-item"><view class="legend-box unavailable"></view><text>已满</text></view>
       <view class="legend-item"><view class="legend-box selected"></view><text>已选区间</text></view>
     </view>
 
@@ -38,6 +38,7 @@
             <text wx:if="{{day.isCheckIn}}" class="day-caption">入住</text>
             <text wx:elif="{{day.isCheckOut}}" class="day-caption">退房</text>
             <text wx:elif="{{day.unavailable}}" class="day-caption day-full-caption">已满</text>
+            <text wx:elif="{{day.priceLabel}}" class="day-caption day-price">{{day.priceLabel}}</text>
           </button>
         </view>
         <text wx:if="{{item.loading}}" class="month-state">正在读取房态…</text>

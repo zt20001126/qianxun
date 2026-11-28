@@ -1,5 +1,6 @@
 /** 小程序共享的入住与退房日期抽屉。 */
-import { getFullyUnavailableDates, getRoomAvailability } from '../../services/rooms'
+import { getRoomAvailability, getStoreCalendarAvailability, listRooms } from '../../services/rooms'
+import type { CalendarAvailability } from '../../types/room'
 import { addDays, daysBetween, getBookingDateWindow } from '../../utils/stay-date'
 
 interface CalendarDay {
@@ -14,6 +15,7 @@ interface CalendarDay {
   isToday: boolean
   isCheckIn: boolean
   isCheckOut: boolean
+  priceLabel?: string
 }
 
 interface CalendarMonth {
@@ -21,6 +23,7 @@ interface CalendarMonth {
   month: string
   title: string
   days: CalendarDay[]
+  availability?: CalendarAvailability
   loading: boolean
   error: string
 }
@@ -36,7 +39,7 @@ interface CalendarPageData {
   nights: number
   checkInPreview: string
   checkOutPreview: string
-  availabilityCache: Record<string, string[]>
+  loadVersion: number
   weekdays: string[]
 }
 
@@ -67,7 +70,7 @@ Component({
     nights: 0,
     checkInPreview: '',
     checkOutPreview: '',
-    availabilityCache: {},
+    loadVersion: 0,
     weekdays: ['日', '一', '二', '三', '四', '五', '六'],
   } as CalendarPageData,
   methods: {
@@ -91,7 +94,9 @@ Component({
         error: '',
       }))
 
+      const loadVersion = this.data.loadVersion + 1
       this.setData({
+        loadVersion,
         today,
         maxDate: lastSelectableDate,
         lastCheckInDate,
@@ -103,47 +108,26 @@ Component({
         checkInPreview: formatDayLabel(checkIn),
         checkOutPreview: formatDayLabel(checkOut),
       })
-      this.rebuildDays(initialMonths, checkIn, checkOut, 'checkin', {})
+      this.rebuildDays(initialMonths, checkIn, checkOut, 'checkin')
 
       const roomId = this.properties.roomId
-      void Promise.all(initialMonths.map(async (month) => {
-        const cachedDates = this.data.availabilityCache[month.month]
-        if (cachedDates) {
-          this.updateMonthAvailability(month.month, cachedDates)
-          return
-        }
+      // 每次打开都刷新价格和房态，全店模式只获取一次上架房间列表。
+      const roomIds = roomId > 0 ? Promise.resolve([]) : listRooms().then((rooms) => rooms.map((room) => room.id))
+      void Promise.all(initialMonths.map(async ({ month }) => {
         try {
-          const unavailableDates = roomId > 0
-            ? (await getRoomAvailability(roomId, month.month)).unavailable_dates
-            : await getFullyUnavailableDates(month.month)
-          this.updateMonthAvailability(month.month, unavailableDates)
+          const availability = roomId > 0
+            ? await getRoomAvailability(roomId, month)
+            : await getStoreCalendarAvailability(month, await roomIds)
+          if (this.data.loadVersion !== loadVersion) return
+          const months = this.data.months.map((item) => item.month === month
+            ? { ...item, loading: false, availability }
+            : item)
+          this.rebuildDays(months, this.data.tempCheckIn, this.data.tempCheckOut, this.data.selectingStep)
         } catch (error) {
-          this.updateMonthError(month.month, error instanceof Error ? error.message : '房态日历读取失败')
+          if (this.data.loadVersion !== loadVersion) return
+          this.updateMonthError(month, error instanceof Error ? error.message : '房态日历读取失败')
         }
       }))
-    },
-
-    updateMonthAvailability(month: string, unavailableDates: string[]) {
-      this.setData({
-        availabilityCache: {
-          ...this.data.availabilityCache,
-          [month]: unavailableDates,
-        },
-      })
-      const currentMonths = this.data.months
-      const nextMonths = currentMonths.map((item) => item.month === month
-        ? { ...item, loading: false, error: '', days: buildCalendarDays(
-          item.month,
-          this.data.today,
-          this.data.maxDate,
-          this.data.lastCheckInDate,
-          unavailableDates,
-          this.data.tempCheckIn,
-          this.data.tempCheckOut,
-          this.data.selectingStep,
-        ) }
-        : item)
-      this.setData({ months: nextMonths })
     },
 
     updateMonthError(month: string, message: string) {
@@ -161,8 +145,9 @@ Component({
     onDayTap(event: WechatMiniprogram.TouchEvent) {
       const date = String(event.currentTarget.dataset.date)
       const month = String(event.currentTarget.dataset.month)
-      const day = this.data.months.find((item) => item.month === month)?.days.find((item) => item.date === date)
-      if (!day || day.empty || day.disabled) return
+      const calendarMonth = this.data.months.find((item) => item.month === month)
+      const day = calendarMonth?.days.find((item) => item.date === date)
+      if (!day || day.empty || day.disabled || calendarMonth?.loading || calendarMonth?.error) return
 
       let checkIn = this.data.tempCheckIn
       let checkOut = this.data.tempCheckOut
@@ -173,6 +158,11 @@ Component({
         checkOut = ''
         selectingStep = 'checkout'
       } else {
+        // 退房当晚不占房，可选已满日期作退房；区间内的已满夜晚不可跨过。
+        if (hasUnavailableNight(this.data.months, checkIn, date)) {
+          wx.showToast({ title: '所选区间含已满日期', icon: 'none' })
+          return
+        }
         checkOut = date
         selectingStep = 'checkin'
       }
@@ -192,11 +182,7 @@ Component({
         checkInPreview: formatDayLabel(checkIn),
         checkOutPreview: checkOut ? formatDayLabel(checkOut) : '请选择退房日期',
       })
-      const unavailableByMonth: Record<string, string[]> = {}
-      this.data.months.forEach((month) => {
-        unavailableByMonth[month.month] = month.days.filter((day) => day.unavailable).map((day) => day.date)
-      })
-      this.rebuildDays(this.data.months, checkIn, checkOut, selectingStep, unavailableByMonth)
+      this.rebuildDays(this.data.months, checkIn, checkOut, selectingStep)
     },
 
     rebuildDays(
@@ -204,7 +190,6 @@ Component({
       checkIn: string,
       checkOut: string,
       selectingStep: 'checkin' | 'checkout',
-      unavailableByMonth: Record<string, string[]>,
     ) {
       const nextMonths = months.map((month) => ({
         ...month,
@@ -213,7 +198,9 @@ Component({
           this.data.today,
           this.data.maxDate,
           this.data.lastCheckInDate,
-          unavailableByMonth[month.month] || [],
+          month.availability,
+          this.properties.roomId <= 0,
+          month.loading || !!month.error,
           checkIn,
           checkOut,
           selectingStep,
@@ -230,6 +217,10 @@ Component({
       const { tempCheckIn, tempCheckOut, today, maxDate, lastCheckInDate } = this.data
       if (!tempCheckOut || tempCheckIn < today || tempCheckIn > lastCheckInDate
         || tempCheckOut <= tempCheckIn || tempCheckOut > maxDate) return
+      if (hasUnavailableNight(this.data.months, tempCheckIn, tempCheckOut)) {
+        wx.showToast({ title: '所选区间含已满日期', icon: 'none' })
+        return
+      }
       this.triggerEvent('confirm', { checkIn: tempCheckIn, checkOut: tempCheckOut })
     },
 
@@ -242,7 +233,9 @@ function buildCalendarDays(
   today: string,
   maxDate: string,
   lastCheckInDate: string,
-  unavailableDates: string[],
+  availability: CalendarAvailability | undefined,
+  showStartingPrice: boolean,
+  loadingOrError: boolean,
   checkIn: string,
   checkOut: string,
   selectingStep: 'checkin' | 'checkout',
@@ -250,7 +243,7 @@ function buildCalendarDays(
   const [year, monthNumber] = month.split('-').map(Number)
   const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate()
   const firstWeekday = new Date(Date.UTC(year, monthNumber - 1, 1)).getUTCDay()
-  const unavailable = new Set(unavailableDates)
+  const unavailable = new Set(availability?.unavailable_dates)
   const days: CalendarDay[] = Array.from({ length: firstWeekday }, (_, index) => ({
     key: 'empty-' + month + '-' + index,
     date: '',
@@ -267,10 +260,16 @@ function buildCalendarDays(
 
   for (let number = 1; number <= daysInMonth; number += 1) {
     const date = month + '-' + String(number).padStart(2, '0')
-    const isUnavailable = unavailable.has(date)
     const withinWindow = date >= today && date <= maxDate
+    const isUnavailable = withinWindow && (availability?.noRooms === true || unavailable.has(date))
+    const isCheckIn = date === checkIn && !isUnavailable
+    const isCheckOut = date === checkOut
+    const selected = isCheckIn || isCheckOut
+    const inRange = !!checkOut && date > checkIn && date < checkOut
+    const price = withinWindow && date <= lastCheckInDate && !isUnavailable && !selected && !inRange
+      ? availability?.nightly_prices?.[date] : undefined
     // 选择退房时保留入住日的选中样式；点击入住日会重新开始选择入住日期。
-    const disabled = !withinWindow || (selectingStep === 'checkout'
+    const disabled = loadingOrError || !withinWindow || (selectingStep === 'checkout'
       ? date < checkIn
       : (date > lastCheckInDate || isUnavailable))
     days.push({
@@ -280,11 +279,12 @@ function buildCalendarDays(
       empty: false,
       unavailable: isUnavailable,
       disabled,
-      selected: date === checkIn || (!!checkOut && date === checkOut),
-      inRange: !!checkIn && !!checkOut && date > checkIn && date < checkOut,
+      selected,
+      inRange,
       isToday: date === today,
-      isCheckIn: date === checkIn,
-      isCheckOut: date === checkOut,
+      isCheckIn,
+      isCheckOut,
+      priceLabel: price === undefined ? '' : formatNightlyPrice(price, showStartingPrice),
     })
   }
 
@@ -306,6 +306,18 @@ function buildCalendarDays(
   }
 
   return days
+}
+
+/** 检查已加载日期中的占用区间，完整预订仍由接口复核。 */
+function hasUnavailableNight(months: CalendarMonth[], checkIn: string, checkOut: string): boolean {
+  return months.some((month) => month.days.some((day) =>
+    day.unavailable && day.date >= checkIn && day.date < checkOut,
+  ))
+}
+
+function formatNightlyPrice(price: string, showStartingPrice: boolean): string {
+  const amount = price.replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')
+  return '¥' + amount + (showStartingPrice ? '起' : '')
 }
 
 function getMonthsInRange(start: string, end: string): string[] {

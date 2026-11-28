@@ -19,8 +19,12 @@ import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -93,7 +97,8 @@ public class AvailabilityServiceImpl implements AvailabilityService {
             throw new BusinessException(HttpStatus.NOT_FOUND, "房间不存在");
         }
         LocalDate today = LocalDate.now(BUSINESS_ZONE);
-        LocalDate windowEnd = today.plusDays(BOOKING_WINDOW_DAYS);
+        LocalDate lastCheckout = today.plusDays(BOOKING_WINDOW_DAYS - 1L);
+        LocalDate windowEnd = lastCheckout.plusDays(1);
         LocalDate monthStart = month.atDay(1);
         LocalDate monthEnd = month.plusMonths(1).atDay(1);
         LocalDate start = monthStart.isAfter(today) ? monthStart : today;
@@ -101,7 +106,18 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         List<LocalDate> unavailableDates = start.isBefore(end)
                 ? findUnavailableDates(roomId, start, end)
                 : List.of();
-        return new AppRoomAvailabilityVO(roomId, month.toString(), unavailableDates);
+        // 窗口最后一天可以退房，已无法再作为住宿夜晚报价。
+        LocalDate priceEnd = end.isBefore(lastCheckout) ? end : lastCheckout;
+        Map<LocalDate, String> nightlyPrices = new TreeMap<>();
+        if (start.isBefore(priceEnd)) {
+            Set<LocalDate> unavailable = new HashSet<>(unavailableDates);
+            roomPriceService.quoteNights(room, new StayDateRange(start, priceEnd)).forEach((date, amount) -> {
+                if (!unavailable.contains(date)) {
+                    nightlyPrices.put(date, amount.toPlainString());
+                }
+            });
+        }
+        return new AppRoomAvailabilityVO(roomId, month.toString(), unavailableDates, nightlyPrices);
     }
 
     @Override
