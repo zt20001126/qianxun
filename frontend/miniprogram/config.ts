@@ -1,5 +1,5 @@
-/** 服务器 IP 联调地址；正式发布时改为已备案的 HTTPS 合法域名。 */
-export const API_BASE_URL = 'https://111.229.107.194'
+/** 本地后端联调地址；手机需与电脑连接同一 Wi-Fi，电脑 IP 变化后同步更新。 */
+export const API_BASE_URL = 'http://192.168.1.11:8080'
 export const DEFAULT_AVATAR_PATH = '/assets/member-default-avatar.jpg'
 /** 小程序统一展示的民宿地址。 */
 export const STORE_ADDRESS = '南浔古镇宝善街167号'

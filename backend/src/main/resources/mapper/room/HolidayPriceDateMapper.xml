@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.qianxun.homestay.modules.room.mapper.HolidayPriceDateMapper">
+    <select id="findDates" resultType="java.time.LocalDate">
+        SELECT holiday_date
+        FROM holiday_price_date
+        WHERE holiday_date BETWEEN #{firstDate} AND #{lastDate}
+        ORDER BY holiday_date
+    </select>
+
+    <insert id="enable">
+        INSERT INTO holiday_price_date (holiday_date) VALUES (#{date})
+        ON DUPLICATE KEY UPDATE id = id
+    </insert>
+
+    <delete id="disable">
+        DELETE FROM holiday_price_date WHERE holiday_date = #{date}
+    </delete>
+</mapper>

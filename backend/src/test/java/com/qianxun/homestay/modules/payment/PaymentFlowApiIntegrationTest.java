@@ -2,7 +2,9 @@ package com.qianxun.homestay.modules.payment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -101,6 +103,7 @@ class PaymentFlowApiIntegrationTest {
     @BeforeEach
     void prepareMemberAndRoom() {
         jdbcTemplate.update("DELETE FROM refunds");
+        jdbcTemplate.update("DELETE FROM holiday_price_date");
         jdbcTemplate.update("DELETE FROM points_log");
         jdbcTemplate.update("DELETE FROM order_amount");
         jdbcTemplate.update("DELETE FROM payments");
@@ -163,6 +166,46 @@ class PaymentFlowApiIntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT balance_after FROM points_log WHERE ref_no = ?", Integer.class, "REDEEM:ORDER:" + orderId))
                 .isZero();
+    }
+
+    @Test
+    void holidayPricesAffectNewQuotesAndPreserveLockedAndCompletedAmounts() throws Exception {
+        String request = prepayRequestBody();
+        JsonNode dates = objectMapper.readTree(request);
+        LocalDate checkIn = LocalDate.parse(dates.path("check_in").asText());
+        LocalDate checkOut = LocalDate.parse(dates.path("check_out").asText());
+        jdbcTemplate.update("UPDATE room SET holiday_price = 180.00 WHERE id = ?", roomId);
+        jdbcTemplate.update("INSERT INTO holiday_price_date (holiday_date) VALUES (?)", checkIn.plusDays(1));
+
+        String preview = objectMapper.writeValueAsString(Map.of(
+                "room_id", roomId, "check_in", checkIn, "check_out", checkOut, "points_used", POINTS_TO_USE));
+        mockMvc.perform(post("/api/app/points/preview").header("Authorization", bearer(memberToken))
+                        .contentType(MediaType.APPLICATION_JSON).content(preview))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.room_amount").value("280.00"))
+                .andExpect(jsonPath("$.data.pay_amount").value("270.00"));
+
+        JsonNode prepay = prepay(request);
+        assertThat(prepay.path("room_amount").asText()).isEqualTo("280.00");
+        assertThat(prepay.path("pay_amount").asText()).isEqualTo("270.00");
+        String paymentNo = prepay.path("payment_no").asText();
+
+        jdbcTemplate.update("UPDATE room SET price = 130.00, holiday_price = 250.00 WHERE id = ?", roomId);
+        jdbcTemplate.update("DELETE FROM holiday_price_date WHERE holiday_date = ?", checkIn.plusDays(1));
+        String requote = objectMapper.writeValueAsString(Map.of(
+                "room_id", roomId, "check_in", checkIn, "check_out", checkOut));
+        mockMvc.perform(post("/api/app/rooms/availability-check").contentType(MediaType.APPLICATION_JSON).content(requote))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.room_amount").value("260.00"));
+
+        JsonNode result = mockPay(paymentNo).path("data");
+        assertThat(result.path("paid_amount").asText()).isEqualTo("270.00");
+        assertThat(mockPay(paymentNo).path("data").path("order_id").asLong()).isEqualTo(result.path("order_id").asLong());
+        mockMvc.perform(get("/api/app/orders/{id}", result.path("order_id").asLong())
+                        .header("Authorization", bearer(memberToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.room_amount").value("280.00"))
+                .andExpect(jsonPath("$.data.paid_amount").value("270.00"));
     }
 
     @Test
@@ -470,11 +513,15 @@ class PaymentFlowApiIntegrationTest {
     }
 
     private JsonNode prepay() throws Exception {
+        return prepay(prepayRequestBody());
+    }
+
+    private JsonNode prepay(String request) throws Exception {
         String response = mockMvc.perform(post("/api/app/payments/prepay")
                         .header("Authorization", bearer(memberToken))
                         .contentType("application/json")
-                        .content(prepayRequestBody()))
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                        .content(request))
+                .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).path("data");
     }

@@ -5,9 +5,10 @@ export interface Room {
   name: string
   floor: number
   price: string
+  holiday_price?: string | null
   capacity: number
   bed_info: string | null
-  area: number | null
+  area?: number | null
   facilities: string[]
   images: string[]
   description: string | null
@@ -21,12 +22,24 @@ export interface RoomSaveRequest {
   name: string
   floor: number
   price: string
+  holiday_price?: string | null
   capacity: number
   bed_info: string | null
   area: number | null
   facilities: string[]
   images: string[]
   description: string | null
+}
+
+/** 后台提交的单月节假日日期变更。 */
+export interface HolidayPriceDatesUpdate {
+  month: string
+  add_dates: string[]
+  remove_dates: string[]
+}
+
+export interface HolidayPriceDates {
+  dates: string[]
 }
 
 export interface Channel {

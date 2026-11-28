@@ -55,7 +55,7 @@
       </view>
       <view wx:if="{{preview}}" class="fee-line">
         <text>房费</text>
-        <text class="fee-equation">¥{{roomPriceLabel}} × {{nights}}晚</text>
+        <text class="fee-equation">共 {{nights}} 晚</text>
         <text class="fee-value">¥{{roomAmountLabel}}</text>
       </view>
       <view wx:else class="fee-loading">{{previewLoading ? '正在试算费用…' : '费用暂不可用'}}</view>

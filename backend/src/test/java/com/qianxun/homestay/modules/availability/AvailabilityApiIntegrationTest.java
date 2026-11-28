@@ -13,11 +13,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qianxun.homestay.modules.auth.WechatLoginTestSupport;
 import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import com.zaxxer.hikari.HikariDataSource;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -90,6 +93,7 @@ class AvailabilityApiIntegrationTest {
     @BeforeEach
     void resetData() throws Exception {
         jdbcTemplate.update("DELETE FROM booking_lock");
+        jdbcTemplate.update("DELETE FROM holiday_price_date");
         jdbcTemplate.update("DELETE FROM orders");
         jdbcTemplate.update("DELETE FROM room_block");
         jdbcTemplate.update("DELETE FROM room");
@@ -204,6 +208,65 @@ class AvailabilityApiIntegrationTest {
                                 + "\",\"check_out\":\"" + firstNight.plusDays(2) + "\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.available").value(false));
+    }
+
+    @Test
+    void roomListAndAvailabilityUseStayNightsAndExcludeCheckoutAcrossMonths() throws Exception {
+        LocalDate checkIn = YearMonth.from(LocalDate.now(BUSINESS_ZONE).plusDays(1)).atEndOfMonth();
+        LocalDate holiday = checkIn.plusDays(1);
+        LocalDate checkOut = checkIn.plusDays(2);
+        jdbcTemplate.update("UPDATE room SET holiday_price = 168.50 WHERE id = ?", roomId);
+        jdbcTemplate.update("""
+                INSERT INTO room (number, name, floor, price, capacity, enabled)
+                VALUES ('102', '双床房', 1, 120.00, 2, 1)
+                """);
+        LocalDate saturday = LocalDate.now(BUSINESS_ZONE)
+                .with(TemporalAdjusters.nextOrSame(DayOfWeek.SATURDAY));
+        mockMvc.perform(get("/api/app/rooms").param("check_in", saturday.toString())
+                        .param("check_out", saturday.plusDays(1).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.list[0].room_amount").value("100.00"));
+
+        String selectedDates = objectMapper.writeValueAsString(Map.of(
+                "month", YearMonth.from(holiday).toString(),
+                "add_dates", List.of(holiday, checkOut),
+                "remove_dates", List.of()));
+        mockMvc.perform(put("/api/admin/holiday-price-dates").header("Authorization", bearer(adminToken))
+                        .contentType("application/json").content(selectedDates))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.dates.length()").value(2));
+
+        mockMvc.perform(get("/api/app/rooms").param("check_in", checkIn.toString()).param("check_out", checkOut.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.list[0].price").value("100.00"))
+                .andExpect(jsonPath("$.data.list[0].room_amount").value("268.50"))
+                .andExpect(jsonPath("$.data.list[1].room_amount").value("240.00"));
+
+        String body = objectMapper.writeValueAsString(Map.of(
+                "room_id", roomId, "check_in", checkIn, "check_out", checkOut));
+        mockMvc.perform(post("/api/app/rooms/availability-check").contentType("application/json").content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nights").value(2))
+                .andExpect(jsonPath("$.data.room_amount").value("268.50"));
+
+        mockMvc.perform(get("/api/app/rooms").param("check_in", holiday.toString())
+                        .param("check_out", checkOut.plusDays(1).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.list[0].room_amount").value("337.00"));
+    }
+
+    @Test
+    void roomQuoteRejectsAmountsAboveThePaymentSnapshotLimit() throws Exception {
+        LocalDate checkIn = LocalDate.now(BUSINESS_ZONE).plusDays(1);
+        LocalDate checkOut = checkIn.plusDays(2);
+        jdbcTemplate.update("UPDATE room SET holiday_price = 9999999999.99 WHERE id = ?", roomId);
+        jdbcTemplate.update("INSERT INTO holiday_price_date (holiday_date) VALUES (?), (?)", checkIn, checkIn.plusDays(1));
+        String body = objectMapper.writeValueAsString(Map.of(
+                "room_id", roomId, "check_in", checkIn, "check_out", checkOut));
+
+        mockMvc.perform(post("/api/app/rooms/availability-check").contentType("application/json").content(body))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.message").value("住宿房费超过可预订金额上限"));
     }
 
     @Test

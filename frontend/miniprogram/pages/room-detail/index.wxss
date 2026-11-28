@@ -33,10 +33,10 @@
 .availability-state { margin-top: 18rpx; color: #7a726b; font-size: 20rpx; }
 .availability-error { color: #b83b2a; }
 .detail-footer { position: fixed; z-index: 10; right: 0; bottom: 0; left: 0; display: flex; height: calc(140rpx + env(safe-area-inset-bottom)); align-items: center; justify-content: space-between; padding: 24rpx 40rpx calc(24rpx + env(safe-area-inset-bottom)); box-sizing: border-box; border-top: 1rpx solid #e8e0d4; background: rgba(255, 255, 255, .96); box-shadow: 0 -12rpx 40rpx rgba(35, 31, 29, .05); }
-.footer-price { display: flex; align-items: baseline; }
+.footer-price { display: flex; flex-wrap: wrap; align-items: baseline; margin-right: 12rpx; }
 .currency { color: #b83b2a; font-size: 24rpx; font-weight: 700; }
 .price-number { color: #b83b2a; font-size: 48rpx; font-weight: 700; }
-.per-night { margin-left: 8rpx; color: #7a726b; font-size: 24rpx; }
+.price-caption { margin-left: 8rpx; color: #7a726b; font-size: 24rpx; }
 .detail-footer .book-button { display: flex; width: auto; min-width: 240rpx; height: 90rpx; align-items: center; justify-content: center; box-sizing: border-box; margin: 0; padding: 0 64rpx; border-radius: 32rpx; color: #fff; background: #8b4d25; box-shadow: 0 12rpx 36rpx rgba(139, 77, 37, .22); font-size: 28rpx; font-weight: 500; line-height: 1; }
 .detail-footer .book-button::after { border: 0; }
 .home-indicator { position: absolute; bottom: calc(8rpx + env(safe-area-inset-bottom)); left: 50%; width: 256rpx; height: 8rpx; transform: translateX(-50%); border-radius: 999rpx; background: rgba(35, 31, 29, .2); }

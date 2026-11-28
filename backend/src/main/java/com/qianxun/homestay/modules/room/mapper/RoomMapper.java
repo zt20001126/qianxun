@@ -1,6 +1,7 @@
 package com.qianxun.homestay.modules.room.mapper;
 
 import com.qianxun.homestay.modules.room.entity.RoomEntity;
+import java.math.BigDecimal;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -24,6 +25,9 @@ public interface RoomMapper {
     int insert(RoomEntity room);
 
     int update(RoomEntity room);
+
+    /** 写入或清空管理员显式提交的节假日价。 */
+    void updateHolidayPrice(@Param("id") Long id, @Param("holidayPrice") BigDecimal holidayPrice);
 
     int updateEnabled(@Param("id") Long id, @Param("enabled") boolean enabled);
 }

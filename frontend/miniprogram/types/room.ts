@@ -8,6 +8,8 @@ export interface AppRoomSummary {
   bed_info: string | null
   images: string[]
   available?: boolean
+  /** 所选住宿日期的房费合计，金额为十进制字符串。 */
+  room_amount?: string
 }
 
 export interface AppRoomDetail extends AppRoomSummary {

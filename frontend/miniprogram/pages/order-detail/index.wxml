@@ -33,7 +33,7 @@
         </view>
         <view wx:if="{{roomAmountLabel !== '—'}}" class="fee-row">
           <text class="fee-label">房费</text>
-          <text class="fee-summary">¥{{unitPrice}} × {{order.nights}}晚</text>
+          <text class="fee-summary">{{order.nights}} 晚 · 平均 ¥{{unitPrice}}/晚</text>
           <text class="fee-total">¥{{roomAmountLabel}}</text>
         </view>
         <text wx:else class="fee-unavailable">房费明细暂不可用</text>

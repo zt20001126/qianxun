@@ -3,21 +3,24 @@ package com.qianxun.homestay.modules.room.service.impl;
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.cache.DisplayCacheService;
 import com.qianxun.homestay.config.DisplayCacheProperties;
-import java.util.Arrays;
 import com.qianxun.homestay.common.util.ApiTime;
+import com.qianxun.homestay.modules.availability.domain.StayDateRange;
 import com.qianxun.homestay.modules.availability.service.AvailabilityService;
 import com.qianxun.homestay.modules.room.dto.RoomSaveRequest;
 import com.qianxun.homestay.modules.room.dto.RoomCatalogCacheDTO;
 import com.qianxun.homestay.modules.room.entity.RoomEntity;
 import com.qianxun.homestay.modules.room.mapper.RoomMapper;
 import com.qianxun.homestay.modules.room.service.RoomImageUrlService;
+import com.qianxun.homestay.modules.room.service.RoomPriceService;
 import com.qianxun.homestay.modules.room.service.RoomService;
 import com.qianxun.homestay.modules.room.vo.AppRoomDetailVO;
 import com.qianxun.homestay.modules.room.vo.AppRoomSummaryVO;
 import com.qianxun.homestay.modules.room.vo.RoomAdminVO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -36,16 +39,19 @@ public class RoomServiceImpl implements RoomService {
     private final RoomMapper roomMapper;
     private final RoomImageUrlService roomImageUrlService;
     private final AvailabilityService availabilityService;
+    private final RoomPriceService roomPriceService;
 
     public RoomServiceImpl(
             RoomMapper roomMapper,
             RoomImageUrlService roomImageUrlService,
-            AvailabilityService availabilityService, DisplayCacheService cache, DisplayCacheProperties cacheProperties) {
+            AvailabilityService availabilityService, RoomPriceService roomPriceService,
+            DisplayCacheService cache, DisplayCacheProperties cacheProperties) {
         this.cacheProperties = cacheProperties;
         this.cache = cache;
         this.roomMapper = roomMapper;
         this.roomImageUrlService = roomImageUrlService;
         this.availabilityService = availabilityService;
+        this.roomPriceService = roomPriceService;
     }
 
     @Override
@@ -65,12 +71,17 @@ public class RoomServiceImpl implements RoomService {
         }
         if (checkIn != null) {
             availabilityService.validateMiniProgramRange(checkIn, checkOut);
-            return enabledRooms().stream()
-                    .filter(room -> availabilityService.isAvailable(room.id(), checkIn, checkOut))
-                    .map(room -> toAppSummaryVO(room, true))
+            // 带日期的查询返回可用于比较的实时房费，直接读取两档价格。
+            List<RoomEntity> availableRooms = roomMapper.findEnabled().stream()
+                    .filter(room -> availabilityService.isAvailable(room.getId(), checkIn, checkOut))
+                    .toList();
+            StayDateRange stay = new StayDateRange(checkIn, checkOut);
+            Map<Long, BigDecimal> amounts = roomPriceService.quoteAll(availableRooms, stay);
+            return availableRooms.stream()
+                    .map(room -> toAppSummaryVO(RoomCatalogCacheDTO.from(room), true, amounts.get(room.getId())))
                     .toList();
         }
-        return enabledRooms().stream().map(room -> toAppSummaryVO(room, null)).toList();
+        return enabledRooms().stream().map(room -> toAppSummaryVO(room, null, null)).toList();
     }
 
     @Override
@@ -114,6 +125,10 @@ public class RoomServiceImpl implements RoomService {
         }
         try {
             roomMapper.update(room);
+            // 旧客户端省略节假日价时保留原配置，避免覆盖独立维护的价格。
+            if (request.hasHolidayPrice()) {
+                roomMapper.updateHolidayPrice(id, room.getHolidayPrice());
+            }
             cache.invalidateAfterCommit(CACHE_DOMAIN);
         } catch (DuplicateKeyException exception) {
             throw new BusinessException(HttpStatus.CONFLICT, "房号已存在");
@@ -150,6 +165,7 @@ public class RoomServiceImpl implements RoomService {
         room.setName(request.getName().trim());
         room.setFloor(request.getFloor());
         room.setPrice(request.getPrice().setScale(2));
+        room.setHolidayPrice(request.getHolidayPrice());
         room.setCapacity(request.getCapacity());
         room.setBedInfo(trimToNull(request.getBedInfo()));
         room.setArea(request.getArea() == null ? null : request.getArea().setScale(2));
@@ -172,15 +188,17 @@ public class RoomServiceImpl implements RoomService {
     private RoomAdminVO toAdminVO(RoomEntity room) {
         return new RoomAdminVO(
                 room.getId(), room.getNumber(), room.getName(), room.getFloor(), formatPrice(room.getPrice()),
+                room.getHolidayPrice() == null ? null : formatPrice(room.getHolidayPrice()),
                 room.getCapacity(), room.getBedInfo(), room.getArea(), emptyIfNull(room.getFacilities()),
                 emptyIfNull(room.getImages()), room.getDescription(), room.getEnabled(),
                 ApiTime.fromShanghai(room.getCreatedAt()), ApiTime.fromShanghai(room.getUpdatedAt()));
     }
 
-    private AppRoomSummaryVO toAppSummaryVO(RoomCatalogCacheDTO room, Boolean available) {
+    private AppRoomSummaryVO toAppSummaryVO(RoomCatalogCacheDTO room, Boolean available, BigDecimal roomAmount) {
         return new AppRoomSummaryVO(
                 room.id(), room.number(), room.name(), formatPrice(room.price()), room.capacity(),
-                room.bedInfo(), roomImageUrlService.resolveForApp(room.images()), available);
+                room.bedInfo(), roomImageUrlService.resolveForApp(room.images()), available,
+                roomAmount == null ? null : formatPrice(roomAmount));
     }
 
     private String formatPrice(BigDecimal price) {

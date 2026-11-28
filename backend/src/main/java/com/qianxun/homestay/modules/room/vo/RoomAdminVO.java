@@ -1,5 +1,6 @@
 package com.qianxun.homestay.modules.room.vo;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -16,6 +17,9 @@ public record RoomAdminVO(
         Integer floor,
         /** 客房每晚基础价格，十进制字符串，单位为元。 */
         String price,
+        /** 节假日每晚价格，十进制字符串，空值沿用平时价。 */
+        @JsonInclude(JsonInclude.Include.ALWAYS)
+        String holidayPrice,
         /** 客房允许入住的最大人数。 */
         Integer capacity,
         /** 客房床型说明。 */

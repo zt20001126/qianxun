@@ -2,6 +2,7 @@ package com.qianxun.homestay.modules.booking.service.impl;
 
 import com.qianxun.homestay.common.exception.BusinessException;
 import com.qianxun.homestay.common.util.ApiTime;
+import com.qianxun.homestay.modules.availability.domain.StayDateRange;
 import com.qianxun.homestay.modules.availability.service.AvailabilityService;
 import com.qianxun.homestay.modules.booking.dto.PrepayRequest;
 import com.qianxun.homestay.modules.booking.entity.BookingLockEntity;
@@ -20,6 +21,7 @@ import com.qianxun.homestay.modules.points.domain.PointsRedemptionQuote;
 import com.qianxun.homestay.modules.points.service.PointsBalanceService;
 import com.qianxun.homestay.modules.room.entity.RoomEntity;
 import com.qianxun.homestay.modules.room.mapper.RoomMapper;
+import com.qianxun.homestay.modules.room.service.RoomPriceService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -44,6 +46,7 @@ public class BookingLockServiceImpl implements BookingLockService {
     private final PaymentMapper paymentMapper;
     private final PointsBalanceService pointsBalanceService;
     private final RoomMapper roomMapper;
+    private final RoomPriceService roomPriceService;
     private final WechatPayProperties wechatPayProperties;
 
     public BookingLockServiceImpl(
@@ -53,6 +56,7 @@ public class BookingLockServiceImpl implements BookingLockService {
             PaymentMapper paymentMapper,
             PointsBalanceService pointsBalanceService,
             RoomMapper roomMapper,
+            RoomPriceService roomPriceService,
             WechatPayProperties wechatPayProperties) {
         this.availabilityService = availabilityService;
         this.bookingLockMapper = bookingLockMapper;
@@ -60,6 +64,7 @@ public class BookingLockServiceImpl implements BookingLockService {
         this.paymentMapper = paymentMapper;
         this.pointsBalanceService = pointsBalanceService;
         this.roomMapper = roomMapper;
+        this.roomPriceService = roomPriceService;
         this.wechatPayProperties = wechatPayProperties;
     }
 
@@ -87,10 +92,8 @@ public class BookingLockServiceImpl implements BookingLockService {
         if (!availabilityService.isAvailable(request.roomId(), request.checkIn(), request.checkOut())) {
             throw new BusinessException(HttpStatus.CONFLICT, "所选日期已不可预订，请重新选择");
         }
-        int nights = Math.toIntExact(java.time.temporal.ChronoUnit.DAYS.between(
-                request.checkIn(), request.checkOut()));
-        BigDecimal roomAmount = room.getPrice().multiply(BigDecimal.valueOf(nights))
-                .setScale(2, RoundingMode.UNNECESSARY);
+        // 在锁房事务内重新报价，支付阶段使用本次写入的金额快照。
+        BigDecimal roomAmount = roomPriceService.quote(room, new StayDateRange(request.checkIn(), request.checkOut()));
         PointsRedemptionQuote quote = pointsBalanceService.calculateForLockedMember(
                 member, roomAmount, request.pointsUsed(), createdAt);
 

@@ -11,8 +11,8 @@ import com.qianxun.homestay.modules.availability.vo.AppAvailabilityCheckVO;
 import com.qianxun.homestay.modules.availability.vo.AppRoomAvailabilityVO;
 import com.qianxun.homestay.modules.room.entity.RoomEntity;
 import com.qianxun.homestay.modules.room.mapper.RoomMapper;
+import com.qianxun.homestay.modules.room.service.RoomPriceService;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -34,10 +34,13 @@ public class AvailabilityServiceImpl implements AvailabilityService {
 
     private final AvailabilityMapper availabilityMapper;
     private final RoomMapper roomMapper;
+    private final RoomPriceService roomPriceService;
 
-    public AvailabilityServiceImpl(AvailabilityMapper availabilityMapper, RoomMapper roomMapper) {
+    public AvailabilityServiceImpl(
+            AvailabilityMapper availabilityMapper, RoomMapper roomMapper, RoomPriceService roomPriceService) {
         this.availabilityMapper = availabilityMapper;
         this.roomMapper = roomMapper;
+        this.roomPriceService = roomPriceService;
     }
 
     @Override
@@ -106,8 +109,9 @@ public class AvailabilityServiceImpl implements AvailabilityService {
         if (room == null) {
             throw new BusinessException(HttpStatus.NOT_FOUND, "房间不存在");
         }
-        int nights = Math.toIntExact(new StayDateRange(checkIn, checkOut).nights());
-        BigDecimal roomAmount = room.getPrice().multiply(BigDecimal.valueOf(nights)).setScale(2, RoundingMode.HALF_UP);
+        StayDateRange stay = new StayDateRange(checkIn, checkOut);
+        int nights = Math.toIntExact(stay.nights());
+        BigDecimal roomAmount = roomPriceService.quote(room, stay);
         return new AppAvailabilityCheckVO(
                 !hasConflict(roomId, checkIn, checkOut, null), nights, roomAmount.toPlainString());
     }

@@ -1,5 +1,6 @@
 package com.qianxun.homestay.modules.catalog;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -7,10 +8,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.qianxun.homestay.modules.auth.WechatLoginTestSupport;
 import com.qianxun.homestay.modules.auth.service.WechatIdentityService;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.YearMonth;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +85,7 @@ class CatalogApiIntegrationTest {
     @BeforeEach
     void resetStageTwoData() throws Exception {
         jdbcTemplate.update("DELETE FROM creators");
+        jdbcTemplate.update("DELETE FROM holiday_price_date");
         jdbcTemplate.update("DELETE FROM room");
         cache.invalidateAfterCommit("rooms");
         jdbcTemplate.update("UPDATE channels SET enabled = 1");
@@ -131,6 +137,86 @@ class CatalogApiIntegrationTest {
                         .param("check_out", checkIn.minusDays(1).toString()))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value(422));
+    }
+
+    @Test
+    void roomHolidayPriceCanBeSetPreservedByLegacyUpdateAndCleared() throws Exception {
+        long roomId = insertRoom("101", "101 房间", 1, "198.00", true);
+        String ordinaryFields = """
+                {"number":"101","name":"水乡客房","floor":1,"price":"199.00","capacity":2}
+                """;
+        ObjectNode update = objectMapper.readValue(ordinaryFields, ObjectNode.class);
+        update.put("holiday_price", "-1.00");
+        mockMvc.perform(put("/api/admin/rooms/{id}", roomId)
+                        .header("Authorization", bearer(adminToken)).contentType("application/json").content(update.toString()))
+                .andExpect(status().isBadRequest());
+
+        update.put("holiday_price", "299.50");
+        mockMvc.perform(put("/api/admin/rooms/{id}", roomId)
+                        .header("Authorization", bearer(adminToken)).contentType("application/json").content(update.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.price").value("199.00"))
+                .andExpect(jsonPath("$.data.holiday_price").value("299.50"));
+
+        mockMvc.perform(put("/api/admin/rooms/{id}", roomId)
+                        .header("Authorization", bearer(adminToken)).contentType("application/json").content(ordinaryFields))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.holiday_price").value("299.50"));
+
+        update.putNull("holiday_price");
+        mockMvc.perform(put("/api/admin/rooms/{id}", roomId)
+                        .header("Authorization", bearer(adminToken)).contentType("application/json").content(update.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.holiday_price").value(nullValue()));
+    }
+
+    @Test
+    void administratorsCanScheduleAndCancelDatesAheadOfTheBookingWindow() throws Exception {
+        String path = "/api/admin/holiday-price-dates";
+        YearMonth month = YearMonth.now(ZoneId.of("Asia/Shanghai")).plusMonths(3);
+        LocalDate first = month.atDay(1);
+        LocalDate second = first.plusDays(1);
+        String add = objectMapper.writeValueAsString(Map.of(
+                "month", month.toString(), "add_dates", List.of(first), "remove_dates", List.of()));
+
+        mockMvc.perform(get(path).param("month", month.toString()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(put(path).header("Authorization", bearer(loginMemberToken("13800000031")))
+                        .contentType("application/json").content(add))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get(path).param("month", "2026-13").header("Authorization", bearer(adminToken)))
+                .andExpect(status().isBadRequest());
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mockMvc.perform(put(path).header("Authorization", bearer(adminToken)).contentType("application/json").content(add))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.dates.length()").value(1))
+                    .andExpect(jsonPath("$.data.dates[0]").value(first.toString()));
+        }
+
+        String invalid = objectMapper.writeValueAsString(Map.of(
+                "month", month.toString(), "add_dates", List.of(second, month.plusMonths(1).atDay(1)), "remove_dates", List.of()));
+        mockMvc.perform(put(path).header("Authorization", bearer(adminToken)).contentType("application/json").content(invalid))
+                .andExpect(status().isBadRequest());
+        String conflict = objectMapper.writeValueAsString(Map.of(
+                "month", month.toString(), "add_dates", List.of(first), "remove_dates", List.of(first)));
+        mockMvc.perform(put(path).header("Authorization", bearer(adminToken)).contentType("application/json").content(conflict))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(path).param("month", month.toString()).header("Authorization", bearer(adminToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.dates.length()").value(1))
+                .andExpect(jsonPath("$.data.dates[0]").value(first.toString()));
+
+        String change = objectMapper.writeValueAsString(Map.of(
+                "month", month.toString(), "add_dates", List.of(second), "remove_dates", List.of(first)));
+        mockMvc.perform(put(path).header("Authorization", bearer(adminToken)).contentType("application/json").content(change))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.dates.length()").value(1))
+                .andExpect(jsonPath("$.data.dates[0]").value(second.toString()));
+        mockMvc.perform(get(path).param("month", month.toString()).header("Authorization", bearer(adminToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.dates.length()").value(1))
+                .andExpect(jsonPath("$.data.dates[0]").value(second.toString()));
     }
 
     @Test

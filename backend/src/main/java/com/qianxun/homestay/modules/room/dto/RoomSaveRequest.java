@@ -1,5 +1,6 @@
 package com.qianxun.homestay.modules.room.dto;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Max;
@@ -10,7 +11,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.List;
 
-/** R07/R08 客房资料和基础价格请求。 */
+/** R07/R08 客房资料和平时、节假日价格请求。 */
 public class RoomSaveRequest {
 
     /** 客房对外房号。 */
@@ -34,6 +35,14 @@ public class RoomSaveRequest {
     @DecimalMin(value = "0.00", message = "每晚房价不能为负数")
     @Digits(integer = 10, fraction = 2, message = "每晚房价最多两位小数")
     private BigDecimal price;
+
+    /** 节假日每晚价格，空值表示沿用平时价。 */
+    @DecimalMin(value = "0.00", message = "节假日房价不能为负数")
+    @Digits(integer = 10, fraction = 2, message = "节假日房价最多两位小数且整数不超过十位")
+    private BigDecimal holidayPrice;
+
+    /** 区分旧请求省略字段和管理员显式清空价格。 */
+    private boolean holidayPriceProvided;
 
     /** 客房允许入住的最大人数。 */
     @NotNull(message = "最大入住人数不能为空")
@@ -69,6 +78,16 @@ public class RoomSaveRequest {
     public void setFloor(Integer floor) { this.floor = floor; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
+    public BigDecimal getHolidayPrice() { return holidayPrice; }
+
+    /** 记录字段是否随请求提交，显式空值也会触发此方法。 */
+    @JsonSetter("holiday_price")
+    public void setHolidayPrice(BigDecimal holidayPrice) {
+        this.holidayPrice = holidayPrice;
+        this.holidayPriceProvided = true;
+    }
+
+    public boolean hasHolidayPrice() { return holidayPriceProvided; }
     public Integer getCapacity() { return capacity; }
     public void setCapacity(Integer capacity) { this.capacity = capacity; }
     public String getBedInfo() { return bedInfo; }

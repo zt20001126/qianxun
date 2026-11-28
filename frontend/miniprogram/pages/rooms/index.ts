@@ -38,6 +38,8 @@ Page({
     calendarVisible: false,
   } as RoomsPageData,
 
+  loadSequence: 0,
+
   async onLoad(options: Record<string, string | undefined>) {
     const window = getBookingDateWindow()
     const requestedIn = options.check_in || window.today
@@ -61,30 +63,37 @@ Page({
   },
 
   async loadRooms() {
+    const loadSequence = ++this.loadSequence
+    const { checkIn, checkOut, nights } = this.data
     this.setData({ loading: true, errorMessage: '' })
     try {
-      const summaries = await listRooms(this.data.checkIn, this.data.checkOut)
+      const summaries = await listRooms(checkIn, checkOut)
       const rooms = await Promise.all(summaries.map(async (room) => {
+        const priceLabel = room.room_amount != null && nights > 1
+          ? formatNightlyAverage(room.room_amount, nights)
+          : formatPrice(room.room_amount ?? room.price)
         try {
           const detail = await getRoomDetail(room.id)
           return {
             ...room,
             area: detail.area,
             areaLabel: detail.area ? detail.area + '㎡' : '—',
-            priceLabel: formatPrice(room.price),
+            priceLabel,
           }
         } catch {
-          return { ...room, area: null, areaLabel: '—', priceLabel: formatPrice(room.price) }
+          return { ...room, area: null, areaLabel: '—', priceLabel }
         }
       }))
-      this.setData({ rooms })
+      // 切换日期后只接受最新查询，避免把旧区间房费显示在新日期上。
+      if (loadSequence === this.loadSequence) this.setData({ rooms })
     } catch (error) {
+      if (loadSequence !== this.loadSequence) return
       this.setData({
         rooms: [],
         errorMessage: error instanceof Error ? error.message : '可订房间读取失败',
       })
     } finally {
-      this.setData({ loading: false })
+      if (loadSequence === this.loadSequence) this.setData({ loading: false })
     }
   },
 
@@ -122,6 +131,15 @@ Page({
 
   noop() {},
 })
+
+/** 从后端房费合计按分四舍五入计算展示均价。 */
+function formatNightlyAverage(amount: string, nights: number): string {
+  const [yuan, fraction = ''] = amount.split('.')
+  const cents = Number(yuan + fraction.padEnd(2, '0'))
+  const averageCents = Math.floor((cents + Math.floor(nights / 2)) / nights)
+  const digits = String(averageCents).padStart(3, '0')
+  return formatPrice(`${digits.slice(0, -2)}.${digits.slice(-2)}`)
+}
 
 function formatPrice(price: string): string {
   return price.replace(/\.00$/, '')

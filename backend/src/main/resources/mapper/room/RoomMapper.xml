@@ -7,6 +7,7 @@
         <result property="name" column="name"/>
         <result property="floor" column="floor"/>
         <result property="price" column="price"/>
+        <result property="holidayPrice" column="holiday_price"/>
         <result property="capacity" column="capacity"/>
         <result property="bedInfo" column="bed_info"/>
         <result property="area" column="area"/>
@@ -21,7 +22,7 @@
     </resultMap>
 
     <sql id="roomColumns">
-        id, number, name, floor, price, capacity, bed_info, area, facilities, images,
+        id, number, name, floor, price, holiday_price, capacity, bed_info, area, facilities, images,
         description, enabled, created_at, updated_at
     </sql>
 
@@ -60,9 +61,9 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO room (
-            number, name, floor, price, capacity, bed_info, area, facilities, images, description, enabled
+            number, name, floor, price, holiday_price, capacity, bed_info, area, facilities, images, description, enabled
         ) VALUES (
-            #{number}, #{name}, #{floor}, #{price}, #{capacity}, #{bedInfo}, #{area},
+            #{number}, #{name}, #{floor}, #{price}, #{holidayPrice,jdbcType=DECIMAL}, #{capacity}, #{bedInfo}, #{area},
             #{facilities,typeHandler=com.qianxun.homestay.common.persistence.JsonStringListTypeHandler},
             #{images,typeHandler=com.qianxun.homestay.common.persistence.JsonStringListTypeHandler},
             #{description}, 1
@@ -77,6 +78,10 @@
             images = #{images,typeHandler=com.qianxun.homestay.common.persistence.JsonStringListTypeHandler},
             description = #{description}
         WHERE id = #{id}
+    </update>
+
+    <update id="updateHolidayPrice">
+        UPDATE room SET holiday_price = #{holidayPrice,jdbcType=DECIMAL} WHERE id = #{id}
     </update>
 
     <update id="updateEnabled">

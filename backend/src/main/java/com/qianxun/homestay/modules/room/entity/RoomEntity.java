@@ -17,6 +17,9 @@ public class RoomEntity {
     private Integer floor;
     /** 客房每晚基础价格，单位为元。 */
     private BigDecimal price;
+
+    /** 节假日每晚房价，空值沿用平时价。 */
+    private BigDecimal holidayPrice;
     /** 客房允许入住的最大人数。 */
     private Integer capacity;
     /** 客房床型说明。 */
@@ -46,6 +49,8 @@ public class RoomEntity {
     public void setFloor(Integer floor) { this.floor = floor; }
     public BigDecimal getPrice() { return price; }
     public void setPrice(BigDecimal price) { this.price = price; }
+    public BigDecimal getHolidayPrice() { return holidayPrice; }
+    public void setHolidayPrice(BigDecimal holidayPrice) { this.holidayPrice = holidayPrice; }
     public Integer getCapacity() { return capacity; }
     public void setCapacity(Integer capacity) { this.capacity = capacity; }
     public String getBedInfo() { return bedInfo; }

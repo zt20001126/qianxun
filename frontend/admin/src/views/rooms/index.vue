@@ -1,4 +1,6 @@
 <script setup lang="ts">
+/** 管理客房资料、两档房价及全店节假日计价日期。 */
+import HolidayPriceCalendar from './HolidayPriceCalendar.vue'
 /** R05-R09 客房资料维护。具体日期占用由房态模块统一校验。 */
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AdminNoticeDialog from '../../components/AdminNoticeDialog.vue'
@@ -12,6 +14,7 @@ interface RoomForm {
   name: string
   floor: number
   price: string
+  holiday_price: string
   capacity: string
   bed_info: string
   area: string
@@ -26,6 +29,7 @@ const saving = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 const dialogOpen = ref(false)
+const calendarOpen = ref<boolean | null>(null)
 const editingRoom = ref<Room | null>(null)
 const busyRoomIds = ref<number[]>([])
 const form = reactive<RoomForm>(emptyForm())
@@ -42,7 +46,7 @@ onMounted(() => { void loadRooms() })
 
 function emptyForm(): RoomForm {
   return {
-    number: '', name: '', floor: 1, price: '', capacity: '', bed_info: '', area: '',
+    number: '', name: '', floor: 1, price: '', holiday_price: '', capacity: '', bed_info: '', area: '',
     facilities_text: '', images_text: '', description: '',
   }
 }
@@ -74,9 +78,10 @@ function beginEdit(room: Room): void {
     name: room.name,
     floor: room.floor,
     price: room.price,
+    holiday_price: room.holiday_price ?? '',
     capacity: String(room.capacity),
     bed_info: room.bed_info || '',
-    area: room.area === null ? '' : String(room.area),
+    area: room.area == null ? '' : String(room.area),
     facilities_text: (room.facilities || []).join('\n'),
     images_text: (room.images || []).join('\n'),
     description: room.description || '',
@@ -91,14 +96,21 @@ function closeDialog(): void {
 }
 
 async function saveRoom(): Promise<void> {
+  if (saving.value) return
   const price = form.price.trim()
+  const holidayPrice = form.holiday_price.trim()
+  const pricePattern = /^\d{1,10}(?:\.\d{1,2})?$/
   const capacity = Number(form.capacity)
   if (!form.number || !form.name.trim()) {
     errorMessage.value = '请填写房号和房间名称'
     return
   }
-  if (!/^\d{1,10}(?:\.\d{1,2})?$/.test(price)) {
+  if (!pricePattern.test(price)) {
     errorMessage.value = '房价须为不超过两位小数的非负金额'
+    return
+  }
+  if (holidayPrice && !pricePattern.test(holidayPrice)) {
+    errorMessage.value = '节假日房价须为不超过两位小数的非负金额'
     return
   }
   if (!Number.isInteger(capacity) || capacity < 1 || capacity > 65535) {
@@ -115,6 +127,8 @@ async function saveRoom(): Promise<void> {
     name: form.name.trim(),
     floor: form.floor,
     price,
+    // 节假日价有变化时才提交该字段，空值用于显式清除旧配置。
+    ...(holidayPrice !== (editingRoom.value?.holiday_price ?? '') ? { holiday_price: holidayPrice || null } : {}),
     capacity,
     bed_info: form.bed_info.trim() || null,
     area: form.area ? Number(form.area) : null,
@@ -167,12 +181,20 @@ function messageOf(error: unknown, fallback: string): string {
       <div>
         <p class="page-eyebrow">ROOMS</p>
         <h1>客房管理</h1>
-        <p class="page-description">维护房型资料、基础夜价和展示状态。指定日期房态将在后续阶段接入。</p>
+        <p class="page-description">维护客房资料、平时价和节假日价。</p>
       </div>
-      <button class="button button-primary" type="button" :disabled="availableNumbers.length === 0" @click="beginAdd">
-        新增客房
-      </button>
+      <div class="room-heading-actions">
+        <button class="button button-outline" type="button" :aria-expanded="calendarOpen === true"
+          aria-controls="holiday-price-calendar" @click="calendarOpen = !calendarOpen">
+          {{ calendarOpen ? '收起节假日价格日历' : '节假日价格日历' }}
+        </button>
+        <button class="button button-primary" type="button" :disabled="availableNumbers.length === 0" @click="beginAdd">
+          新增客房
+        </button>
+      </div>
     </div>
+
+    <HolidayPriceCalendar v-if="calendarOpen !== null" v-show="calendarOpen" />
 
     <div class="summary-strip">
       <span>客房总数 <strong>{{ rooms.length }}</strong> / 6</span>
@@ -191,7 +213,7 @@ function messageOf(error: unknown, fallback: string): string {
       <div v-else class="table-scroll">
         <table class="data-table rooms-table">
           <thead>
-            <tr><th>房间</th><th>房型与床型</th><th>楼层</th><th>可住人数</th><th>每晚价格</th><th>设施 / 图片</th><th>状态</th><th class="actions-column">操作</th></tr>
+            <tr><th>房间</th><th>房型与床型</th><th>楼层</th><th>可住人数</th><th>平时价</th><th>节假日价</th><th>设施 / 图片</th><th>状态</th><th class="actions-column">操作</th></tr>
           </thead>
           <tbody>
             <tr v-for="room in rooms" :key="room.id">
@@ -200,6 +222,8 @@ function messageOf(error: unknown, fallback: string): string {
               <td>{{ room.floor }} 楼</td>
               <td>{{ room.capacity }} 人</td>
               <td class="price-cell">¥{{ room.price }} <small>/ 晚</small></td>
+              <td v-if="room.holiday_price != null" class="price-cell">¥{{ room.holiday_price }} <small>/ 晚</small></td>
+              <td v-else>沿用平时价</td>
               <td>{{ room.facilities.length }} 项设施 · {{ room.images.length }} 张图片</td>
               <td><span class="status-pill" :class="room.enabled ? 'is-enabled' : 'is-disabled'">{{ room.enabled ? '已上架' : '已下架' }}</span></td>
               <td class="row-actions">
@@ -234,8 +258,11 @@ function messageOf(error: unknown, fallback: string): string {
             <label class="form-span">房间名称
               <input v-model="form.name" maxlength="80" placeholder="例如：智能大床房" required />
             </label>
-            <label>每晚价格（元）
+            <label>平时价（元 / 晚）
               <input v-model="form.price" class="money-value" inputmode="decimal" maxlength="13" placeholder="如 198.00" required />
+            </label>
+            <label>节假日价（元 / 晚）
+              <input v-model="form.holiday_price" class="money-value" inputmode="decimal" maxlength="13" placeholder="留空沿用平时价" />
             </label>
             <label>可入住人数
               <input v-model="form.capacity" type="number" min="1" max="65535" placeholder="人数" required />
@@ -266,3 +293,7 @@ function messageOf(error: unknown, fallback: string): string {
     </div>
   </section>
 </template>
+
+<style scoped>
+.room-heading-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+</style>

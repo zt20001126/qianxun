@@ -15,7 +15,6 @@ interface RoomDetailPageData {
   checkInLabel: string
   checkOutLabel: string
   nights: number
-  priceLabel: string
   calendarVisible: boolean
   availability: AppAvailabilityCheck | null
   checkingAvailability: boolean
@@ -36,7 +35,6 @@ Page({
     checkInLabel: '',
     checkOutLabel: '',
     nights: 0,
-    priceLabel: '',
     calendarVisible: false,
     availability: null,
     checkingAvailability: false,
@@ -45,6 +43,7 @@ Page({
   } as RoomDetailPageData,
 
   roomId: 0,
+  quoteSequence: 0,
 
   async onLoad(options: Record<string, string | undefined>) {
     const roomId = Number(options.id)
@@ -88,7 +87,6 @@ Page({
         facilities: room.facilities.slice(0, 4).map((label) => ({ label, icon: getFacilityIcon(label) })),
         imageIndex: 0,
         imageCount: room.images.length,
-        priceLabel: formatPrice(room.price),
       })
       wx.setNavigationBarTitle({ title: room.name })
     } catch (error) {
@@ -134,24 +132,29 @@ Page({
   },
 
   async checkSelectedStay() {
+    const quoteSequence = ++this.quoteSequence
     this.setData({ checkingAvailability: true, availabilityError: '', availability: null })
     try {
       const availability = await checkRoomAvailability(this.roomId, this.data.checkIn, this.data.checkOut)
-      this.setData({ availability })
+      // 连续改期时，底栏只显示最新住宿日期的报价。
+      if (quoteSequence === this.quoteSequence) this.setData({ availability })
     } catch (error) {
+      if (quoteSequence !== this.quoteSequence) return
       this.setData({
         availabilityError: error instanceof Error ? error.message : '日期复核失败',
       })
     } finally {
-      this.setData({ checkingAvailability: false })
+      if (quoteSequence === this.quoteSequence) this.setData({ checkingAvailability: false })
     }
   },
 
   async onBookTap() {
     if (!this.data.room || this.data.bookingLoading || this.data.checkingAvailability) return
+    const quoteSequence = this.quoteSequence
     this.setData({ bookingLoading: true, availabilityError: '' })
     try {
       const availability = await checkRoomAvailability(this.roomId, this.data.checkIn, this.data.checkOut)
+      if (quoteSequence !== this.quoteSequence) return
       this.setData({ availability })
       if (!availability.available) {
         wx.showToast({ title: '所选日期该房型暂不可订', icon: 'none' })
@@ -163,7 +166,8 @@ Page({
         + '&check_out=' + encodeURIComponent(this.data.checkOut)
       wx.navigateTo({ url: '/pages/booking/index' + query })
     } catch (error) {
-      this.setData({ availabilityError: error instanceof Error ? error.message : '日期复核失败' })
+      if (quoteSequence !== this.quoteSequence) return
+      this.setData({ availability: null, availabilityError: error instanceof Error ? error.message : '日期复核失败' })
       wx.showToast({ title: '暂时无法确认房态，请稍后重试', icon: 'none' })
     } finally {
       this.setData({ bookingLoading: false })
@@ -180,10 +184,6 @@ Page({
 function formatMonthDay(date: string): string {
   const [, month, day] = date.split('-')
   return Number(month) + '月' + Number(day) + '日'
-}
-
-function formatPrice(price: string): string {
-  return price.replace(/\.00$/, '')
 }
 
 function getFacilityIcon(label: string): string {

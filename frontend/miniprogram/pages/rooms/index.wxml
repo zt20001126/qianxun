@@ -42,7 +42,7 @@
             <view><qx-icon name="maximize-2" size="24" /><text>{{item.areaLabel}}</text></view>
           </view>
           <view class="room-card-bottom">
-            <view class="price"><text>¥{{item.priceLabel}}</text><text>/晚</text></view>
+            <view class="price"><text>¥{{item.priceLabel}}</text><text>/晚{{item.room_amount == null ? '（平时价）' : nights > 1 ? '（均价）' : ''}}</text></view>
             <button class="detail-button" data-room-id="{{item.id}}" catchtap="onRoomTap"><text class="detail-button-label">查看详情</text></button>
           </view>
         </view>

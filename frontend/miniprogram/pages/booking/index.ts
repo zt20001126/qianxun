@@ -18,7 +18,6 @@ interface BookingPageData {
   checkOutWeek: string
   nights: number
   tierLabel: string
-  roomPriceLabel: string
   roomAmountLabel: string
   discountAmountLabel: string
   payAmountLabel: string
@@ -54,7 +53,6 @@ Page({
     checkOutWeek: '',
     nights: 0,
     tierLabel: '',
-    roomPriceLabel: '',
     roomAmountLabel: '',
     discountAmountLabel: '',
     payAmountLabel: '',
@@ -77,6 +75,8 @@ Page({
     errorMessage: '',
     ruleVisible: false,
   } as BookingPageData,
+
+  quoteSequence: 0,
 
   async onLoad(options: Record<string, string | undefined>) {
     const roomId = Number(options.room_id)
@@ -105,15 +105,9 @@ Page({
     })
     try {
       const room = await getRoomDetail(roomId)
-      this.setData({ room, roomPriceLabel: formatPrice(room.price), guestCount: 1 })
+      this.setData({ room, guestCount: 1 })
       wx.setNavigationBarTitle({ title: '填写预订信息' })
-      await this.refreshAvailability()
-      const initialPreview = await this.loadPreview(0)
-      if (initialPreview && initialPreview.max_points_usable > 0) {
-        this.setData({ usePoints: true })
-        const pointsPreview = await this.loadPreview(initialPreview.max_points_usable)
-        if (!pointsPreview) this.setData({ usePoints: false })
-      }
+      await this.refreshStayQuote()
     } catch (error) {
       this.setData({ errorMessage: error instanceof Error ? error.message : '读取预订资料失败' })
     } finally {
@@ -146,16 +140,31 @@ Page({
 
   async onPointsToggle() {
     const currentPreview = this.data.preview
-    if (this.data.previewLoading || !currentPreview || currentPreview.max_points_usable <= 0) return
+    if (this.data.submitting || this.data.previewLoading || !currentPreview || currentPreview.max_points_usable <= 0) return
+    const quoteSequence = this.quoteSequence
     const usePoints = !this.data.usePoints
     const pointsUsed = usePoints ? currentPreview.max_points_usable : 0
     this.setData({ usePoints })
-    const preview = await this.loadPreview(pointsUsed)
-    if (!preview) this.setData({ usePoints: !usePoints })
+    const preview = await this.loadPreview(pointsUsed, quoteSequence)
+    if (!preview && quoteSequence === this.quoteSequence) this.setData({ usePoints: !usePoints })
   },
 
-  async loadPreview(pointsUsed: number): Promise<PointsPreview | null> {
-    if (!this.data.roomId) return null
+  async refreshStayQuote(): Promise<void> {
+    // 日期变更会让前一次试算和自动抵扣请求一起失效。
+    const quoteSequence = ++this.quoteSequence
+    this.setData({ previewLoading: true, errorMessage: '' })
+    const available = await this.refreshAvailability(quoteSequence)
+    if (quoteSequence !== this.quoteSequence) return
+
+    const initialPreview = await this.loadPreview(0, quoteSequence)
+    if (quoteSequence !== this.quoteSequence || !available || !initialPreview || initialPreview.max_points_usable <= 0) return
+
+    this.setData({ usePoints: true })
+    const pointsPreview = await this.loadPreview(initialPreview.max_points_usable, quoteSequence)
+    if (!pointsPreview && quoteSequence === this.quoteSequence) this.setData({ usePoints: false })
+  },
+
+  async loadPreview(pointsUsed: number, quoteSequence: number): Promise<PointsPreview | null> {
     this.setData({ previewLoading: true, errorMessage: '' })
     try {
       const preview = await previewPoints({
@@ -164,6 +173,7 @@ Page({
         check_out: this.data.checkOut,
         points_used: pointsUsed,
       })
+      if (quoteSequence !== this.quoteSequence) return null
       this.setData({
         preview,
         tierLabel: formatTierRateLabel(preview.points_per_yuan),
@@ -176,20 +186,24 @@ Page({
       })
       return preview
     } catch (error) {
-      this.setData({ errorMessage: error instanceof Error ? error.message : '积分试算失败' })
+      if (quoteSequence === this.quoteSequence) {
+        this.setData({ errorMessage: error instanceof Error ? error.message : '积分试算失败' })
+      }
       return null
     } finally {
-      this.setData({ previewLoading: false })
+      if (quoteSequence === this.quoteSequence) this.setData({ previewLoading: false })
     }
   },
 
-  async refreshAvailability(): Promise<boolean> {
+  async refreshAvailability(quoteSequence: number): Promise<boolean> {
     this.setData({ availability: null, availabilityVerified: false, availabilityError: '' })
     try {
       const availability = await checkRoomAvailability(this.data.roomId, this.data.checkIn, this.data.checkOut)
+      if (quoteSequence !== this.quoteSequence) return false
       this.setData({ availability, availabilityVerified: true })
       return availability.available
     } catch (error) {
+      if (quoteSequence !== this.quoteSequence) return false
       this.setData({
         availabilityError: error instanceof Error ? error.message : '日期复核失败',
       })
@@ -198,6 +212,7 @@ Page({
   },
 
   onCalendarOpen() {
+    if (this.data.submitting) return
     this.setData({ calendarVisible: true })
   },
 
@@ -206,6 +221,7 @@ Page({
   },
 
   async onCalendarConfirm(event: WechatMiniprogram.CustomEvent<{ checkIn: string; checkOut: string }>) {
+    if (this.data.submitting) return
     const { checkIn, checkOut } = event.detail
     this.setData({
       calendarVisible: false,
@@ -222,12 +238,7 @@ Page({
       preview: null,
       usePoints: false,
     })
-    const available = await this.refreshAvailability()
-    const initialPreview = await this.loadPreview(0)
-    if (available && initialPreview && initialPreview.max_points_usable > 0) {
-      this.setData({ usePoints: true })
-      await this.loadPreview(initialPreview.max_points_usable)
-    }
+    await this.refreshStayQuote()
   },
 
   onPointsRuleOpen() {
@@ -259,24 +270,25 @@ Page({
       return
     }
 
-    this.setData({ submitting: true, errorMessage: '' })
+    const { roomId, checkIn, checkOut, usePoints } = this.data
+    this.setData({ submitting: true, calendarVisible: false, errorMessage: '' })
     try {
       this.setData({ availabilityVerified: false, availability: null })
-      const availability = await checkRoomAvailability(this.data.roomId, this.data.checkIn, this.data.checkOut)
+      const availability = await checkRoomAvailability(roomId, checkIn, checkOut)
       this.setData({ availability, availabilityVerified: true })
       if (!availability.available) {
         wx.showToast({ title: '所选日期已不可订，请调整行程', icon: 'none' })
         return
       }
       const prepay: PrepayResult = await createPrepay({
-        room_id: this.data.roomId,
-        check_in: this.data.checkIn,
-        check_out: this.data.checkOut,
+        room_id: roomId,
+        check_in: checkIn,
+        check_out: checkOut,
         guest_name: this.data.guestName.trim(),
         phone: this.data.phone.trim(),
         guest_count: this.data.guestCount,
         remark: this.data.remark.trim(),
-        points_used: this.data.usePoints ? preview.points_used : 0,
+        points_used: usePoints ? preview.points_used : 0,
       })
       wx.redirectTo({ url: buildPaymentUrl(prepay) })
     } catch (error) {

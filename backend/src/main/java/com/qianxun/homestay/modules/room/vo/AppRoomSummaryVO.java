@@ -19,5 +19,7 @@ public record AppRoomSummaryVO(
         /** 客房图片地址列表。 */
         List<String> images,
         /** 查询日期区间内是否可预订。 */
-        Boolean available) {
+        Boolean available,
+        /** 完整日期区间的房费合计，十进制字符串，单位为元。 */
+        String roomAmount) {
 }

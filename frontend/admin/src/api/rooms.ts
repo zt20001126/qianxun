@@ -1,8 +1,20 @@
 import { http } from './http'
 import type { ApiResponse } from '../types/api'
-import type { Room, RoomSaveRequest } from '../types/catalog'
+import type { HolidayPriceDates, HolidayPriceDatesUpdate, Room, RoomSaveRequest } from '../types/catalog'
+
+const HOLIDAY_PRICE_DATES_URL = '/api/admin/holiday-price-dates'
 
 export const roomApi = {
+  async listHolidayPriceDates(month: string): Promise<string[]> {
+    const response = await http.get<ApiResponse<HolidayPriceDates>>(HOLIDAY_PRICE_DATES_URL, { params: { month } })
+    return response.data.data.dates
+  },
+
+  async updateHolidayPriceDates(request: HolidayPriceDatesUpdate): Promise<string[]> {
+    const response = await http.put<ApiResponse<HolidayPriceDates>>(HOLIDAY_PRICE_DATES_URL, request)
+    return response.data.data.dates
+  },
+
   async list(): Promise<Room[]> {
     const response = await http.get<ApiResponse<{ list: Room[] }>>('/api/admin/rooms')
     return response.data.data.list

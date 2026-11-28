@@ -69,8 +69,11 @@
   </view>
 
   <view wx:if="{{room && !loading && !errorMessage}}" class="detail-footer">
-    <view class="footer-price"><text class="currency">¥</text><text class="price-number">{{priceLabel}}</text><text class="per-night">/晚</text></view>
-    <button class="book-button" loading="{{bookingLoading}}" disabled="{{bookingLoading}}" bindtap="onBookTap">立即预订</button>
+    <view wx:if="{{availability && availability.available}}" class="footer-price">
+      <text class="currency">¥</text><text class="price-number">{{availability.room_amount}}</text><text class="price-caption">所选{{nights}}晚</text>
+    </view>
+    <text wx:else class="price-caption">{{checkingAvailability ? '正在查询房费…' : '房费待确认'}}</text>
+    <button class="book-button" loading="{{bookingLoading}}" disabled="{{bookingLoading || checkingAvailability}}" bindtap="onBookTap">立即预订</button>
   </view>
 
   <booking-calendar
